@@ -1,0 +1,18 @@
+[package]
+name = "schedune-agent"
+version = "0.1.0"
+edition = "2021"
+authors = ["Schedune Open Source Community"]
+description = "Node agent for the Schedune ARM-Native Control Plane"
+license = "Apache-2.0"
+
+[dependencies]
+anyhow = "1.0"
+clap = { version = "4.4", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sysinfo = "0.30"
+tokio = { version = "1.36", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1.23.1", features = ["v4"] }

@@ -1,0 +1,59 @@
+{
+  "schema_version": "v1alpha1",
+  "agent_version": "0.1.0",
+  "collection_id": "287a89cb-9e15-4163-a32f-f1ab2674d86f",
+  "timestamp_sec": 1776986642,
+  "node_id": "arm-fc-fail-01",
+  "compatibility": {
+    "class": "ArmProduction",
+    "reason_codes": [
+      "CLASS_ARM_PROD_READY"
+    ]
+  },
+  "facts": {
+    "cpu": {
+      "architecture": "aarch64",
+      "cores": 64,
+      "vendor_id": "ARM"
+    },
+    "memory": {
+      "total_mb": 131072
+    },
+    "os": {
+      "hostname": "arm-fc-fail-01",
+      "name": "Ubuntu",
+      "kernel_version": "6.8.0"
+    }
+  },
+  "capabilities": [
+    {
+      "feature": "kvm_vm_launch",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "KVM_OPENABLE",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "firecracker_launch",
+      "state": "Unavailable",
+      "provenance": "Observed",
+      "reason_code": "FC_PREREQS_MISSING",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    }
+  ],
+  "constraints": [],
+  "health": {
+    "state": "Healthy",
+    "active_alarms": []
+  },
+  "collector_statuses": [
+    {
+      "collector_name": "MockCollector",
+      "success": true,
+      "duration_ms": 10,
+      "error_message": null
+    }
+  ]
+}

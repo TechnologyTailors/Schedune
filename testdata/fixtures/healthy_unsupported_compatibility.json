@@ -1,0 +1,52 @@
+{
+  "schema_version": "v1alpha1",
+  "agent_version": "0.1.0",
+  "collection_id": "75eec3de-e961-4ac5-b816-c3ba8340cc39",
+  "timestamp_sec": 1776986642,
+  "node_id": "x86-storage-only-01",
+  "compatibility": {
+    "class": "Unsupported",
+    "reason_codes": [
+      "CLASS_UNSUPPORTED_NO_KVM",
+      "CLASS_STORAGE_ONLY"
+    ]
+  },
+  "facts": {
+    "cpu": {
+      "architecture": "x86_64",
+      "cores": 8,
+      "vendor_id": "Intel"
+    },
+    "memory": {
+      "total_mb": 16384
+    },
+    "os": {
+      "hostname": "x86-storage-only-01",
+      "name": "Ubuntu",
+      "kernel_version": "6.8.0"
+    }
+  },
+  "capabilities": [
+    {
+      "feature": "kvm_vm_launch",
+      "state": "Unsupported",
+      "provenance": "Observed",
+      "reason_code": "KVM_MISSING",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    }
+  ],
+  "constraints": [],
+  "health": {
+    "state": "Healthy",
+    "active_alarms": []
+  },
+  "collector_statuses": [
+    {
+      "collector_name": "MockCollector",
+      "success": true,
+      "duration_ms": 10,
+      "error_message": null
+    }
+  ]
+}

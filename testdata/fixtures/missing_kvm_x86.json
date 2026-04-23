@@ -1,0 +1,59 @@
+{
+  "schema_version": "v1alpha1",
+  "agent_version": "0.1.0",
+  "collection_id": "ce2e0e35-59f9-4dc2-ba49-556a588e392e",
+  "timestamp_sec": 1776986642,
+  "node_id": "x86-storage-01",
+  "compatibility": {
+    "class": "Unsupported",
+    "reason_codes": [
+      "CLASS_UNSUPPORTED_NO_KVM"
+    ]
+  },
+  "facts": {
+    "cpu": {
+      "architecture": "x86_64",
+      "cores": 16,
+      "vendor_id": "GenuineIntel"
+    },
+    "memory": {
+      "total_mb": 65536
+    },
+    "os": {
+      "hostname": "x86-storage-01",
+      "name": "Ubuntu",
+      "kernel_version": "6.8.0"
+    }
+  },
+  "capabilities": [
+    {
+      "feature": "kvm_vm_launch",
+      "state": "Unsupported",
+      "provenance": "Observed",
+      "reason_code": "KVM_MISSING",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    }
+  ],
+  "constraints": [
+    {
+      "constraint_type": "VirtualizationDisabled",
+      "code": "CONSTRAINT_NO_KVM",
+      "description": "Cannot schedule KVM VMs on this node.",
+      "observed_value": "missing",
+      "expected_value": "present"
+    }
+  ],
+  "health": {
+    "state": "Healthy",
+    "active_alarms": []
+  },
+  "collector_statuses": [
+    {
+      "collector_name": "MockCollector",
+      "success": true,
+      "duration_ms": 15,
+      "error_message": null
+    }
+  ]
+}

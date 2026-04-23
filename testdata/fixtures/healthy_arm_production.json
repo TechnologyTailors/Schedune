@@ -1,0 +1,59 @@
+{
+  "schema_version": "v1alpha1",
+  "agent_version": "0.1.0",
+  "collection_id": "dd9d743a-2483-463c-9fb1-c1d9dd893645",
+  "timestamp_sec": 1776986642,
+  "node_id": "arm-prod-01",
+  "compatibility": {
+    "class": "ArmProduction",
+    "reason_codes": [
+      "CLASS_ARM_PROD_READY"
+    ]
+  },
+  "facts": {
+    "cpu": {
+      "architecture": "aarch64",
+      "cores": 128,
+      "vendor_id": "ARM"
+    },
+    "memory": {
+      "total_mb": 262144
+    },
+    "os": {
+      "hostname": "arm-prod-01",
+      "name": "Ubuntu",
+      "kernel_version": "6.8.0"
+    }
+  },
+  "capabilities": [
+    {
+      "feature": "kvm_vm_launch",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "KVM_OPENABLE",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "hardware_tpm",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_TPM_PRESENT",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    }
+  ],
+  "constraints": [],
+  "health": {
+    "state": "Healthy",
+    "active_alarms": []
+  },
+  "collector_statuses": [
+    {
+      "collector_name": "MockCollector",
+      "success": true,
+      "duration_ms": 10,
+      "error_message": null
+    }
+  ]
+}

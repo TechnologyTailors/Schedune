@@ -1,0 +1,51 @@
+{
+  "schema_version": "v1alpha1",
+  "agent_version": "0.1.0",
+  "collection_id": "675d5edf-aeff-499d-91df-e7a27ee863c9",
+  "timestamp_sec": 1000000300,
+  "node_id": "stale-arm-01",
+  "compatibility": {
+    "class": "ArmProduction",
+    "reason_codes": [
+      "CLASS_ARM_PROD_READY"
+    ]
+  },
+  "facts": {
+    "cpu": {
+      "architecture": "aarch64",
+      "cores": 64,
+      "vendor_id": null
+    },
+    "memory": {
+      "total_mb": 131072
+    },
+    "os": {
+      "hostname": "stale-arm-01",
+      "name": "Ubuntu",
+      "kernel_version": null
+    }
+  },
+  "capabilities": [
+    {
+      "feature": "kvm_vm_launch",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "KVM_OPENABLE",
+      "observed_at_sec": 1000000000,
+      "stale_after_sec": 1000000300
+    }
+  ],
+  "constraints": [],
+  "health": {
+    "state": "Healthy",
+    "active_alarms": []
+  },
+  "collector_statuses": [
+    {
+      "collector_name": "MockCollector",
+      "success": false,
+      "duration_ms": 5000,
+      "error_message": "Connection timeout"
+    }
+  ]
+}
