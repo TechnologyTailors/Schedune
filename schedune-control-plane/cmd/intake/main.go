@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"os"
+	"time"
 
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/api"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/recovery"
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime/inspect"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/store"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/store/sqlite"
@@ -31,6 +33,19 @@ func main() {
 	if err := bootstrapper.Bootstrap(context.Background()); err != nil {
 		log.Fatal().Err(err).Msg("Failed to run recovery bootstrap")
 	}
+
+	// Phase 7B.5: Real Orphan Sweep
+	enumerator := &runtime.LinuxProcEnumerator{}
+	orphanSweeper := recovery.NewOrphanSweepService(enumerator, sqliteStore, sqliteStore, sqliteStore, "local-node")
+
+	go func() {
+		for {
+			time.Sleep(30 * time.Second)
+			if err := orphanSweeper.SweepOnce(context.Background()); err != nil {
+				log.Error().Err(err).Msg("Orphan sweep failed")
+			}
+		}
+	}()
 
 	// We still use InMemoryStore for some node truth logic in V0/V1 that wasn't moved to SQLite yet
 	// but new execution handlers should use durable store where possible.
