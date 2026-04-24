@@ -1,15 +1,15 @@
 # Schedune
 
-**Schedune is an alpha-stage control plane and node agent for explainable scheduling, launch validation, managed runtime lifecycle, restart recovery, and orphan visibility across heterogeneous infrastructure.**
+**Schedune is an alpha-stage control plane and node agent for explainable scheduling, launch validation, managed runtime lifecycle, restart recovery, and orphan visibility across heterogeneous ARM and x86 infrastructure.**
 
-**Status:** v0.1.0-alpha
-**Control plane:** Go
+**Status:** v0.1.0-alpha / Experimental (Single-node technical preview)
+**Control Plane:** Go
 **Agent:** Rust
 **Persistence:** SQLite
-**Runtimes:**
-- **KVM/QEMU:** execute
-- **Cloud Hypervisor:** execute or validate
-- **Firecracker:** validate/dry-run, execution status if applicable
+**Supported Runtimes:**
+- **KVM/QEMU:** Execute
+- **Cloud Hypervisor:** Execute or Validate
+- **Firecracker:** Validate / Dry-Run (Execution coming soon)
 
 Unlike generic orchestrators or traditional hypervisors, Schedune is built specifically to help organizations exit expensive legacy virtualization, adopt ARM infrastructure safely, and manage mixed fleets with lower operational risk.
 
