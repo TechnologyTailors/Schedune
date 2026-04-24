@@ -1,8 +1,8 @@
 package domain
 
 import (
-	"sort"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/workload"
+	"sort"
 	"time"
 )
 

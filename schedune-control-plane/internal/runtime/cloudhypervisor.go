@@ -13,7 +13,7 @@ type CloudHypervisorExecutor struct{}
 
 func (k *CloudHypervisorExecutor) Prepare(spec launch.LaunchSpec) (launch.PreparedLaunch, error) {
 	binPath := "cloud-hypervisor"
-	
+
 	artifactPath := spec.ImageReference
 	if _, err := os.Stat(artifactPath); os.IsNotExist(err) {
 		return launch.PreparedLaunch{}, fmt.Errorf("artifact missing at host path: %s", artifactPath)
@@ -43,7 +43,7 @@ func (k *CloudHypervisorExecutor) Execute(prepared launch.PreparedLaunch) (int, 
 	}
 	cmd := exec.Command(prepared.CloudHypervisor.BinaryPath, prepared.CloudHypervisor.CommandArgs...)
 	if err := cmd.Start(); err != nil {
-		return 0, fmt.Errorf("executable failed to start: %v", err)
+		return 0, fmt.Errorf("executable failed to start: %w", err)
 	}
 	return cmd.Process.Pid, nil
 }

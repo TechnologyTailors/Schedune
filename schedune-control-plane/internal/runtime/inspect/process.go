@@ -29,7 +29,7 @@ func (i *ProcessInspector) Inspect(pid int) (RuntimeObservation, error) {
 	} else {
 		// Process does not exist or we don't have permission (which implies it's gone for us)
 		obs.ProcessExists = false
-		// We cannot easily get the exit code from an un-Wait()ed child in Go 
+		// We cannot easily get the exit code from an un-Wait()ed child in Go
 		// without a dedicated supervisor, so we leave ExitCode nil.
 	}
 

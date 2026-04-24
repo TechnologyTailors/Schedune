@@ -19,14 +19,14 @@ func TestEvaluate_HealthyArmProduction(t *testing.T) {
 	node := ProjectEnvelope(env)
 
 	intent := workload.WorkloadIntent{
-		SchemaVersion:        "v1alpha1",
-		WorkloadID:           "wl-arm-001",
-		TenantID:             "tenant-1",
-		RuntimeClass:         "VirtualMachine",
-		RequiredArchitecture: "aarch64",
-		MaxTelemetryAgeSec:   60,
-		RequiresKVM:          true,
-		RequiresTPM:          true,
+		SchemaVersion:                "v1alpha1",
+		WorkloadID:                   "wl-arm-001",
+		TenantID:                     "tenant-1",
+		RuntimeClass:                 "VirtualMachine",
+		RequiredArchitecture:         "aarch64",
+		MaxTelemetryAgeSec:           60,
+		RequiresKVM:                  true,
+		RequiresTPM:                  true,
 		RequiredCompatibilityClasses: []string{"ArmProduction"},
 	}
 
@@ -44,12 +44,12 @@ func TestEvaluate_ArchitectureMismatch(t *testing.T) {
 	node := ProjectEnvelope(env)
 
 	intent := workload.WorkloadIntent{
-		SchemaVersion:        "v1alpha1",
-		WorkloadID:           "wl-arm-002",
-		TenantID:             "tenant-1",
-		RuntimeClass:         "VirtualMachine",
-		RequiredArchitecture: "aarch64", // Node is x86_64
-		MaxTelemetryAgeSec:   60,
+		SchemaVersion:                "v1alpha1",
+		WorkloadID:                   "wl-arm-002",
+		TenantID:                     "tenant-1",
+		RuntimeClass:                 "VirtualMachine",
+		RequiredArchitecture:         "aarch64", // Node is x86_64
+		MaxTelemetryAgeSec:           60,
 		RequiredCompatibilityClasses: []string{"ArmProduction"},
 	}
 
@@ -78,13 +78,13 @@ func TestEvaluate_MissingKVM(t *testing.T) {
 	node := ProjectEnvelope(env)
 
 	intent := workload.WorkloadIntent{
-		SchemaVersion:        "v1alpha1",
-		WorkloadID:           "wl-x86-001",
-		TenantID:             "tenant-1",
-		RuntimeClass:         "VirtualMachine",
-		RequiredArchitecture: "x86_64",
-		MaxTelemetryAgeSec:   60,
-		RequiresKVM:          true, // Node is missing KVM
+		SchemaVersion:                "v1alpha1",
+		WorkloadID:                   "wl-x86-001",
+		TenantID:                     "tenant-1",
+		RuntimeClass:                 "VirtualMachine",
+		RequiredArchitecture:         "x86_64",
+		MaxTelemetryAgeSec:           60,
+		RequiresKVM:                  true, // Node is missing KVM
 		RequiredCompatibilityClasses: []string{"Unsupported"},
 	}
 
@@ -111,12 +111,12 @@ func TestEvaluate_StaleTelemetry(t *testing.T) {
 	node := ProjectEnvelope(env)
 
 	intent := workload.WorkloadIntent{
-		SchemaVersion:        "v1alpha1",
-		WorkloadID:           "wl-stale-001",
-		TenantID:             "tenant-1",
-		RuntimeClass:         "Container",
-		RequiredArchitecture: "any",
-		MaxTelemetryAgeSec:   60,
+		SchemaVersion:                "v1alpha1",
+		WorkloadID:                   "wl-stale-001",
+		TenantID:                     "tenant-1",
+		RuntimeClass:                 "Container",
+		RequiredArchitecture:         "any",
+		MaxTelemetryAgeSec:           60,
 		RequiredCompatibilityClasses: []string{"ArmProduction"},
 	}
 
@@ -150,20 +150,20 @@ func TestEvaluate_FirecrackerPartialFail(t *testing.T) {
 	node := ProjectEnvelope(env)
 
 	intent := workload.WorkloadIntent{
-		SchemaVersion:        "v1alpha1",
-		WorkloadID:           "wl-fc-001",
-		TenantID:             "tenant-1",
-		RuntimeClass:         "MicroVM",
-		RequiredArchitecture: "aarch64",
-		MaxTelemetryAgeSec:   60,
-		RequiresKVM:          true, // It has KVM, but Firecracker launch validator will fail it
+		SchemaVersion:                "v1alpha1",
+		WorkloadID:                   "wl-fc-001",
+		TenantID:                     "tenant-1",
+		RuntimeClass:                 "MicroVM",
+		RequiredArchitecture:         "aarch64",
+		MaxTelemetryAgeSec:           60,
+		RequiresKVM:                  true, // It has KVM, but Firecracker launch validator will fail it
 		RequiredCompatibilityClasses: []string{"ArmProduction"},
 	}
 
 	result := Evaluate(intent, node)
 
 	// In the evaluator, RequiresKVM passes, but does Evaluate know it's a MicroVM requiring firecracker_launch?
-	// Currently Evaluate only checks RequiresKVM and RequiresTPM explicitly. 
+	// Currently Evaluate only checks RequiresKVM and RequiresTPM explicitly.
 	// The runtime logic is in ValidateLaunch.
 	// So it might be "eligible" for scheduling, but fail launch validation.
 	if !result.IsEligible {

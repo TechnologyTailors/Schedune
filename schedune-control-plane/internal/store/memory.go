@@ -2,9 +2,9 @@ package store
 
 import (
 	"context"
-	"sync"
 	"errors"
-	
+	"sync"
+
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/domain"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
@@ -45,7 +45,7 @@ func (s *InMemoryStore) GetExecution(ctx context.Context, id string) (launch.Lau
 func (s *InMemoryStore) SaveNodeState(env schema.SchedulerEnvelope, record domain.NodeRecord) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	s.rawEnvelopes[env.NodeID] = env
 	s.nodes[record.ID] = record
 	return nil
@@ -54,7 +54,7 @@ func (s *InMemoryStore) SaveNodeState(env schema.SchedulerEnvelope, record domai
 func (s *InMemoryStore) GetNode(id string) (domain.NodeRecord, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	
+
 	if node, exists := s.nodes[id]; exists {
 		return node, nil
 	}
@@ -64,7 +64,7 @@ func (s *InMemoryStore) GetNode(id string) (domain.NodeRecord, error) {
 func (s *InMemoryStore) ListNodesByCompatibility(class string) []domain.NodeRecord {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	
+
 	var matches []domain.NodeRecord
 	for _, node := range s.nodes {
 		if node.Compatibility.Class == class {
@@ -77,11 +77,11 @@ func (s *InMemoryStore) ListNodesByCompatibility(class string) []domain.NodeReco
 func (s *InMemoryStore) ListNodesEligibleFor(runtimeClass string) []domain.NodeRecord {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	
+
 	var matches []domain.NodeRecord
 	for _, node := range s.nodes {
 		engine := domain.NewEligibilityEngine(node)
-		
+
 		switch runtimeClass {
 		case "kvm":
 			if engine.CanRunKVMVMs() {
@@ -107,7 +107,7 @@ func (s *InMemoryStore) ListNodesEligibleFor(runtimeClass string) []domain.NodeR
 func (s *InMemoryStore) ListStaleNodes() []domain.NodeRecord {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	
+
 	var matches []domain.NodeRecord
 	for _, node := range s.nodes {
 		if node.Freshness.IsStale {

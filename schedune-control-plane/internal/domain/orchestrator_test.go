@@ -2,11 +2,11 @@ package domain
 
 import (
 	"context"
+	"errors"
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime"
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
 	"testing"
 	"time"
-	"errors"
-	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
-	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime"
 )
 
 type MockStore struct {

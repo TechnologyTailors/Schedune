@@ -11,7 +11,7 @@ type FirecrackerExecutor struct{}
 
 func (k *FirecrackerExecutor) Prepare(spec launch.LaunchSpec) (launch.PreparedLaunch, error) {
 	binPath := "firecracker"
-	
+
 	if spec.KernelImagePath == "" || spec.RootfsPath == "" {
 		return launch.PreparedLaunch{}, fmt.Errorf("missing kernel or rootfs path for firecracker artifact model")
 	}

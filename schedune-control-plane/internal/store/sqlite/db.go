@@ -26,7 +26,7 @@ func NewSQLiteStore(dsn string) (*SQLiteStore, error) {
 
 	store := &SQLiteStore{db: db}
 	if err := store.migrate(); err != nil {
-		return nil, fmt.Errorf("failed to migrate db: %v", err)
+		return nil, fmt.Errorf("failed to migrate db: %w", err)
 	}
 
 	return store, nil
@@ -173,7 +173,7 @@ func (s *SQLiteStore) ListEvents(ctx context.Context, executionID string) ([]lau
 		var ev launch.RuntimeEvent
 		var payload sql.NullString
 		var reasonCode sql.NullString
-		
+
 		if err := rows.Scan(&ev.EventID, &ev.ExecutionID, &ev.EventType, &ev.TimestampSec, &reasonCode, &payload); err != nil {
 			return nil, err
 		}

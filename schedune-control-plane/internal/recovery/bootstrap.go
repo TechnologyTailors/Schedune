@@ -47,7 +47,7 @@ func (b *RecoveryBootstrapper) Bootstrap(ctx context.Context) error {
 
 	recs, err := b.ExecStore.ListRecoverableExecutions(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to list recoverable executions: %v", err)
+		return fmt.Errorf("failed to list recoverable executions: %w", err)
 	}
 
 	for _, rec := range recs {

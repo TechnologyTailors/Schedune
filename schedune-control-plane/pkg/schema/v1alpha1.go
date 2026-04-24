@@ -43,12 +43,12 @@ type OsFacts struct {
 }
 
 type NodeCapability struct {
-	Feature         string      `json:"feature" binding:"required"`
-	State           string      `json:"state" binding:"required,oneof=Supported Unsupported Unknown Unavailable"`
-	Provenance      interface{} `json:"provenance" binding:"required"`
-	ReasonCode      *string     `json:"reason_code"`
-	ObservedAtSec   int64       `json:"observed_at_sec" binding:"required"`
-	StaleAfterSec   *int64      `json:"stale_after_sec"`
+	Feature       string      `json:"feature" binding:"required"`
+	State         string      `json:"state" binding:"required,oneof=Supported Unsupported Unknown Unavailable"`
+	Provenance    interface{} `json:"provenance" binding:"required"`
+	ReasonCode    *string     `json:"reason_code"`
+	ObservedAtSec int64       `json:"observed_at_sec" binding:"required"`
+	StaleAfterSec *int64      `json:"stale_after_sec"`
 }
 
 type NodeConstraint struct {
@@ -65,12 +65,12 @@ type NodeHealth struct {
 }
 
 type ActiveAlarm struct {
-	Source          string `json:"source" binding:"required"`
-	Severity        string `json:"severity" binding:"required,oneof=Info Warning Error Critical"`
-	Code            string `json:"code" binding:"required"`
-	Description     string `json:"description" binding:"required"`
+	Source          string  `json:"source" binding:"required"`
+	Severity        string  `json:"severity" binding:"required,oneof=Info Warning Error Critical"`
+	Code            string  `json:"code" binding:"required"`
+	Description     string  `json:"description" binding:"required"`
 	RemediationHint *string `json:"remediation_hint"`
-	TimestampSec    int64  `json:"timestamp_sec" binding:"required"`
+	TimestampSec    int64   `json:"timestamp_sec" binding:"required"`
 }
 
 type CollectorStatus struct {

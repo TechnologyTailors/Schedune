@@ -37,7 +37,7 @@ impl MigrationAnalyzer {
 
     pub fn analyze(&self) -> MigrationReadinessReport {
         tracing::info!("Analyzing image: {}", self.image_path);
-        
+
         let is_vmdk = self.image_path.ends_with(".vmdk");
         let mut blockers = Vec::new();
         let mut score = MigrationScore::Green;
@@ -54,9 +54,11 @@ impl MigrationAnalyzer {
         blockers.push(MigrationBlocker {
             severity: "Medium".to_string(),
             description: "x86 Architecture Detected.".to_string(),
-            remediation: Some("Schedule in x86 holding pool until application recompilation.".to_string()),
+            remediation: Some(
+                "Schedule in x86 holding pool until application recompilation.".to_string(),
+            ),
         });
-        
+
         if score == MigrationScore::Green {
             score = MigrationScore::Yellow;
         }

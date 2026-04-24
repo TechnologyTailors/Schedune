@@ -21,9 +21,9 @@ type KvmExecutor struct{}
 func (k *KvmExecutor) Prepare(spec launch.LaunchSpec) (launch.PreparedLaunch, error) {
 	// For V0 MVP, resolve strictly to the qemu-system binary for the requested arch
 	binPath := "qemu-system-" + spec.Architecture
-	
+
 	artifactPath := spec.ImageReference
-	
+
 	if _, err := os.Stat(artifactPath); os.IsNotExist(err) {
 		return launch.PreparedLaunch{}, fmt.Errorf("artifact missing at host path: %s", artifactPath)
 	}
@@ -53,7 +53,7 @@ func (k *KvmExecutor) Execute(prepared launch.PreparedLaunch) (int, error) {
 	}
 	cmd := exec.Command(prepared.KvmQemu.BinaryPath, prepared.KvmQemu.CommandArgs...)
 	if err := cmd.Start(); err != nil {
-		return 0, fmt.Errorf("executable failed to start: %v", err)
+		return 0, fmt.Errorf("executable failed to start: %w", err)
 	}
 	return cmd.Process.Pid, nil
 }

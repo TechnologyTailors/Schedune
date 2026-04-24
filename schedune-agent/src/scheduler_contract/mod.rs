@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
-use crate::capabilities::{NodeFacts, NodeCapability, NodeConstraint, CompatibilityClassification};
+use crate::capabilities::{CompatibilityClassification, NodeCapability, NodeConstraint, NodeFacts};
 use crate::health::NodeHealth;
+use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
@@ -19,13 +19,13 @@ pub struct SchedulerEnvelope {
     pub collection_id: String,
     pub timestamp_sec: u64,
     pub node_id: String,
-    
+
     pub compatibility: CompatibilityClassification,
     pub facts: NodeFacts,
     pub capabilities: Vec<NodeCapability>,
     pub constraints: Vec<NodeConstraint>,
     pub health: NodeHealth,
-    
+
     pub collector_statuses: Vec<CollectorStatus>,
 }
 
@@ -63,7 +63,9 @@ impl SchedulerEnvelope {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::capabilities::{CpuFacts, MemoryFacts, OsFacts, CompatibilityClassType, SupportState, Provenance};
+    use crate::capabilities::{
+        CompatibilityClassType, CpuFacts, MemoryFacts, OsFacts, Provenance, SupportState,
+    };
     use crate::health::HealthState;
 
     #[test]
@@ -74,9 +76,7 @@ mod tests {
                 cores: 128,
                 vendor_id: Some("ARM".to_string()),
             },
-            memory: MemoryFacts {
-                total_mb: 262144,
-            },
+            memory: MemoryFacts { total_mb: 262144 },
             os: OsFacts {
                 hostname: "arm-node-01".to_string(),
                 name: "Ubuntu".to_string(),
@@ -89,16 +89,14 @@ mod tests {
             reason_codes: vec!["CLASS_ARM_PROD_READY".to_string()],
         };
 
-        let capabilities = vec![
-            NodeCapability {
-                feature: "kvm_virtualization".to_string(),
-                state: SupportState::Supported,
-                provenance: Provenance::Observed,
-                reason_code: Some("CAP_KVM_SUPPORTED".to_string()),
-                observed_at_sec: 1776978000,
-                stale_after_sec: Some(1776978300),
-            }
-        ];
+        let capabilities = vec![NodeCapability {
+            feature: "kvm_virtualization".to_string(),
+            state: SupportState::Supported,
+            provenance: Provenance::Observed,
+            reason_code: Some("CAP_KVM_SUPPORTED".to_string()),
+            observed_at_sec: 1776978000,
+            stale_after_sec: Some(1776978300),
+        }];
 
         let health = NodeHealth {
             state: HealthState::Healthy,

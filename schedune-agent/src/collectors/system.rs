@@ -1,19 +1,32 @@
-use crate::capabilities::{NodeFacts, CpuFacts, MemoryFacts, OsFacts, NodeCapability, NodeConstraint, CompatibilityClassification, CompatibilityClassType, Provenance, SupportState};
-use crate::health::{NodeHealth, HealthState, ActiveAlarm, AlarmSeverity};
+use crate::capabilities::{
+    CompatibilityClassType, CompatibilityClassification, CpuFacts, MemoryFacts, NodeCapability,
+    NodeConstraint, NodeFacts, OsFacts, Provenance, SupportState,
+};
+use crate::health::{HealthState, NodeHealth};
 use crate::scheduler_contract::CollectorStatus;
-use sysinfo::System;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
+use sysinfo::System;
 
 pub struct SystemCollector;
 
 impl SystemCollector {
-    pub fn collect() -> (CompatibilityClassification, NodeFacts, Vec<NodeCapability>, Vec<NodeConstraint>, NodeHealth, CollectorStatus) {
+    pub fn collect() -> (
+        CompatibilityClassification,
+        NodeFacts,
+        Vec<NodeCapability>,
+        Vec<NodeConstraint>,
+        NodeHealth,
+        CollectorStatus,
+    ) {
         let start = SystemTime::now();
         let mut sys = System::new_all();
         sys.refresh_all();
-        
-        let now_sec = start.duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
+
+        let now_sec = start
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
         let default_stale_after = now_sec + 300; // 5 minutes
 
         let hostname = System::host_name().unwrap_or_else(|| "unknown".to_string());
@@ -37,7 +50,7 @@ impl SystemCollector {
                 hostname,
                 name: os_name,
                 kernel_version,
-            }
+            },
         };
 
         // Hardware Probes
@@ -46,24 +59,40 @@ impl SystemCollector {
 
         // 2. Capabilities (SupportState + Reason Codes)
         let capabilities = vec![
-            NodeCapability { 
-                feature: "kvm_virtualization".to_string(), 
-                state: if kvm_available { SupportState::Supported } else { SupportState::Unsupported },
+            NodeCapability {
+                feature: "kvm_virtualization".to_string(),
+                state: if kvm_available {
+                    SupportState::Supported
+                } else {
+                    SupportState::Unsupported
+                },
                 provenance: Provenance::Observed,
-                reason_code: if kvm_available { Some("CAP_KVM_SUPPORTED".to_string()) } else { Some("CAP_KVM_MISSING".to_string()) },
+                reason_code: if kvm_available {
+                    Some("CAP_KVM_SUPPORTED".to_string())
+                } else {
+                    Some("CAP_KVM_MISSING".to_string())
+                },
                 observed_at_sec: now_sec,
                 stale_after_sec: Some(default_stale_after),
             },
-            NodeCapability { 
-                feature: "hardware_tpm".to_string(), 
-                state: if tpm_present { SupportState::Supported } else { SupportState::Unsupported },
+            NodeCapability {
+                feature: "hardware_tpm".to_string(),
+                state: if tpm_present {
+                    SupportState::Supported
+                } else {
+                    SupportState::Unsupported
+                },
                 provenance: Provenance::Observed,
-                reason_code: if tpm_present { Some("CAP_TPM_PRESENT".to_string()) } else { Some("CAP_TPM_MISSING".to_string()) },
+                reason_code: if tpm_present {
+                    Some("CAP_TPM_PRESENT".to_string())
+                } else {
+                    Some("CAP_TPM_MISSING".to_string())
+                },
                 observed_at_sec: now_sec,
                 stale_after_sec: Some(default_stale_after),
             },
-            NodeCapability { 
-                feature: "dpu_offload".to_string(), 
+            NodeCapability {
+                feature: "dpu_offload".to_string(),
                 state: SupportState::Unknown,
                 provenance: Provenance::Unavailable("PCIe scan not implemented".to_string()),
                 reason_code: None,
@@ -75,16 +104,17 @@ impl SystemCollector {
         let mut constraints = Vec::new();
         let mut reason_codes = Vec::new();
         // 3. Decouple Health from Eligibility
-        // If KVM is missing, the host is operationally Healthy (just an OS running normally), 
+        // If KVM is missing, the host is operationally Healthy (just an OS running normally),
         // but it is Ineligible for the ARM_PROD class.
-        let health_state = HealthState::Healthy; 
+        let health_state = HealthState::Healthy;
         let active_alarms = Vec::new();
 
         if !kvm_available {
             constraints.push(NodeConstraint {
                 constraint_type: "VirtualizationDisabled".to_string(),
                 code: "CONSTRAINT_NO_KVM".to_string(),
-                description: "Cannot schedule KVM or Firecracker microVMs on this node.".to_string(),
+                description: "Cannot schedule KVM or Firecracker microVMs on this node."
+                    .to_string(),
                 observed_value: Some("missing".to_string()),
                 expected_value: Some("present".to_string()),
             });
@@ -123,6 +153,13 @@ impl SystemCollector {
             error_message: None,
         };
 
-        (compatibility, facts, capabilities, constraints, health, status)
+        (
+            compatibility,
+            facts,
+            capabilities,
+            constraints,
+            health,
+            status,
+        )
     }
 }
