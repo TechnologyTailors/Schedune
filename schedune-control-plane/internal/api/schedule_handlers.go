@@ -51,15 +51,15 @@ func (h *SchedulerHandler) SelectNode(c *gin.Context) {
 
 	if decision.SelectedNode == nil {
 		c.JSON(http.StatusConflict, gin.H{
-			"error": "No eligible nodes available for workload",
+			"error":          "No eligible nodes available for workload",
 			"decision_trace": decision,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"status": "scheduled",
-		"node_id": *decision.SelectedNode,
+		"status":      "scheduled",
+		"node_id":     *decision.SelectedNode,
 		"workload_id": intent.WorkloadID,
 	})
 }

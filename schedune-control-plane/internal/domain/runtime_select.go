@@ -16,7 +16,7 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, map[string]
 			rejected["firecracker"] = "CAP_FIRECRACKER_PREREQS_MISSING"
 			return "", rejected
 		}
-		
+
 		// Artifact validation
 		if spec.KernelImagePath == "" || spec.RootfsPath == "" {
 			rejected["firecracker"] = "ERR_LAUNCH_INVALID_FIRECRACKER_ARTIFACT_MODEL"
@@ -28,7 +28,7 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, map[string]
 
 	if spec.RuntimeClass == "VirtualMachine" {
 		backends := []string{"cloud_hypervisor", "kvm_qemu"}
-		
+
 		// Check explicitly requested backend
 		if spec.RuntimeBackendPreference != "" {
 			if spec.RuntimeBackendPreference == "cloud_hypervisor" || spec.RuntimeBackendPreference == "kvm_qemu" {

@@ -57,11 +57,11 @@ func TestProjectEnvelope_MissingKvmX86(t *testing.T) {
 	if record.Compatibility.Class != "Unsupported" {
 		t.Errorf("expected class 'Unsupported', got %s", record.Compatibility.Class)
 	}
-	
+
 	if len(record.Constraints) == 0 {
 		t.Fatalf("expected constraints to be projected")
 	}
-	
+
 	constraint, exists := record.Constraints["CONSTRAINT_NO_KVM"]
 	if !exists {
 		t.Fatalf("expected 'CONSTRAINT_NO_KVM' constraint")
@@ -116,7 +116,7 @@ func TestProjectEnvelope_HealthyUnsupportedCompatibility(t *testing.T) {
 	if record.Health.State != "Healthy" {
 		t.Errorf("expected HealthState 'Healthy', got %s", record.Health.State)
 	}
-	
+
 	if record.Compatibility.Class != "Unsupported" {
 		t.Errorf("expected CompatibilityClass 'Unsupported', got %s", record.Compatibility.Class)
 	}

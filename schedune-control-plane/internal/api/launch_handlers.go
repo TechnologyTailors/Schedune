@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/domain"
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/store"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/store/sqlite"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
-	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
 )
@@ -94,7 +94,7 @@ func (h *LaunchHandler) ExecuteLaunch(c *gin.Context) {
 		return
 	}
 	spec.LaunchMode = "Execute"
-	
+
 	record := h.orch.StartLaunch(spec)
 	if record.State == launch.StateFailed {
 		c.JSON(http.StatusConflict, record)

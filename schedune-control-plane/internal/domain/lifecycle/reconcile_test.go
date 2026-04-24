@@ -20,7 +20,7 @@ func (m *MockInspector) Inspect(pid int) (inspect.RuntimeObservation, error) {
 func TestReconcile_StartingToRunning(t *testing.T) {
 	pid := 1234
 	startedAt := time.Now().Unix() - 10
-	
+
 	rec := launch.LaunchExecutionRecord{
 		State:        launch.StateStarting,
 		PID:          &pid,
@@ -51,7 +51,7 @@ func TestReconcile_StartingToRunning(t *testing.T) {
 func TestReconcile_StartingToFailed_Timeout(t *testing.T) {
 	pid := 1234
 	startedAt := time.Now().Unix() - 40 // Past 30s timeout
-	
+
 	rec := launch.LaunchExecutionRecord{
 		State:        launch.StateStarting,
 		PID:          &pid,
@@ -81,7 +81,7 @@ func TestReconcile_StartingToFailed_Timeout(t *testing.T) {
 
 func TestReconcile_RunningToExited(t *testing.T) {
 	pid := 1234
-	
+
 	rec := launch.LaunchExecutionRecord{
 		State: launch.StateRunning,
 		PID:   &pid,
@@ -106,7 +106,7 @@ func TestReconcile_RunningToExited(t *testing.T) {
 
 func TestReconcile_TerminatingToTerminated(t *testing.T) {
 	pid := 1234
-	
+
 	rec := launch.LaunchExecutionRecord{
 		State: launch.StateTerminating,
 		PID:   &pid,

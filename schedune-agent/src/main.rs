@@ -1,7 +1,5 @@
-mod api;
 mod capabilities;
 mod collectors;
-mod config;
 mod daemon;
 mod health;
 mod migration;
@@ -48,16 +46,18 @@ async fn main() -> Result<()> {
 
     match &cli.command {
         Commands::Inspect => {
-            let (compatibility, facts, mut capabilities, mut constraints, health, sys_status) = SystemCollector::collect();
-            let (mut virt_caps, mut virt_constraints, virt_status) = collectors::virtualization::VirtualizationCollector::collect();
-            
+            let (compatibility, facts, mut capabilities, mut constraints, health, sys_status) =
+                SystemCollector::collect();
+            let (mut virt_caps, mut virt_constraints, virt_status) =
+                collectors::virtualization::VirtualizationCollector::collect();
+
             capabilities.append(&mut virt_caps);
             constraints.append(&mut virt_constraints);
 
             // The agent emits TRUTH via the rigid Envelope contract.
             // It does not decide WHERE workloads go. It just reports its state.
             let node_id = facts.os.hostname.clone();
-            
+
             let envelope = SchedulerEnvelope::new(
                 node_id,
                 compatibility,

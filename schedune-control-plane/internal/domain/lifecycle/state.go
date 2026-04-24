@@ -9,17 +9,17 @@ import (
 
 // AllowedTransitions defines the strict state machine rules
 var AllowedTransitions = map[launch.LaunchState][]launch.LaunchState{
-	launch.StatePending:    {launch.StatePreparing, launch.StateTerminated},
-	launch.StatePreparing:  {launch.StateValidated, launch.StateFailed, launch.StateTerminating},
-	launch.StateValidated:  {launch.StateLaunching, launch.StateFailed, launch.StateTerminating},
-	launch.StateLaunching:  {launch.StateStarting, launch.StateFailed, launch.StateTerminating},
-	launch.StateStarting:   {launch.StateRunning, launch.StateExited, launch.StateFailed, launch.StateTerminating},
-	launch.StateRunning:    {launch.StateDegraded, launch.StateExited, launch.StateTerminating},
-	launch.StateDegraded:   {launch.StateFailed, launch.StateTerminating},
+	launch.StatePending:   {launch.StatePreparing, launch.StateTerminated},
+	launch.StatePreparing: {launch.StateValidated, launch.StateFailed, launch.StateTerminating},
+	launch.StateValidated: {launch.StateLaunching, launch.StateFailed, launch.StateTerminating},
+	launch.StateLaunching: {launch.StateStarting, launch.StateFailed, launch.StateTerminating},
+	launch.StateStarting:  {launch.StateRunning, launch.StateExited, launch.StateFailed, launch.StateTerminating},
+	launch.StateRunning:   {launch.StateDegraded, launch.StateExited, launch.StateTerminating},
+	launch.StateDegraded:  {launch.StateFailed, launch.StateTerminating},
 	// Terminal states cannot transition to active states
-	launch.StateExited:     {},
-	launch.StateFailed:     {},
-	launch.StateTerminated: {},
+	launch.StateExited:      {},
+	launch.StateFailed:      {},
+	launch.StateTerminated:  {},
 	launch.StateTerminating: {launch.StateTerminated},
 }
 

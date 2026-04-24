@@ -2,21 +2,21 @@ package launch
 
 // LaunchSpec defines the runtime configuration to validate or dry-run.
 type LaunchSpec struct {
-	SchemaVersion      string   `json:"schema_version" binding:"required,eq=v1alpha1"`
-	WorkloadID         string   `json:"workload_id" binding:"required"`
-	TenantID           string   `json:"tenant_id" binding:"required"`
-	NodeID             string   `json:"node_id" binding:"required"`
-	RuntimeClass       string   `json:"runtime_class" binding:"required,oneof=VirtualMachine MicroVM"`
-	Architecture       string   `json:"architecture" binding:"required,oneof=aarch64 x86_64"`
-	ImageReference     string   `json:"image_reference"` // Optional for Firecracker
-	KernelImagePath    string   `json:"kernel_image_path"`
-	RootfsPath         string   `json:"rootfs_path"`
-	Vcpu               int      `json:"vcpu" binding:"required,gt=0"`
-	MemoryMB           int64    `json:"memory_mb" binding:"required,gt=0"`
-	NetworkAttachments []string `json:"network_attachments"`
-	LaunchMode         string   `json:"launch_mode" binding:"required,oneof=Validate DryRun Execute"`
-	RuntimeBackendPreference string `json:"runtime_backend_preference"`
-	AllowBackendFallback     bool   `json:"allow_backend_fallback"`
+	SchemaVersion            string   `json:"schema_version" binding:"required,eq=v1alpha1"`
+	WorkloadID               string   `json:"workload_id" binding:"required"`
+	TenantID                 string   `json:"tenant_id" binding:"required"`
+	NodeID                   string   `json:"node_id" binding:"required"`
+	RuntimeClass             string   `json:"runtime_class" binding:"required,oneof=VirtualMachine MicroVM"`
+	Architecture             string   `json:"architecture" binding:"required,oneof=aarch64 x86_64"`
+	ImageReference           string   `json:"image_reference"` // Optional for Firecracker
+	KernelImagePath          string   `json:"kernel_image_path"`
+	RootfsPath               string   `json:"rootfs_path"`
+	Vcpu                     int      `json:"vcpu" binding:"required,gt=0"`
+	MemoryMB                 int64    `json:"memory_mb" binding:"required,gt=0"`
+	NetworkAttachments       []string `json:"network_attachments"`
+	LaunchMode               string   `json:"launch_mode" binding:"required,oneof=Validate DryRun Execute"`
+	RuntimeBackendPreference string   `json:"runtime_backend_preference"`
+	AllowBackendFallback     bool     `json:"allow_backend_fallback"`
 }
 
 // LaunchValidationResult explains exactly what host-level blockers exist.
@@ -93,8 +93,8 @@ type LaunchExecutionRecord struct {
 	Spec              LaunchSpec           `json:"spec"`
 	PreparedState     *PreparedLaunch      `json:"prepared_state,omitempty"`
 	State             LaunchState          `json:"state"`
-	RuntimeLiveness   string               `json:"runtime_liveness"`   // e.g. "Alive", "Dead", "Unknown"
-	RuntimeReadiness  string               `json:"runtime_readiness"`  // e.g. "NotStarted", "Ready", "Failed"
+	RuntimeLiveness   string               `json:"runtime_liveness"`  // e.g. "Alive", "Dead", "Unknown"
+	RuntimeReadiness  string               `json:"runtime_readiness"` // e.g. "NotStarted", "Ready", "Failed"
 	CreatedAtSec      int64                `json:"created_at_sec"`
 	UpdatedAtSec      int64                `json:"updated_at_sec"`
 	StartedAtSec      *int64               `json:"started_at_sec,omitempty"`

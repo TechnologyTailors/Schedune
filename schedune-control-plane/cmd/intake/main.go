@@ -45,16 +45,16 @@ func main() {
 	// Setup Router
 	r := gin.New()
 	r.Use(gin.Recovery())
-	
+
 	// API Group
 	v1 := r.Group("/api/v1alpha1")
 	{
 		// Data Plane -> Control Plane
 		v1.POST("/intake/envelope", intakeHandler.Ingest)
-		
+
 		// Operator -> Control Plane (Explainability)
 		v1.GET("/nodes/:id/explain", intakeHandler.ExplainNodeDecision)
-		
+
 		// Workload Orchestration -> Control Plane
 		v1.POST("/schedule/explain", schedulerHandler.ExplainSchedule)
 		v1.POST("/schedule/select", schedulerHandler.SelectNode)

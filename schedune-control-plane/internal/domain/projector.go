@@ -1,25 +1,25 @@
 package domain
 
 import (
-	"time"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema"
+	"time"
 )
 
 // NodeRecord is the canonical, queryable state of a node within the control plane.
 type NodeRecord struct {
-	ID                 string
-	Identity           NodeIdentity
-	Health             NodeHealthSummary
-	Compatibility      NodeCompatibilityRecord
-	Capabilities       map[string]NodeCapabilityRecord
-	Constraints        map[string]NodeConstraintRecord
-	Freshness          NodeFreshnessRecord
+	ID            string
+	Identity      NodeIdentity
+	Health        NodeHealthSummary
+	Compatibility NodeCompatibilityRecord
+	Capabilities  map[string]NodeCapabilityRecord
+	Constraints   map[string]NodeConstraintRecord
+	Freshness     NodeFreshnessRecord
 }
 
 type NodeIdentity struct {
-	Hostname     string
-	Architecture string
-	TotalCores   int
+	Hostname      string
+	Architecture  string
+	TotalCores    int
 	TotalMemoryMB int64
 }
 
@@ -48,22 +48,22 @@ type NodeConstraintRecord struct {
 }
 
 type NodeFreshnessRecord struct {
-	LastCollectionID  string
+	LastCollectionID   string
 	LastCollectionTime time.Time
-	IsStale           bool
-	StaleCollectors   []string
+	IsStale            bool
+	StaleCollectors    []string
 }
 
 // ProjectEnvelope maps the raw wire schema into the canonical domain model.
 func ProjectEnvelope(env schema.SchedulerEnvelope) NodeRecord {
 	now := time.Now().Unix()
-	
+
 	record := NodeRecord{
 		ID: env.NodeID,
 		Identity: NodeIdentity{
-			Hostname:     env.Facts.OS.Hostname,
-			Architecture: env.Facts.CPU.Architecture,
-			TotalCores:   env.Facts.CPU.Cores,
+			Hostname:      env.Facts.OS.Hostname,
+			Architecture:  env.Facts.CPU.Architecture,
+			TotalCores:    env.Facts.CPU.Cores,
 			TotalMemoryMB: env.Facts.Memory.TotalMB,
 		},
 		Health: NodeHealthSummary{
@@ -77,10 +77,10 @@ func ProjectEnvelope(env schema.SchedulerEnvelope) NodeRecord {
 		Capabilities: make(map[string]NodeCapabilityRecord),
 		Constraints:  make(map[string]NodeConstraintRecord),
 		Freshness: NodeFreshnessRecord{
-			LastCollectionID:  env.CollectionID,
+			LastCollectionID:   env.CollectionID,
 			LastCollectionTime: time.Unix(env.TimestampSec, 0),
-			IsStale:           false, // derived below
-			StaleCollectors:   []string{},
+			IsStale:            false, // derived below
+			StaleCollectors:    []string{},
 		},
 	}
 
@@ -101,12 +101,12 @@ func ProjectEnvelope(env schema.SchedulerEnvelope) NodeRecord {
 			record.Freshness.IsStale = true
 			record.Freshness.StaleCollectors = append(record.Freshness.StaleCollectors, cap.Feature+"_probe")
 		}
-		
+
 		reason := ""
 		if cap.ReasonCode != nil {
 			reason = *cap.ReasonCode
 		}
-		
+
 		// Unpack the provenance interface (this is simplified for the Go backend V1)
 		provStr := "Observed"
 		if provMap, ok := cap.Provenance.(map[string]interface{}); ok {
@@ -144,7 +144,7 @@ func ProjectEnvelope(env schema.SchedulerEnvelope) NodeRecord {
 	}
 
 	// Safety Check: Envelope itself is too old
-	if now - env.TimestampSec > 300 {
+	if now-env.TimestampSec > 300 {
 		record.Freshness.IsStale = true
 		record.Freshness.StaleCollectors = append(record.Freshness.StaleCollectors, "GlobalEnvelopeStale")
 	}

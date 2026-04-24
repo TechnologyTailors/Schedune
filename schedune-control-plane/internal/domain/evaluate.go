@@ -7,20 +7,20 @@ import (
 
 // EligibilityResult explains exactly why a node was accepted or rejected for a specific intent.
 type EligibilityResult struct {
-	NodeID             string   `json:"node_id"`
-	IsEligible         bool     `json:"is_eligible"`
-	
+	NodeID     string `json:"node_id"`
+	IsEligible bool   `json:"is_eligible"`
+
 	// Hard Rejections (If any exist, IsEligible must be false)
 	HardRejectionCodes []string `json:"hard_rejection_codes"`
-	
+
 	// Details for transparency
-	FreshnessOK        bool     `json:"freshness_ok"`
-	CompatibilityOK    bool     `json:"compatibility_ok"`
-	HealthOK           bool     `json:"health_ok"`
-	
+	FreshnessOK     bool `json:"freshness_ok"`
+	CompatibilityOK bool `json:"compatibility_ok"`
+	HealthOK        bool `json:"health_ok"`
+
 	// Soft matching data for the scoring engine
-	MatchedFeatures    []string `json:"matched_features"`
-	Warnings           []string `json:"warnings"`
+	MatchedFeatures []string `json:"matched_features"`
+	Warnings        []string `json:"warnings"`
 }
 
 // Evaluate tests a NodeRecord against a WorkloadIntent and returns a pure EligibilityResult.

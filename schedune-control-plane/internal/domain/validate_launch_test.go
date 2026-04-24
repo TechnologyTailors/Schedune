@@ -297,7 +297,7 @@ func TestValidateLaunch_KvmExistsNotOpenable(t *testing.T) {
 	if result.RejectedBackends["kvm_qemu"] != "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU (KVM_NOT_OPENABLE_PERMS)" {
 		t.Errorf("expected rejected backend kvm_qemu, got %v", result.RejectedBackends)
 	}
-	
+
 	// Optional: verify that the reason trace exposes the exact reason from the agent
 	traceStr := ""
 	for _, tr := range result.ValidationTrace {

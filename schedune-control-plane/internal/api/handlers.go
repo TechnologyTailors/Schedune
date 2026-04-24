@@ -49,7 +49,7 @@ func (h *IntakeHandler) Ingest(c *gin.Context) {
 // ExplainNodeDecision returns the full operational transparency for a node
 func (h *IntakeHandler) ExplainNodeDecision(c *gin.Context) {
 	nodeID := c.Param("id")
-	
+
 	record, err := h.store.GetNode(nodeID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Node not found"})
@@ -77,8 +77,8 @@ func (h *IntakeHandler) ExplainNodeDecision(c *gin.Context) {
 			"is_only_eligible_for_holding":     engine.IsOnlyEligibleForHoldingPool(),
 			"is_healthy_but_policy_ineligible": engine.IsHealthyButPolicyIneligible(),
 		},
-		"blocking_constraints": record.Constraints,
-		"stale_collectors":     record.Freshness.StaleCollectors,
+		"blocking_constraints":        record.Constraints,
+		"stale_collectors":            record.Freshness.StaleCollectors,
 		"remediation_relevant_alarms": record.Health.ActiveAlarms,
 	}
 

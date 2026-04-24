@@ -14,7 +14,7 @@ import (
 
 func TestIntake_ValidEnvelope(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	
+
 	path := filepath.Join("..", "..", "..", "testdata", "fixtures", "healthy_arm_production.json")
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -49,7 +49,7 @@ func TestIntake_ValidEnvelope(t *testing.T) {
 
 func TestIntake_InvalidSchema(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	
+
 	// Missing mandatory fields like collection_id and facts
 	invalidJSON := []byte(`{
 		"schema_version": "v1alpha1",

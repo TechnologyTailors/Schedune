@@ -21,7 +21,7 @@ func ValidateLaunch(spec launch.LaunchSpec, node NodeRecord) launch.LaunchValida
 	if spec.Architecture != node.Identity.Architecture {
 		result.IsValid = false
 		result.BlockingReasonCodes = append(result.BlockingReasonCodes, "ERR_LAUNCH_ARCH_MISMATCH")
-		result.ValidationTrace = append(result.ValidationTrace, "Failed: Architecture mismatch. Node is " + node.Identity.Architecture)
+		result.ValidationTrace = append(result.ValidationTrace, "Failed: Architecture mismatch. Node is "+node.Identity.Architecture)
 	}
 
 	if !result.IsValid {
@@ -46,10 +46,10 @@ func ValidateLaunch(spec launch.LaunchSpec, node NodeRecord) launch.LaunchValida
 	}
 
 	// 3. Layer 4: Setup context for preparation phase validation
-	result.ValidationTrace = append(result.ValidationTrace, "Passed: Selected backend " + selectedBackend)
-	
+	result.ValidationTrace = append(result.ValidationTrace, "Passed: Selected backend "+selectedBackend)
+
 	result.ExplainabilityText = "Node is fully capable of executing this launch spec."
-	
+
 	if selectedBackend == "kvm_qemu" {
 		result.RecommendedRuntime = "qemu-system-" + spec.Architecture
 	} else if selectedBackend == "cloud_hypervisor" {
