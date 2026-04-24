@@ -53,9 +53,32 @@ func (s *SQLiteStore) migrate() error {
 		payload_json TEXT
 	);
 
+	CREATE TABLE IF NOT EXISTS orphans (
+		orphan_id TEXT PRIMARY KEY,
+		backend TEXT NOT NULL,
+		pid INTEGER NOT NULL,
+		ppid INTEGER,
+		command TEXT,
+		command_args_json TEXT,
+		command_fingerprint TEXT NOT NULL,
+		execution_id_hint TEXT,
+		workload_id_hint TEXT,
+		classification TEXT NOT NULL,
+		status TEXT NOT NULL,
+		reason_code TEXT NOT NULL,
+		first_seen_at_sec INTEGER NOT NULL,
+		last_seen_at_sec INTEGER NOT NULL,
+		node_id TEXT,
+		recovery_epoch TEXT,
+		details_json TEXT
+	);
+
 	CREATE INDEX IF NOT EXISTS idx_executions_node_state ON executions(node_id, state);
 	CREATE INDEX IF NOT EXISTS idx_executions_workload ON executions(workload_id);
 	CREATE INDEX IF NOT EXISTS idx_events_execution ON events(execution_id);
+	CREATE INDEX IF NOT EXISTS idx_orphans_backend_pid_status ON orphans(backend, pid, status);
+	CREATE INDEX IF NOT EXISTS idx_orphans_fingerprint_status ON orphans(command_fingerprint, status);
+	CREATE INDEX IF NOT EXISTS idx_orphans_exechint_status ON orphans(execution_id_hint, status);
 	`
 	_, err := s.db.Exec(query)
 	return err

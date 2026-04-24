@@ -41,6 +41,7 @@ func main() {
 	intakeHandler := api.NewIntakeHandler(memStore)
 	schedulerHandler := api.NewSchedulerHandler(memStore)
 	launchHandler := api.NewLaunchHandler(memStore, sqliteStore)
+	orphanHandler := api.NewOrphanHandler(sqliteStore)
 
 	// Setup Router
 	r := gin.New()
@@ -68,8 +69,11 @@ func main() {
 		v1.GET("/launch/:id/trace", launchHandler.InspectTrace)
 		v1.GET("/launch/:id/events", launchHandler.InspectEvents)
 		v1.POST("/launch/:id/terminate", launchHandler.TerminateLaunch)
-	}
 
+		// Recovery -> Control Plane
+		v1.GET("/recovery/orphans", orphanHandler.ListOrphans)
+		v1.GET("/recovery/orphans/:id", orphanHandler.GetOrphan)
+	}
 	log.Info().Msg("Starting Schedune Control Plane on :9090")
 	if err := r.Run(":9090"); err != nil {
 		log.Fatal().Err(err).Msg("Failed to start server")
