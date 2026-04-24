@@ -1,0 +1,14 @@
+{
+  "schema_version": "v1alpha1",
+  "workload_id": "wl-test-launch-002",
+  "tenant_id": "tenant-1",
+  "node_id": "PUT_NODE_ID_HERE",
+  "runtime_class": "VirtualMachine",
+  "architecture": "x86_64",
+  "image_reference": "/tmp/dummy.qcow2",
+  "vcpu": 2,
+  "memory_mb": 1024,
+  "launch_mode": "Validate",
+  "runtime_backend_preference": "cloud_hypervisor",
+  "allow_backend_fallback": false
+}

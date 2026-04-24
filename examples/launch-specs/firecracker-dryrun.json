@@ -1,0 +1,13 @@
+{
+  "schema_version": "v1alpha1",
+  "workload_id": "wl-test-launch-003",
+  "tenant_id": "tenant-1",
+  "node_id": "PUT_NODE_ID_HERE",
+  "runtime_class": "MicroVM",
+  "architecture": "x86_64",
+  "kernel_image_path": "/tmp/vmlinux",
+  "rootfs_path": "/tmp/rootfs.ext4",
+  "vcpu": 2,
+  "memory_mb": 512,
+  "launch_mode": "DryRun"
+}

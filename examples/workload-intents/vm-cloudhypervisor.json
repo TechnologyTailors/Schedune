@@ -1,0 +1,12 @@
+{
+  "schema_version": "v1alpha1",
+  "workload_id": "wl-vm-ch-001",
+  "tenant_id": "tenant-1",
+  "runtime_class": "VirtualMachine",
+  "required_architecture": "aarch64",
+  "max_telemetry_age_sec": 600,
+  "requires_kvm": true,
+  "required_compatibility_classes": ["ArmProduction"],
+  "runtime_backend_preference": "cloud_hypervisor",
+  "allow_backend_fallback": false
+}

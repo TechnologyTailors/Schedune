@@ -1,113 +1,77 @@
 # Schedune
 
-**Explainable scheduling and managed runtime lifecycle for heterogeneous ARM and x86 infrastructure.**
+**Schedune is an open-source control plane for explainable scheduling and managed runtime lifecycle across heterogeneous ARM and x86 infrastructure.**
 
-**Status:** Alpha / Experimental (Single-node technical preview)
-**Control Plane:** Go
+**Status:** Alpha / Experimental
+**Control plane:** Go
 **Agent:** Rust
 **Persistence:** SQLite
-**Supported Runtimes:**
-- **KVM/QEMU:** Execute
-- **Cloud Hypervisor:** Execute
-- **Firecracker:** Validate / Dry-Run (Execution coming soon)
+**Runtimes:**
+- **KVM/QEMU:** execute
+- **Cloud Hypervisor:** execute or validate
+- **Firecracker:** validate/dry-run, execution status if applicable
 
-Schedune is an open-source control plane built specifically to help organizations exit expensive legacy virtualization, adopt ARM infrastructure safely, and manage mixed fleets with lower operational risk.
+Unlike generic orchestrators or traditional hypervisors, Schedune is built specifically to help organizations exit expensive legacy virtualization, adopt ARM infrastructure safely, and manage mixed fleets with lower operational risk.
 
-It achieves this by enforcing a strict boundary between **node truth** (what the hardware can actually do), **workload intent** (what the workload requires), and **execution readiness** (proving a launch will succeed before it is attempted).
+## What Schedune does today
 
-## What works today
-
-- [x] Agent inspects and emits versioned node truth (Capabilities, Constraints, Facts, Health)
-- [x] Control plane ingests `SchedulerEnvelope`
-- [x] Workload intent evaluated against node truth
-- [x] Scheduler explain endpoint explains rejections
-- [x] Dry-run launch validation catches host-level and artifact-level blockers
-- [x] KVM-backed VM and Cloud Hypervisor execution works
-- [x] Runtime lifecycle is persisted to SQLite
-- [x] Restart recovery is supported (orphans surfaced, active workloads rehydrated)
-
-## Intentionally NOT supported yet
-
-- High Availability (HA) control plane
-- Live migration & snapshots
-- Advanced storage & networking orchestration
-- Guest-service readiness (currently only hypervisor readiness is tracked)
-- Firecracker full execution (validation-first)
-
-## Prerequisites
-
-- **OS:** Linux
-- **Control Plane:** Go 1.22+
-- **Agent:** Rust (cargo)
-- **Virtualization:** `/dev/kvm` must be present and openable (RW)
-- **Binaries:** `qemu-system-aarch64` / `qemu-system-x86_64`, `cloud-hypervisor`, `firecracker` (optional for validation)
-- **Host features:** `/dev/net/tun`, cgroups v2 (for Firecracker)
+- **Node capability ingestion:** Agent inspects and emits versioned node truth.
+- **Workload eligibility explanation:** Explains why workloads are rejected.
+- **Backend-aware launch validation:** Catches host-level and artifact-level blockers.
+- **Runtime lifecycle management:** Persistent states, append-only traces.
+- **Restart recovery:** Rehydrates active workloads after a crash, surfaces orphans.
+- **Orphan visibility:** Explicit orphan detection sweeping without destructive actions.
 
 ## Quickstart
 
 Get a single-node Schedune control plane and agent running in under 5 minutes.
 
-### 1. Build and Start the Control Plane
+### 1. Clone & Doctor
+
+Check if your local Linux host is ready:
+
 ```bash
-cd schedune-control-plane
-go build ./cmd/intake
-./intake &
+make doctor
 ```
 
-### 2. Build and Run the Node Agent
+### 2. Run the Demo
+
+Run the end-to-end evaluator journey. This builds the components, starts the control plane, inspects your local node, ingests the truth, and evaluates a sample workload intent.
+
 ```bash
-cd schedune-agent
-cargo build --release
-./target/release/schedune_agent inspect > payload.json
+make demo
 ```
 
-### 3. Ingest Node Truth
+### 3. Manual Steps
+
+If you want to run it manually:
+
 ```bash
+make build
+make dev-up
+
+# Ingest your node
+./bin/schedune-agent inspect > payload.json
 curl -X POST -H "Content-Type: application/json" -d @payload.json http://localhost:9090/api/v1alpha1/intake/envelope
+
+# Schedule explanation
+curl -X POST -H "Content-Type: application/json" -d @examples/workload-intents/vm-x86.json http://localhost:9090/api/v1alpha1/schedule/explain
 ```
 
-### 4. Explain a Scheduling Decision
-Create `workload.json`:
-```json
-{
-  "schema_version": "v1alpha1",
-  "workload_id": "wl-test-001",
-  "tenant_id": "tenant-1",
-  "runtime_class": "VirtualMachine",
-  "required_architecture": "x86_64",
-  "max_telemetry_age_sec": 600,
-  "requires_kvm": true,
-  "required_compatibility_classes": ["X86HoldingPool"]
-}
-```
-```bash
-curl -X POST -H "Content-Type: application/json" -d @workload.json http://localhost:9090/api/v1alpha1/schedule/explain
-```
+## Architecture
 
-### 5. Execute a Workload
-Create `launch.json`:
-```json
-{
-  "schema_version": "v1alpha1",
-  "workload_id": "wl-test-001",
-  "tenant_id": "tenant-1",
-  "node_id": "<YOUR_NODE_ID_FROM_PAYLOAD>",
-  "runtime_class": "VirtualMachine",
-  "architecture": "x86_64",
-  "image_reference": "/path/to/dummy.qcow2",
-  "vcpu": 2,
-  "memory_mb": 1024,
-  "launch_mode": "Execute"
-}
-```
-```bash
-curl -X POST -H "Content-Type: application/json" -d @launch.json http://localhost:9090/api/v1alpha1/launch/execute
-```
+*   **Agent Truth:** The Schedune Agent (Rust) purely observes the node and emits facts, capabilities, health, and constraints in a structured `SchedulerEnvelope`.
+*   **Intake & Projection:** The Go Control Plane ingests the envelope, normalizes it, and maps it to schedulable capabilities.
+*   **Eligibility & Scheduling:** WorkloadIntents are evaluated against constraints and freshness, returning `EligibilityResult`s with exact reason codes.
+*   **Execution & Recovery:** The LaunchOrchestrator manages the runtime lifecycle, tracking readiness signals and persisting traces in SQLite.
 
-### 6. Inspect Lifecycle
-```bash
-curl http://localhost:9090/api/v1alpha1/launch/<EXECUTION_ID>
-```
+## Current Limitations
+
+Schedune is currently an alpha project. It explicitly **does not** support:
+- High Availability (HA) control plane
+- Auto-orphan adoption
+- Live migration
+- Advanced guest-service readiness (only hypervisor readiness is tracked)
 
 ## Documentation
 
