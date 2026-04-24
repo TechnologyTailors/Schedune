@@ -2,6 +2,8 @@
 
 Schedune embraces explainable failure. Errors are heavily structured and traceable via strict reason code namespaces.
 
+**Evaluator Tip:** If you are encountering recurring issues, run `make dev-preflight` or `./bin/schedune doctor` to check your host environment for missing dependencies like `/dev/kvm` or runtime binaries.
+
 ## Common Reason Codes
 
 ### Capability Codes (`CAP_`)

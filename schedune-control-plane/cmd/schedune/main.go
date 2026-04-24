@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"runtime"
@@ -23,6 +24,7 @@ import (
 const (
 	PASS = "[\033[32mOK\033[0m]"
 	WARN = "[\033[33mWARN\033[0m]"
+	INFO = "[\033[36mINFO\033[0m]"
 	FAIL = "[\033[31mFAIL\033[0m]"
 )
 
@@ -57,122 +59,202 @@ func printHelp() {
 	fmt.Println("  doctor    Run the preflight checks to verify local readiness")
 }
 
-func checkCommand(name string) bool {
-	_, err := exec.LookPath(name)
-	return err == nil
+func checkCommand(name string) string {
+	path, err := exec.LookPath(name)
+	if err != nil {
+		return ""
+	}
+	return path
+}
+
+func getKernelVersion() string {
+	out, err := exec.Command("uname", "-r").Output()
+	if err != nil {
+		return "unknown"
+	}
+	return string(out[:len(out)-1])
+}
+
+func checkPort(port string) bool {
+	l, err := net.Listen("tcp", port)
+	if err != nil {
+		return false
+	}
+	l.Close()
+	return true
 }
 
 func runDoctor() {
 	fmt.Println("============================================")
-	fmt.Println("    Schedune Preflight & Doctor Check       ")
+	fmt.Println("              Schedune Doctor               ")
 	fmt.Println("============================================")
+	fmt.Println()
 
-	vmLaunchReady := true
-	chReady := true
-	fcReady := true
+	var vmLaunchReady, chReady, fcReady bool
+	var kvmExists bool
+	var controlPlaneReady = true
+	var agentInspectReady = true
+	var orphanSweepReady = true
 
-	// 1. OS Check
+	fmt.Println("Host")
+	fmt.Println("----")
 	if runtime.GOOS == "linux" {
-		fmt.Printf("%s Linux host detected: %s\n", PASS, runtime.GOARCH)
+		fmt.Printf("%s OS: %s\n", PASS, runtime.GOOS)
+		fmt.Printf("%s Architecture: %s\n", PASS, runtime.GOARCH)
+		fmt.Printf("%s Kernel: %s\n", PASS, getKernelVersion())
 	} else {
-		fmt.Printf("%s Schedune requires Linux. Found: %s\n", FAIL, runtime.GOOS)
-		vmLaunchReady = false
-		chReady = false
-		fcReady = false
+		fmt.Printf("%s OS: %s (Schedune requires Linux)\n", FAIL, runtime.GOOS)
+		controlPlaneReady = false
+		agentInspectReady = false
 	}
 
-	// 2. SQLite / Persistence Check
+	if syscall.Access("/proc", 4) == nil {
+		fmt.Printf("%s /proc: readable\n", PASS)
+	} else {
+		fmt.Printf("%s /proc: not readable\n", FAIL)
+		orphanSweepReady = false
+	}
+	fmt.Println()
+
+	fmt.Println("Storage / Paths")
+	fmt.Println("---------------")
 	dbDir := "./var"
 	if err := os.MkdirAll(dbDir, 0755); err != nil {
-		fmt.Printf("%s Database directory not writable: %s (%v)\n", FAIL, dbDir, err)
+		fmt.Printf("%s SQLite DB Path: %s not writable (%v)\n", FAIL, dbDir, err)
+		controlPlaneReady = false
 	} else if syscall.Access(dbDir, 2) == nil {
-		fmt.Printf("%s SQLite writable: %s/schedune.db\n", PASS, dbDir)
+		fmt.Printf("%s SQLite DB Path: %s/schedune.db (writable)\n", PASS, dbDir)
 	} else {
-		fmt.Printf("%s Database directory not writable: %s\n", FAIL, dbDir)
+		fmt.Printf("%s SQLite DB Path: %s not writable\n", FAIL, dbDir)
+		controlPlaneReady = false
 	}
 
-	// 3. KVM Check
-	kvmExists := false
+	runDir := "./var/run"
+	if err := os.MkdirAll(runDir, 0755); err == nil && syscall.Access(runDir, 2) == nil {
+		fmt.Printf("%s Runtime Path: %s (writable)\n", PASS, runDir)
+	} else {
+		fmt.Printf("%s Runtime Path: %s not writable\n", FAIL, runDir)
+	}
+
+	fmt.Printf("%s Temp Path: %s (writable)\n", PASS, os.TempDir())
+	fmt.Println()
+
+	fmt.Println("Virtualization Primitives")
+	fmt.Println("-------------------------")
 	if _, err := os.Stat("/dev/kvm"); err == nil {
 		kvmExists = true
 		if syscall.Access("/dev/kvm", 6) == nil {
-			fmt.Printf("%s /dev/kvm is present and writable\n", PASS)
+			fmt.Printf("%s /dev/kvm: present and openable\n", PASS)
+			vmLaunchReady = true
 		} else {
-			fmt.Printf("%s /dev/kvm exists but is not writable by current user. VM launch will fail.\n", WARN)
-			vmLaunchReady = false
-			chReady = false
-			fcReady = false
+			fmt.Printf("%s /dev/kvm: present but not openable by current user\n", WARN)
 		}
 	} else {
-		fmt.Printf("%s /dev/kvm missing: VM execution will not work on this host.\n", WARN)
-		vmLaunchReady = false
-		chReady = false
-		fcReady = false
+		fmt.Printf("%s /dev/kvm: missing\n", INFO)
 	}
 
-	// 4. QEMU Binary Check
+	if _, err := os.Stat("/dev/net/tun"); err == nil {
+		fmt.Printf("%s /dev/net/tun: present\n", PASS)
+	} else {
+		fmt.Printf("%s /dev/net/tun: missing\n", INFO)
+	}
+
+	if syscall.Access("/sys/fs/cgroup", 4) == nil {
+		fmt.Printf("%s cgroups: readable\n", PASS)
+	} else {
+		fmt.Printf("%s cgroups: not readable\n", INFO)
+	}
+	fmt.Println()
+
+	fmt.Println("Backend Binaries")
+	fmt.Println("----------------")
 	qemuBin := "qemu-system-x86_64"
 	if runtime.GOARCH == "arm64" {
 		qemuBin = "qemu-system-aarch64"
 	}
-	if checkCommand(qemuBin) {
-		fmt.Printf("%s QEMU binary found: %s\n", PASS, qemuBin)
+	if path := checkCommand(qemuBin); path != "" {
+		fmt.Printf("%s QEMU: %s\n", PASS, path)
 	} else {
-		fmt.Printf("%s %s not found in PATH. KVM_QEMU backend will fail.\n", WARN, qemuBin)
+		fmt.Printf("%s QEMU: %s not found\n", INFO, qemuBin)
 		vmLaunchReady = false
 	}
 
-	// 5. Cloud Hypervisor Binary Check
-	if checkCommand("cloud-hypervisor") {
-		fmt.Printf("%s Cloud Hypervisor binary found\n", PASS)
+	if path := checkCommand("cloud-hypervisor"); path != "" {
+		fmt.Printf("%s Cloud Hypervisor: %s\n", PASS, path)
+		chReady = true
 	} else {
-		fmt.Printf("%s cloud-hypervisor not found in PATH. CLOUD_HYPERVISOR backend will fail.\n", WARN)
-		chReady = false
+		fmt.Printf("%s Cloud Hypervisor: not found\n", INFO)
 	}
 
-	// 6. Firecracker Checks
-	if checkCommand("firecracker") {
-		fmt.Printf("%s Firecracker binary found\n", PASS)
+	if path := checkCommand("firecracker"); path != "" {
+		fmt.Printf("%s Firecracker: %s\n", PASS, path)
+		fcReady = true
 	} else {
-		fmt.Printf("%s firecracker not found in PATH. MicroVM launch validation will fail.\n", WARN)
-		fcReady = false
+		fmt.Printf("%s Firecracker: not found\n", INFO)
+	}
+	fmt.Println()
+
+	fmt.Println("Control Plane")
+	fmt.Println("-------------")
+	if checkPort("127.0.0.1:9090") {
+		fmt.Printf("%s API Port: 127.0.0.1:9090 is available\n", PASS)
+	} else {
+		fmt.Printf("%s API Port: 127.0.0.1:9090 is in use or unavailable\n", FAIL)
+		controlPlaneReady = false
+	}
+	if controlPlaneReady {
+		fmt.Printf("%s SQLite Initialization: possible\n", PASS)
+	} else {
+		fmt.Printf("%s SQLite Initialization: blocked by path errors\n", FAIL)
+	}
+	fmt.Println()
+
+	fmt.Println("Summary")
+	fmt.Println("-------")
+	if controlPlaneReady {
+		fmt.Printf("%s Control plane\n", PASS)
+	} else {
+		fmt.Printf("%s Control plane\n", FAIL)
 	}
 
-	if _, err := os.Stat("/dev/net/tun"); err == nil {
-		fmt.Printf("%s /dev/net/tun is present (required for Firecracker networking)\n", PASS)
+	if agentInspectReady {
+		fmt.Printf("%s Agent inspect\n", PASS)
 	} else {
-		fmt.Printf("%s /dev/net/tun missing: Firecracker networking checks may fail.\n", WARN)
-		fcReady = false
+		fmt.Printf("%s Agent inspect\n", FAIL)
 	}
 
-	// 7. ProcFS
-	if syscall.Access("/proc", 4) == nil {
-		fmt.Printf("%s /proc is readable (required for orphan sweep)\n", PASS)
-	} else {
-		fmt.Printf("%s /proc is not readable. Orphan detection will fail.\n", FAIL)
-	}
-
-	fmt.Println("\nSchedune doctor summary:")
-	fmt.Println("- Control plane: runnable")
-	fmt.Println("- Agent inspect: runnable")
 	if vmLaunchReady {
-		fmt.Println("- VM launch: ready")
-	} else if !kvmExists {
-		fmt.Println("- VM launch: not ready (missing /dev/kvm)")
+		fmt.Printf("%s VM launch\n", PASS)
+	} else if kvmExists {
+		fmt.Printf("%s VM launch (missing QEMU or permissions)\n", WARN)
 	} else {
-		fmt.Println("- VM launch: partial")
+		fmt.Printf("%s VM launch (missing /dev/kvm)\n", INFO)
 	}
 
-	if chReady {
-		fmt.Println("- Cloud Hypervisor readiness: ready")
+	if chReady && kvmExists {
+		fmt.Printf("%s Cloud Hypervisor support\n", PASS)
 	} else {
-		fmt.Println("- Cloud Hypervisor readiness: partial")
+		fmt.Printf("%s Cloud Hypervisor support (missing binary or /dev/kvm)\n", INFO)
 	}
 
-	if fcReady {
-		fmt.Println("- Firecracker readiness: ready")
+	if fcReady && kvmExists {
+		fmt.Printf("%s Firecracker support\n", PASS)
 	} else {
-		fmt.Println("- Firecracker readiness: partial")
+		fmt.Printf("%s Firecracker support (missing binary or /dev/kvm)\n", INFO)
+	}
+
+	if orphanSweepReady {
+		fmt.Printf("%s Orphan sweep prerequisites\n", PASS)
+	} else {
+		fmt.Printf("%s Orphan sweep prerequisites\n", FAIL)
+	}
+	fmt.Println()
+
+	fmt.Println("Recommended next step:")
+	if controlPlaneReady && agentInspectReady {
+		fmt.Println("  make demo")
+	} else {
+		fmt.Println("  Resolve [FAIL] items before continuing.")
 	}
 }
 

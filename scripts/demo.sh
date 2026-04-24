@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 # Stop running processes on exit
 trap 'kill $(jobs -p) 2>/dev/null || true' EXIT
@@ -37,7 +37,6 @@ echo "Saved payload to /tmp/payload.json"
 
 NODE_ID=$(grep -o '"hostname": *"[^"]*"' /tmp/payload.json | cut -d'"' -f4 | head -n 1)
 if [ -z "$NODE_ID" ]; then
-    # Fallback if grep fails
     NODE_ID="unknown"
 fi
 
@@ -49,16 +48,24 @@ echo ""
 echo "--------------------------------------------"
 echo "3. Scheduling Explanation (POST /api/v1alpha1/schedule/explain)..."
 echo "Simulating a workload request for an x86 VM..."
-curl -s -X POST -H "Content-Type: application/json" -d @examples/workload-intents/vm-x86.json http://127.0.0.1:9090/api/v1alpha1/schedule/explain | python3 -m json.tool
+if command -v python3 >/dev/null 2>&1; then
+    curl -s -X POST -H "Content-Type: application/json" -d @examples/workload-intents/vm-x86.json http://127.0.0.1:9090/api/v1alpha1/schedule/explain | python3 -m json.tool || true
+else
+    curl -s -X POST -H "Content-Type: application/json" -d @examples/workload-intents/vm-x86.json http://127.0.0.1:9090/api/v1alpha1/schedule/explain
+    echo ""
+fi
 
 echo "--------------------------------------------"
-echo "Demo Complete!"
-echo "The Control Plane is still running on http://127.0.0.1:9090."
+echo "Schedune demo is ready."
+echo "Control plane is running at http://127.0.0.1:9090"
 echo ""
-echo "To try a dry-run launch manually, edit examples/launch-specs/cloudhypervisor-validate.json"
-echo "to set node_id = \"$NODE_ID\" and run:"
-echo "  curl -X POST -H \"Content-Type: application/json\" -d @examples/launch-specs/cloudhypervisor-validate.json http://localhost:9090/api/v1alpha1/launch/dry-run"
+echo "Next steps:"
+echo "  make example-schedule"
+echo "  make example-launch-validate"
+echo "  make example-readiness"
+echo "  make example-orphans"
 echo ""
-echo "Press Ctrl+C to terminate the Control Plane."
+echo "The control plane will keep running so you can try the API."
+echo "Press Ctrl+C to stop."
 
 wait $CP_PID

@@ -18,7 +18,7 @@ Schedune aims to abstract runtime nuances without obscuring backend-specific val
 
 ### Firecracker
 - **Class:** `MicroVM`
-- **Execution:** Validate / Dry-Run (Full execution in development)
+- **Execution:** Validate / Dry-Run (Execution status tracking only)
 - **Artifact Model:** Split artifact requirements. Expects `kernel_image_path` and `rootfs_path`.
 - **Prerequisites:** `/dev/kvm`, `/dev/net/tun`, `cgroups v2`, and the `firecracker` binary.
 

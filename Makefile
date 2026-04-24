@@ -38,17 +38,17 @@ lint: ## Lint all code
 	@cd schedune-agent && . $$HOME/.cargo/env && cargo clippy -- -D warnings
 	@cd schedune-control-plane && export CGO_ENABLED=1 && export PATH=$$PATH:$$HOME/.local/go/bin && go vet ./...
 
-doctor: build-control-plane ## Run the Schedune doctor script to check local readiness
+doctor: build-control-plane ## Run preflight checks to verify local readiness for evaluation
 	@./$(CONTROL_PLANE_BIN) doctor
 
-dev-preflight: doctor
+dev-preflight: doctor ## Alias for doctor
 
 dev-db-reset: ## Reset the local SQLite database
 	@echo "Resetting local database..."
 	@rm -f $(SQLITE_DB)
 	@echo "Done."
 
-dev-up: build ## Start the control plane in the background
+dev-up: build ## Start the control plane in the background (port 9090)
 	@echo "Starting Schedune Control Plane..."
 	@./$(CONTROL_PLANE_BIN) server & echo $$! > .schedune.pid
 	@echo "Control plane running on http://127.0.0.1:9090"
@@ -57,23 +57,29 @@ dev-up: build ## Start the control plane in the background
 dev-down: ## Stop the background control plane
 	@if [ -f .schedune.pid ]; then kill $$(cat .schedune.pid) && rm .schedune.pid && echo "Control plane stopped."; else echo "Not running."; fi
 
-demo: doctor build dev-db-reset ## Run the complete end-to-end evaluator demo
+demo: doctor build dev-db-reset ## Run the automated end-to-end evaluator demo
 	@bash scripts/demo.sh
 
-example-intake:
+example-intake: ## Ingest the local node capability payload
 	@bash examples/curls/intake.sh
 
-example-schedule:
+example-schedule: ## Run a workload eligibility evaluation explanation
 	@bash examples/curls/schedule-explain.sh
 
-example-launch-validate:
+example-launch-validate: ## Validate a launch without executing it
 	@bash examples/curls/launch-validate.sh
 
-example-launch-execute:
+example-launch-execute: ## Execute a launch on a local runtime
 	@bash examples/curls/launch-execute.sh
 
-example-readiness:
-	@echo "Provide an execution ID. e.g. curl http://localhost:9090/api/v1alpha1/launch/<id>/readiness"
+example-readiness: ## Check readiness for an execution (Requires EXECUTION_ID)
+	@if [ -z "$(EXECUTION_ID)" ]; then \
+		echo "Usage: make example-readiness EXECUTION_ID=<id>"; \
+		echo "Run 'make example-launch-execute' first to get an execution ID."; \
+	else \
+		curl -s http://127.0.0.1:9090/api/v1alpha1/launch/$(EXECUTION_ID)/readiness; \
+		echo ""; \
+	fi
 
-example-orphans:
-	@curl -s http://localhost:9090/api/v1alpha1/recovery/orphans
+example-orphans: ## List orphaned runtimes on the node
+	@curl -s http://127.0.0.1:9090/api/v1alpha1/recovery/orphans; echo ""

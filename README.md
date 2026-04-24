@@ -1,8 +1,8 @@
 # Schedune
 
-**Schedune is an open-source control plane for explainable scheduling and managed runtime lifecycle across heterogeneous ARM and x86 infrastructure.**
+**Schedune is an alpha-stage control plane and node agent for explainable scheduling, launch validation, managed runtime lifecycle, restart recovery, and orphan visibility across heterogeneous infrastructure.**
 
-**Status:** Alpha / Experimental
+**Status:** v0.1.0-alpha
 **Control plane:** Go
 **Agent:** Rust
 **Persistence:** SQLite
@@ -26,15 +26,15 @@ Unlike generic orchestrators or traditional hypervisors, Schedune is built speci
 
 Get a single-node Schedune control plane and agent running in under 5 minutes.
 
-### 1. Clone & Doctor
+### 1. Preflight Check
 
-Check if your local Linux host is ready:
+Check if your local Linux host is ready for the evaluator:
 
 ```bash
-make doctor
+make dev-preflight
 ```
 
-### 2. Run the Demo
+### 2. Evaluator Demo
 
 Run the end-to-end evaluator journey. This builds the components, starts the control plane, inspects your local node, ingests the truth, and evaluates a sample workload intent.
 
@@ -42,32 +42,40 @@ Run the end-to-end evaluator journey. This builds the components, starts the con
 make demo
 ```
 
-### 3. Manual Steps
+### 3. Step-by-Step Examples
 
-If you want to run it manually:
+If you want to run it manually using the provided targets:
 
 ```bash
-make build
-make dev-up
-
-# Ingest your node
-./bin/schedune-agent inspect > payload.json
-curl -X POST -H "Content-Type: application/json" -d @payload.json http://localhost:9090/api/v1alpha1/intake/envelope
-
-# Schedule explanation
-curl -X POST -H "Content-Type: application/json" -d @examples/workload-intents/vm-x86.json http://localhost:9090/api/v1alpha1/schedule/explain
+make dev-up                  # Start control plane in background
+make example-intake          # Ingest your node capabilities
+make example-schedule        # Run a scheduling explanation
+make example-launch-validate # Validate a cloud-hypervisor launch
+make example-launch-execute  # Execute a cloud-hypervisor launch
+make example-orphans         # Check for orphaned processes
+make dev-down                # Stop the control plane
 ```
 
-## Architecture
+## Repository Layout
 
-*   **Agent Truth:** The Schedune Agent (Rust) purely observes the node and emits facts, capabilities, health, and constraints in a structured `SchedulerEnvelope`.
-*   **Intake & Projection:** The Go Control Plane ingests the envelope, normalizes it, and maps it to schedulable capabilities.
-*   **Eligibility & Scheduling:** WorkloadIntents are evaluated against constraints and freshness, returning `EligibilityResult`s with exact reason codes.
-*   **Execution & Recovery:** The LaunchOrchestrator manages the runtime lifecycle, tracking readiness signals and persisting traces in SQLite.
+- `schedune-control-plane/`: The Go-based control plane, API, and orchestration logic.
+- `schedune-agent/`: The Rust-based node agent for inspection and capability emission.
+- `docs/`: Technical documentation and schemas.
+- `examples/`: Example launch specs, workload intents, and curl wrappers.
+- `scripts/`: Helper scripts for demo and preflight checks.
+
+## Design Principles
+
+- **Agent emits truth; control plane projects truth.** The agent observes; it does not orchestrate.
+- **Eligibility before scoring.** Workloads are explicitly rejected with exact reason codes.
+- **Launch validation before execution.** Fails fast on missing dependencies or permissions.
+- **State, trace, and events separate.** Predictable lifecycle tracking and append-only debugging.
+- **Unknown is better than wrong.** If Schedune cannot verify a capability, it assumes it is absent.
+- **Orphan processes are surfaced, not guessed at or destroyed.** Operators have visibility to resolve out-of-band state manually.
 
 ## Current Limitations
 
-Schedune is currently an alpha project. It explicitly **does not** support:
+Schedune explicitly **does not** support:
 - High Availability (HA) control plane
 - Auto-orphan adoption
 - Live migration
