@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"sync"
 	"errors"
 	
@@ -24,20 +25,21 @@ func NewInMemoryStore() *InMemoryStore {
 	}
 }
 
-func (s *InMemoryStore) SaveExecution(rec launch.LaunchExecutionRecord) {
+func (s *InMemoryStore) SaveExecution(ctx context.Context, rec launch.LaunchExecutionRecord) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.executions[rec.ExecutionID] = rec
+	return nil
 }
 
-func (s *InMemoryStore) GetExecution(id string) (launch.LaunchExecutionRecord, error) {
+func (s *InMemoryStore) GetExecution(ctx context.Context, id string) (launch.LaunchExecutionRecord, bool, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	rec, ok := s.executions[id]
 	if !ok {
-		return launch.LaunchExecutionRecord{}, errors.New("execution not found")
+		return launch.LaunchExecutionRecord{}, false, errors.New("execution not found")
 	}
-	return rec, nil
+	return rec, true, nil
 }
 
 func (s *InMemoryStore) SaveNodeState(env schema.SchedulerEnvelope, record domain.NodeRecord) error {

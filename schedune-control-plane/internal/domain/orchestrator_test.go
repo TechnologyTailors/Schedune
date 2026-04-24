@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"testing"
 	"time"
 	"errors"
@@ -16,11 +17,13 @@ type MockStore struct {
 func (m *MockStore) GetNode(id string) (NodeRecord, error) {
 	return m.node, nil
 }
-func (m *MockStore) SaveExecution(rec launch.LaunchExecutionRecord) {
+func (m *MockStore) SaveExecution(ctx context.Context, rec launch.LaunchExecutionRecord) error {
 	m.exec[rec.ExecutionID] = rec
+	return nil
 }
-func (m *MockStore) GetExecution(id string) (launch.LaunchExecutionRecord, error) {
-	return m.exec[id], nil
+func (m *MockStore) GetExecution(ctx context.Context, id string) (launch.LaunchExecutionRecord, bool, error) {
+	rec, ok := m.exec[id]
+	return rec, ok, nil
 }
 
 type MockExecutor struct {
@@ -66,7 +69,7 @@ func TestLaunchOrchestrator_Success(t *testing.T) {
 	}
 	exec := &MockExecutor{}
 
-	orch := NewLaunchOrchestrator(store, exec)
+	orch := NewLaunchOrchestrator(store, store, exec)
 
 	spec := launch.LaunchSpec{
 		SchemaVersion:  "v1alpha1",
@@ -119,7 +122,7 @@ func TestLaunchOrchestrator_ValidationFails(t *testing.T) {
 	}
 	exec := &MockExecutor{}
 
-	orch := NewLaunchOrchestrator(store, exec)
+	orch := NewLaunchOrchestrator(store, store, exec)
 
 	spec := launch.LaunchSpec{
 		SchemaVersion:  "v1alpha1",

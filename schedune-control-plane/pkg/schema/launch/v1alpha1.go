@@ -104,4 +104,16 @@ type LaunchExecutionRecord struct {
 	ExitCode          *int                 `json:"exit_code,omitempty"`
 	FailureReasonCode *string              `json:"failure_reason_code,omitempty"`
 	Trace             []ExecutionTraceStep `json:"trace"`
+	Generation        int64                `json:"generation"`
+	RecoveryEpoch     string               `json:"recovery_epoch,omitempty"`
+	LastObservedAtSec *int64               `json:"last_observed_at_sec,omitempty"`
+}
+
+type RuntimeEvent struct {
+	EventID      string      `json:"event_id"`
+	ExecutionID  string      `json:"execution_id"`
+	EventType    string      `json:"event_type"`
+	TimestampSec int64       `json:"timestamp_sec"`
+	ReasonCode   string      `json:"reason_code,omitempty"`
+	PayloadJSON  interface{} `json:"payload_json,omitempty"`
 }

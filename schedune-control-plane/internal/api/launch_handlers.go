@@ -1,11 +1,13 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/domain"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/store"
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/store/sqlite"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime"
 	"github.com/gin-gonic/gin"
@@ -25,11 +27,12 @@ func (r *StaticExecutorResolver) Resolve(backend string) (runtime.Executor, erro
 }
 
 type LaunchHandler struct {
-	store *store.InMemoryStore
-	orch  *domain.LaunchOrchestrator
+	nodeStore *store.InMemoryStore
+	execStore *sqlite.SQLiteStore
+	orch      *domain.LaunchOrchestrator
 }
 
-func NewLaunchHandler(s *store.InMemoryStore) *LaunchHandler {
+func NewLaunchHandler(nodeStore *store.InMemoryStore, execStore *sqlite.SQLiteStore) *LaunchHandler {
 	resolver := &StaticExecutorResolver{
 		executors: map[string]runtime.Executor{
 			"kvm_qemu":         &runtime.KvmExecutor{},
@@ -37,8 +40,8 @@ func NewLaunchHandler(s *store.InMemoryStore) *LaunchHandler {
 			"firecracker":      &runtime.FirecrackerExecutor{},
 		},
 	}
-	orch := domain.NewLaunchOrchestrator(s, resolver)
-	return &LaunchHandler{store: s, orch: orch}
+	orch := domain.NewLaunchOrchestrator(nodeStore, execStore, resolver)
+	return &LaunchHandler{nodeStore: nodeStore, execStore: execStore, orch: orch}
 }
 
 // ValidateLaunch assesses whether a chosen node is physically capable of executing the requested spec.
@@ -51,7 +54,7 @@ func (h *LaunchHandler) ValidateLaunch(c *gin.Context) {
 		return
 	}
 
-	node, err := h.store.GetNode(spec.NodeID)
+	node, err := h.nodeStore.GetNode(spec.NodeID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Target node not found"})
 		return
@@ -73,7 +76,7 @@ func (h *LaunchHandler) DryRunLaunch(c *gin.Context) {
 	// Override for dryrun
 	spec.LaunchMode = "DryRun"
 
-	node, err := h.store.GetNode(spec.NodeID)
+	node, err := h.nodeStore.GetNode(spec.NodeID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Target node not found"})
 		return
@@ -103,8 +106,8 @@ func (h *LaunchHandler) ExecuteLaunch(c *gin.Context) {
 // InspectLaunch returns the live status of the execution trace
 func (h *LaunchHandler) InspectLaunch(c *gin.Context) {
 	id := c.Param("id")
-	rec, err := h.store.GetExecution(id)
-	if err != nil {
+	rec, found, err := h.execStore.GetExecution(context.Background(), id)
+	if err != nil || !found {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Execution not found"})
 		return
 	}
