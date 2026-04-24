@@ -13,6 +13,14 @@ type WorkloadIntent struct {
 	
 	RequiresKVM          bool     `json:"requires_kvm"`
 	RequiresTPM          bool     `json:"requires_tpm"`
+
+	// Artifact specific requirements
+	KernelImagePath      string   `json:"kernel_image_path"`
+	RootfsPath           string   `json:"rootfs_path"`
+	
+	// Backend preferences
+	RuntimeBackendPreference string `json:"runtime_backend_preference"`
+	AllowBackendFallback     bool   `json:"allow_backend_fallback"`
 	
 	// Explicitly Forbidden States
 	ForbiddenConstraints []string `json:"forbidden_constraints"`

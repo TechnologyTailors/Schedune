@@ -332,4 +332,95 @@ mod tests {
 
         write_fixture("healthy_unsupported_compatibility.json", &envelope);
     }
+
+    #[test]
+    fn generate_cloudhypervisor_ready_arm() {
+        let facts = NodeFacts {
+            cpu: CpuFacts { architecture: "aarch64".to_string(), cores: 64, vendor_id: Some("ARM".to_string()) },
+            memory: MemoryFacts { total_mb: 131072 },
+            os: OsFacts { hostname: "arm-ch-01".to_string(), name: "Ubuntu".to_string(), kernel_version: Some("6.8.0".to_string()) },
+        };
+        let class = CompatibilityClassification { class: CompatibilityClassType::ArmProduction, reason_codes: vec!["CLASS_ARM_PROD_READY".to_string()] };
+        let capabilities = vec![
+            NodeCapability { feature: "kvm_vm_launch".to_string(), state: SupportState::Supported, provenance: Provenance::Observed, reason_code: Some("CAP_KVM_OPENABLE".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+            NodeCapability { feature: "cloud_hypervisor_binary_present".to_string(), state: SupportState::Supported, provenance: Provenance::Observed, reason_code: Some("CAP_CLOUDHYPERVISOR_BINARY_PRESENT".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+            NodeCapability { feature: "cloud_hypervisor_launch".to_string(), state: SupportState::Supported, provenance: Provenance::Inferred, reason_code: Some("CAP_CLOUDHYPERVISOR_READY".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+        ];
+        let envelope = SchedulerEnvelope::new("arm-ch-01".to_string(), class, facts, capabilities, vec![], NodeHealth { state: HealthState::Healthy, active_alarms: vec![] }, vec![]);
+        write_fixture("cloudhypervisor_ready_arm.json", &envelope);
+    }
+
+    #[test]
+    fn generate_cloudhypervisor_binary_missing() {
+        let facts = NodeFacts {
+            cpu: CpuFacts { architecture: "aarch64".to_string(), cores: 64, vendor_id: Some("ARM".to_string()) },
+            memory: MemoryFacts { total_mb: 131072 },
+            os: OsFacts { hostname: "arm-ch-fail-01".to_string(), name: "Ubuntu".to_string(), kernel_version: Some("6.8.0".to_string()) },
+        };
+        let class = CompatibilityClassification { class: CompatibilityClassType::ArmProduction, reason_codes: vec!["CLASS_ARM_PROD_READY".to_string()] };
+        let capabilities = vec![
+            NodeCapability { feature: "kvm_vm_launch".to_string(), state: SupportState::Supported, provenance: Provenance::Observed, reason_code: Some("CAP_KVM_OPENABLE".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+            NodeCapability { feature: "cloud_hypervisor_binary_present".to_string(), state: SupportState::Unsupported, provenance: Provenance::Observed, reason_code: Some("CAP_CLOUDHYPERVISOR_BINARY_MISSING".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+            NodeCapability { feature: "cloud_hypervisor_launch".to_string(), state: SupportState::Unavailable, provenance: Provenance::Inferred, reason_code: Some("CAP_CLOUDHYPERVISOR_PREREQS_MISSING".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+        ];
+        let envelope = SchedulerEnvelope::new("arm-ch-fail-01".to_string(), class, facts, capabilities, vec![], NodeHealth { state: HealthState::Healthy, active_alarms: vec![] }, vec![]);
+        write_fixture("cloudhypervisor_binary_missing.json", &envelope);
+    }
+
+    #[test]
+    fn generate_firecracker_host_ready() {
+        let facts = NodeFacts {
+            cpu: CpuFacts { architecture: "x86_64".to_string(), cores: 64, vendor_id: Some("Intel".to_string()) },
+            memory: MemoryFacts { total_mb: 131072 },
+            os: OsFacts { hostname: "x86-fc-01".to_string(), name: "Ubuntu".to_string(), kernel_version: Some("6.8.0".to_string()) },
+        };
+        let class = CompatibilityClassification { class: CompatibilityClassType::X86HoldingPool, reason_codes: vec!["CLASS_X86_HOLDING_READY".to_string()] };
+        let capabilities = vec![
+            NodeCapability { feature: "kvm_vm_launch".to_string(), state: SupportState::Supported, provenance: Provenance::Observed, reason_code: Some("CAP_KVM_OPENABLE".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+            NodeCapability { feature: "firecracker_binary_present".to_string(), state: SupportState::Supported, provenance: Provenance::Observed, reason_code: Some("CAP_FIRECRACKER_BINARY_PRESENT".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+            NodeCapability { feature: "firecracker_tun_ready".to_string(), state: SupportState::Supported, provenance: Provenance::Observed, reason_code: Some("CAP_FIRECRACKER_TUN_READY".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+            NodeCapability { feature: "firecracker_cgroups_ready".to_string(), state: SupportState::Supported, provenance: Provenance::Observed, reason_code: Some("CAP_FIRECRACKER_CGROUPS_READY".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+            NodeCapability { feature: "firecracker_launch".to_string(), state: SupportState::Supported, provenance: Provenance::Inferred, reason_code: Some("CAP_FIRECRACKER_READY".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+        ];
+        let envelope = SchedulerEnvelope::new("x86-fc-01".to_string(), class, facts, capabilities, vec![], NodeHealth { state: HealthState::Healthy, active_alarms: vec![] }, vec![]);
+        write_fixture("firecracker_host_ready.json", &envelope);
+    }
+
+    #[test]
+    fn generate_firecracker_tun_missing() {
+        let facts = NodeFacts {
+            cpu: CpuFacts { architecture: "x86_64".to_string(), cores: 64, vendor_id: Some("Intel".to_string()) },
+            memory: MemoryFacts { total_mb: 131072 },
+            os: OsFacts { hostname: "x86-fc-fail-tun".to_string(), name: "Ubuntu".to_string(), kernel_version: Some("6.8.0".to_string()) },
+        };
+        let class = CompatibilityClassification { class: CompatibilityClassType::X86HoldingPool, reason_codes: vec!["CLASS_X86_HOLDING_READY".to_string()] };
+        let capabilities = vec![
+            NodeCapability { feature: "kvm_vm_launch".to_string(), state: SupportState::Supported, provenance: Provenance::Observed, reason_code: Some("CAP_KVM_OPENABLE".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+            NodeCapability { feature: "firecracker_binary_present".to_string(), state: SupportState::Supported, provenance: Provenance::Observed, reason_code: Some("CAP_FIRECRACKER_BINARY_PRESENT".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+            NodeCapability { feature: "firecracker_tun_ready".to_string(), state: SupportState::Unsupported, provenance: Provenance::Observed, reason_code: Some("CAP_FIRECRACKER_TUN_MISSING".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+            NodeCapability { feature: "firecracker_cgroups_ready".to_string(), state: SupportState::Supported, provenance: Provenance::Observed, reason_code: Some("CAP_FIRECRACKER_CGROUPS_READY".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+            NodeCapability { feature: "firecracker_launch".to_string(), state: SupportState::Unavailable, provenance: Provenance::Inferred, reason_code: Some("CAP_FIRECRACKER_PREREQS_MISSING".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+        ];
+        let envelope = SchedulerEnvelope::new("x86-fc-fail-tun".to_string(), class, facts, capabilities, vec![], NodeHealth { state: HealthState::Healthy, active_alarms: vec![] }, vec![]);
+        write_fixture("firecracker_tun_missing.json", &envelope);
+    }
+
+    #[test]
+    fn generate_firecracker_cgroups_missing() {
+        let facts = NodeFacts {
+            cpu: CpuFacts { architecture: "x86_64".to_string(), cores: 64, vendor_id: Some("Intel".to_string()) },
+            memory: MemoryFacts { total_mb: 131072 },
+            os: OsFacts { hostname: "x86-fc-fail-cgroups".to_string(), name: "Ubuntu".to_string(), kernel_version: Some("6.8.0".to_string()) },
+        };
+        let class = CompatibilityClassification { class: CompatibilityClassType::X86HoldingPool, reason_codes: vec!["CLASS_X86_HOLDING_READY".to_string()] };
+        let capabilities = vec![
+            NodeCapability { feature: "kvm_vm_launch".to_string(), state: SupportState::Supported, provenance: Provenance::Observed, reason_code: Some("CAP_KVM_OPENABLE".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+            NodeCapability { feature: "firecracker_binary_present".to_string(), state: SupportState::Supported, provenance: Provenance::Observed, reason_code: Some("CAP_FIRECRACKER_BINARY_PRESENT".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+            NodeCapability { feature: "firecracker_tun_ready".to_string(), state: SupportState::Supported, provenance: Provenance::Observed, reason_code: Some("CAP_FIRECRACKER_TUN_READY".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+            NodeCapability { feature: "firecracker_cgroups_ready".to_string(), state: SupportState::Unsupported, provenance: Provenance::Observed, reason_code: Some("CAP_FIRECRACKER_CGROUPS_MISSING".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+            NodeCapability { feature: "firecracker_launch".to_string(), state: SupportState::Unavailable, provenance: Provenance::Inferred, reason_code: Some("CAP_FIRECRACKER_PREREQS_MISSING".to_string()), observed_at_sec: 1776978000, stale_after_sec: Some(1776978300) },
+        ];
+        let envelope = SchedulerEnvelope::new("x86-fc-fail-cgroups".to_string(), class, facts, capabilities, vec![], NodeHealth { state: HealthState::Healthy, active_alarms: vec![] }, vec![]);
+        write_fixture("firecracker_cgroups_missing.json", &envelope);
+    }
 }

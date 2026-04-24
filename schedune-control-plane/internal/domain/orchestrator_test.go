@@ -5,6 +5,7 @@ import (
 	"time"
 	"errors"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime"
 )
 
 type MockStore struct {
@@ -25,6 +26,10 @@ func (m *MockStore) GetExecution(id string) (launch.LaunchExecutionRecord, error
 type MockExecutor struct {
 	ShouldFailPrepare bool
 	ShouldFailExecute bool
+}
+
+func (m *MockExecutor) Resolve(backend string) (runtime.Executor, error) {
+	return m, nil
 }
 
 func (m *MockExecutor) Prepare(spec launch.LaunchSpec) (launch.PreparedLaunch, error) {
@@ -78,8 +83,8 @@ func TestLaunchOrchestrator_Success(t *testing.T) {
 
 	rec := orch.StartLaunch(spec)
 
-	if rec.State != launch.StateRunning {
-		t.Errorf("expected state %s, got %s", launch.StateRunning, rec.State)
+	if rec.State != launch.StateStarting {
+		t.Errorf("expected state %s, got %s", launch.StateStarting, rec.State)
 	}
 
 	if rec.PID == nil || *rec.PID != 1234 {
@@ -89,12 +94,12 @@ func TestLaunchOrchestrator_Success(t *testing.T) {
 	// Verify trace
 	hasSpawnSuccess := false
 	for _, tr := range rec.Trace {
-		if tr.Stage == "RuntimeSpawn" && tr.Status == "Success" {
+		if tr.Stage == "StateTransition" && tr.ReasonCode == "" && tr.Message == "Process successfully spawned (PID 1234)" {
 			hasSpawnSuccess = true
 		}
 	}
 	if !hasSpawnSuccess {
-		t.Errorf("expected trace to have RuntimeSpawn Success")
+		t.Errorf("expected trace to have RuntimeSpawn Success, got %v", rec.Trace)
 	}
 }
 
@@ -137,11 +142,11 @@ func TestLaunchOrchestrator_ValidationFails(t *testing.T) {
 
 	hasValFailed := false
 	for _, tr := range rec.Trace {
-		if tr.Stage == "HostPreflight" && tr.Status == "Failed" {
+		if tr.Stage == "StateTransition" && tr.ReasonCode == "ERR_VALIDATION_FAILED" {
 			hasValFailed = true
 		}
 	}
 	if !hasValFailed {
-		t.Errorf("expected trace to have HostPreflight Failed")
+		t.Errorf("expected trace to have HostPreflight Failed, got %v", rec.Trace)
 	}
 }

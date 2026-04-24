@@ -44,12 +44,16 @@ func TestKvmExecutor_PrepareValidImage(t *testing.T) {
 		t.Errorf("expected Prepare to succeed, got %v", err)
 	}
 
-	if prep.BinaryPath != "qemu-system-aarch64" {
-		t.Errorf("expected qemu-system-aarch64, got %s", prep.BinaryPath)
+	if prep.KvmQemu == nil {
+		t.Fatalf("expected KvmQemu prepared state, got nil")
 	}
 
-	if len(prep.CommandArgs) < 6 {
-		t.Errorf("expected populated command args, got %v", prep.CommandArgs)
+	if prep.KvmQemu.BinaryPath != "qemu-system-aarch64" {
+		t.Errorf("expected qemu-system-aarch64, got %s", prep.KvmQemu.BinaryPath)
+	}
+
+	if len(prep.KvmQemu.CommandArgs) < 6 {
+		t.Errorf("expected populated command args, got %v", prep.KvmQemu.CommandArgs)
 	}
 }
 
@@ -57,8 +61,11 @@ func TestKvmExecutor_ExecuteSpawnFails(t *testing.T) {
 	exec := &KvmExecutor{}
 
 	prep := launch.PreparedLaunch{
-		BinaryPath:  "qemu-system-non-existent-binary-12345",
-		CommandArgs: []string{"-m", "1024"},
+		RuntimeBackend: "kvm_qemu",
+		KvmQemu: &launch.PreparedQemuLaunch{
+			BinaryPath:  "qemu-system-non-existent-binary-12345",
+			CommandArgs: []string{"-m", "1024"},
+		},
 	}
 
 	_, err := exec.Execute(prep)

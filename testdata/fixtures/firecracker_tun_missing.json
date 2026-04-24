@@ -1,0 +1,76 @@
+{
+  "schema_version": "v1alpha1",
+  "agent_version": "0.1.0",
+  "collection_id": "07ed37f0-6466-4e60-a60b-533f7202facc",
+  "timestamp_sec": 1776988281,
+  "node_id": "x86-fc-fail-tun",
+  "compatibility": {
+    "class": "X86HoldingPool",
+    "reason_codes": [
+      "CLASS_X86_HOLDING_READY"
+    ]
+  },
+  "facts": {
+    "cpu": {
+      "architecture": "x86_64",
+      "cores": 64,
+      "vendor_id": "Intel"
+    },
+    "memory": {
+      "total_mb": 131072
+    },
+    "os": {
+      "hostname": "x86-fc-fail-tun",
+      "name": "Ubuntu",
+      "kernel_version": "6.8.0"
+    }
+  },
+  "capabilities": [
+    {
+      "feature": "kvm_vm_launch",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_KVM_OPENABLE",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "firecracker_binary_present",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_FIRECRACKER_BINARY_PRESENT",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "firecracker_tun_ready",
+      "state": "Unsupported",
+      "provenance": "Observed",
+      "reason_code": "CAP_FIRECRACKER_TUN_MISSING",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "firecracker_cgroups_ready",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_FIRECRACKER_CGROUPS_READY",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "firecracker_launch",
+      "state": "Unavailable",
+      "provenance": "Inferred",
+      "reason_code": "CAP_FIRECRACKER_PREREQS_MISSING",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    }
+  ],
+  "constraints": [],
+  "health": {
+    "state": "Healthy",
+    "active_alarms": []
+  },
+  "collector_statuses": []
+}

@@ -1,9 +1,9 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "e080811d-21f0-4db4-80aa-33887a3160fd",
+  "collection_id": "994de8f2-f639-41d5-85d3-e926ae43c8f2",
   "timestamp_sec": 1776988281,
-  "node_id": "arm-fc-fail-01",
+  "node_id": "arm-ch-01",
   "compatibility": {
     "class": "ArmProduction",
     "reason_codes": [
@@ -20,7 +20,7 @@
       "total_mb": 131072
     },
     "os": {
-      "hostname": "arm-fc-fail-01",
+      "hostname": "arm-ch-01",
       "name": "Ubuntu",
       "kernel_version": "6.8.0"
     }
@@ -30,15 +30,23 @@
       "feature": "kvm_vm_launch",
       "state": "Supported",
       "provenance": "Observed",
-      "reason_code": "KVM_OPENABLE",
+      "reason_code": "CAP_KVM_OPENABLE",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     },
     {
-      "feature": "firecracker_launch",
-      "state": "Unavailable",
+      "feature": "cloud_hypervisor_binary_present",
+      "state": "Supported",
       "provenance": "Observed",
-      "reason_code": "FC_PREREQS_MISSING",
+      "reason_code": "CAP_CLOUDHYPERVISOR_BINARY_PRESENT",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "cloud_hypervisor_launch",
+      "state": "Supported",
+      "provenance": "Inferred",
+      "reason_code": "CAP_CLOUDHYPERVISOR_READY",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     }
@@ -48,12 +56,5 @@
     "state": "Healthy",
     "active_alarms": []
   },
-  "collector_statuses": [
-    {
-      "collector_name": "MockCollector",
-      "success": true,
-      "duration_ms": 10,
-      "error_message": null
-    }
-  ]
+  "collector_statuses": []
 }

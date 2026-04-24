@@ -1,7 +1,7 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "675d5edf-aeff-499d-91df-e7a27ee863c9",
+  "collection_id": "1f5b0676-9118-41a6-b705-c7d8d409a4ef",
   "timestamp_sec": 1000000300,
   "node_id": "stale-arm-01",
   "compatibility": {

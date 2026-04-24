@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/domain"
@@ -11,15 +12,32 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+type StaticExecutorResolver struct {
+	executors map[string]runtime.Executor
+}
+
+func (r *StaticExecutorResolver) Resolve(backend string) (runtime.Executor, error) {
+	exec, ok := r.executors[backend]
+	if !ok {
+		return nil, fmt.Errorf("backend %s not registered", backend)
+	}
+	return exec, nil
+}
+
 type LaunchHandler struct {
 	store *store.InMemoryStore
 	orch  *domain.LaunchOrchestrator
 }
 
 func NewLaunchHandler(s *store.InMemoryStore) *LaunchHandler {
-	// Inject the default KVM executor for Phase 3
-	executor := &runtime.KvmExecutor{}
-	orch := domain.NewLaunchOrchestrator(s, executor)
+	resolver := &StaticExecutorResolver{
+		executors: map[string]runtime.Executor{
+			"kvm_qemu":         &runtime.KvmExecutor{},
+			"cloud_hypervisor": &runtime.CloudHypervisorExecutor{},
+			"firecracker":      &runtime.FirecrackerExecutor{},
+		},
+	}
+	orch := domain.NewLaunchOrchestrator(s, resolver)
 	return &LaunchHandler{store: s, orch: orch}
 }
 

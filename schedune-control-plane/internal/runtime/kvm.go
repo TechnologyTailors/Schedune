@@ -22,7 +22,6 @@ func (k *KvmExecutor) Prepare(spec launch.LaunchSpec) (launch.PreparedLaunch, er
 	// For V0 MVP, resolve strictly to the qemu-system binary for the requested arch
 	binPath := "qemu-system-" + spec.Architecture
 	
-	// Basic artifact validation to prove the trace pipeline
 	artifactPath := spec.ImageReference
 	
 	if _, err := os.Stat(artifactPath); os.IsNotExist(err) {
@@ -37,18 +36,22 @@ func (k *KvmExecutor) Prepare(spec launch.LaunchSpec) (launch.PreparedLaunch, er
 	}
 
 	return launch.PreparedLaunch{
-		RuntimeBackend: "kvm",
-		BinaryPath:     binPath,
-		ArtifactPath:   artifactPath,
-		CommandArgs:    args,
+		RuntimeBackend: "kvm_qemu",
 		MemoryMB:       spec.MemoryMB,
 		Vcpu:           spec.Vcpu,
+		KvmQemu: &launch.PreparedQemuLaunch{
+			BinaryPath:   binPath,
+			ArtifactPath: artifactPath,
+			CommandArgs:  args,
+		},
 	}, nil
 }
 
 func (k *KvmExecutor) Execute(prepared launch.PreparedLaunch) (int, error) {
-	cmd := exec.Command(prepared.BinaryPath, prepared.CommandArgs...)
-	// We run it asynchronously for V0 to prove the "Running" state
+	if prepared.KvmQemu == nil {
+		return 0, fmt.Errorf("missing kvm_qemu prepared state")
+	}
+	cmd := exec.Command(prepared.KvmQemu.BinaryPath, prepared.KvmQemu.CommandArgs...)
 	if err := cmd.Start(); err != nil {
 		return 0, fmt.Errorf("executable failed to start: %v", err)
 	}
@@ -60,6 +63,5 @@ func (k *KvmExecutor) Terminate(pid int) error {
 	if err != nil {
 		return err
 	}
-	// Simple kill for MVP
 	return proc.Kill()
 }
