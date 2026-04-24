@@ -1,53 +1,124 @@
 # Schedune
 
-**Schedune** is an explainable infrastructure control plane designed for heterogeneous ARM and x86 fleets.
+**Explainable scheduling and managed runtime lifecycle for heterogeneous ARM and x86 infrastructure.**
 
-Unlike generic orchestrators or traditional hypervisors, Schedune is built specifically to help organizations exit expensive legacy virtualization, adopt ARM infrastructure safely, and manage mixed fleets with lower operational risk.
+**Status:** Alpha / Experimental (Single-node technical preview)
+**Control Plane:** Go
+**Agent:** Rust
+**Persistence:** SQLite
+**Supported Runtimes:**
+- **KVM/QEMU:** Execute
+- **Cloud Hypervisor:** Execute
+- **Firecracker:** Validate / Dry-Run (Execution coming soon)
+
+Schedune is an open-source control plane built specifically to help organizations exit expensive legacy virtualization, adopt ARM infrastructure safely, and manage mixed fleets with lower operational risk.
 
 It achieves this by enforcing a strict boundary between **node truth** (what the hardware can actually do), **workload intent** (what the workload requires), and **execution readiness** (proving a launch will succeed before it is attempted).
 
-## The Business Value
+## What works today
 
-Schedune is built around three core economic promises:
+- [x] Agent inspects and emits versioned node truth (Capabilities, Constraints, Facts, Health)
+- [x] Control plane ingests `SchedulerEnvelope`
+- [x] Workload intent evaluated against node truth
+- [x] Scheduler explain endpoint explains rejections
+- [x] Dry-run launch validation catches host-level and artifact-level blockers
+- [x] KVM-backed VM and Cloud Hypervisor execution works
+- [x] Runtime lifecycle is persisted to SQLite
+- [x] Restart recovery is supported (orphans surfaced, active workloads rehydrated)
 
-1. **Lower Infrastructure Cost:** Capitalize on the proven price-performance advantages of modern ARM silicon (like AWS Graviton, Google Axion, and Oracle Ampere) without sacrificing the ability to run legacy x86 workloads in designated holding pools.
-2. **Lower Migration Risk:** Cross-ISA migration isn't magic. Schedune explicitly surfaces compatibility classes, launch prerequisites, and hard blockers so you know *before* scheduling whether an imported VM will actually run.
-3. **Lower Operational Risk:** At 3:00 AM, operators don't need opaque "No Nodes Available" errors. They need to know exactly why a workload was rejected, whether a node's telemetry is stale, or if a required virtualization capability (like `/dev/kvm`) is missing. Schedune makes every placement and launch decision fully explainable.
+## Intentionally NOT supported yet
 
-## Architecture
+- High Availability (HA) control plane
+- Live migration & snapshots
+- Advanced storage & networking orchestration
+- Guest-service readiness (currently only hypervisor readiness is tracked)
+- Firecracker full execution (validation-first)
 
-The platform consists of two primary boundaries:
+## Prerequisites
 
-### The Northbound Layer (Scheduling & Eligibility)
-Answers: *What is the node? What does the workload need? Why was it accepted or rejected?*
+- **OS:** Linux
+- **Control Plane:** Go 1.22+
+- **Agent:** Rust (cargo)
+- **Virtualization:** `/dev/kvm` must be present and openable (RW)
+- **Binaries:** `qemu-system-aarch64` / `qemu-system-x86_64`, `cloud-hypervisor`, `firecracker` (optional for validation)
+- **Host features:** `/dev/net/tun`, cgroups v2 (for Firecracker)
 
-*   **Schedune Agent (Rust):** A lightweight, memory-safe daemon that runs on the host. It does not make policy decisions. It solely emits versioned, strongly-typed "truth" (Capabilities, Constraints, Facts, and Health) about the node's hardware and virtualization readiness.
-*   **Control Plane (Go):** Ingests the agent's truth, projects it into queryable state, evaluates workload intent (e.g., "Requires KVM, Requires ARM"), and makes deterministic, explainable scheduling decisions.
+## Quickstart
 
-### The Southbound Layer (Execution Readiness)
-Answers: *Can this node actually launch the selected runtime? What exact host-side blockers exist?*
+Get a single-node Schedune control plane and agent running in under 5 minutes.
 
-*   **Data Plane V0:** Before any shell commands are executed, Schedune validates the required runtime features (e.g., KVM or Firecracker prerequisites) against the node's capabilities, allowing operators to dry-run launch specifications and catch failures before execution.
-
-## Getting Started
-
-### The Control Plane
-Written in Go, providing the intake APIs and scheduling logic.
+### 1. Build and Start the Control Plane
 ```bash
 cd schedune-control-plane
 go build ./cmd/intake
-./intake
+./intake &
 ```
 
-### The Node Agent
-Written in Rust, providing host telemetry and capability discovery.
+### 2. Build and Run the Node Agent
 ```bash
 cd schedune-agent
 cargo build --release
-# To see what the control plane sees:
-./target/release/schedune_agent inspect
+./target/release/schedune_agent inspect > payload.json
 ```
+
+### 3. Ingest Node Truth
+```bash
+curl -X POST -H "Content-Type: application/json" -d @payload.json http://localhost:9090/api/v1alpha1/intake/envelope
+```
+
+### 4. Explain a Scheduling Decision
+Create `workload.json`:
+```json
+{
+  "schema_version": "v1alpha1",
+  "workload_id": "wl-test-001",
+  "tenant_id": "tenant-1",
+  "runtime_class": "VirtualMachine",
+  "required_architecture": "x86_64",
+  "max_telemetry_age_sec": 600,
+  "requires_kvm": true,
+  "required_compatibility_classes": ["X86HoldingPool"]
+}
+```
+```bash
+curl -X POST -H "Content-Type: application/json" -d @workload.json http://localhost:9090/api/v1alpha1/schedule/explain
+```
+
+### 5. Execute a Workload
+Create `launch.json`:
+```json
+{
+  "schema_version": "v1alpha1",
+  "workload_id": "wl-test-001",
+  "tenant_id": "tenant-1",
+  "node_id": "<YOUR_NODE_ID_FROM_PAYLOAD>",
+  "runtime_class": "VirtualMachine",
+  "architecture": "x86_64",
+  "image_reference": "/path/to/dummy.qcow2",
+  "vcpu": 2,
+  "memory_mb": 1024,
+  "launch_mode": "Execute"
+}
+```
+```bash
+curl -X POST -H "Content-Type: application/json" -d @launch.json http://localhost:9090/api/v1alpha1/launch/execute
+```
+
+### 6. Inspect Lifecycle
+```bash
+curl http://localhost:9090/api/v1alpha1/launch/<EXECUTION_ID>
+```
+
+## Documentation
+
+- [Quickstart](docs/quickstart.md)
+- [Architecture Overview](docs/architecture.md)
+- [API Reference](docs/api.md)
+- [Runtime Support](docs/runtime-support.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [State Machine](docs/state-machine.md)
+- [Restart Recovery](docs/recovery.md)
 
 ## License
 
-Copyright 2026 Technology Tailors. Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
+Copyright 2026 Technology Tailors. Licensed under the Apache License, Version 2.0.
