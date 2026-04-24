@@ -59,28 +59,32 @@ type ExecutionTraceStep struct {
 }
 
 type PreparedQemuLaunch struct {
-	BinaryPath   string   `json:"binary_path"`
-	ArtifactPath string   `json:"artifact_path"`
-	CommandArgs  []string `json:"command_args"`
+	BinaryPath        string   `json:"binary_path"`
+	ArtifactPath      string   `json:"artifact_path"`
+	CommandArgs       []string `json:"command_args"`
+	ControlSocketPath string   `json:"control_socket_path,omitempty"`
 }
 
 type PreparedCloudHypervisorLaunch struct {
-	BinaryPath   string   `json:"binary_path"`
-	ArtifactPath string   `json:"artifact_path"`
-	CommandArgs  []string `json:"command_args"`
+	BinaryPath        string   `json:"binary_path"`
+	ArtifactPath      string   `json:"artifact_path"`
+	CommandArgs       []string `json:"command_args"`
+	ControlSocketPath string   `json:"control_socket_path,omitempty"`
 }
 
 type PreparedFirecrackerLaunch struct {
-	BinaryPath      string   `json:"binary_path"`
-	KernelImagePath string   `json:"kernel_image_path"`
-	RootfsPath      string   `json:"rootfs_path"`
-	CommandArgs     []string `json:"command_args"`
+	BinaryPath        string   `json:"binary_path"`
+	KernelImagePath   string   `json:"kernel_image_path"`
+	RootfsPath        string   `json:"rootfs_path"`
+	CommandArgs       []string `json:"command_args"`
+	ControlSocketPath string   `json:"control_socket_path,omitempty"`
 }
 
 type PreparedLaunch struct {
 	RuntimeBackend  string                         `json:"runtime_backend"`
 	MemoryMB        int64                          `json:"memory_mb"`
 	Vcpu            int                            `json:"vcpu"`
+	StartupGraceSec int64                          `json:"startup_grace_sec,omitempty"`
 	KvmQemu         *PreparedQemuLaunch            `json:"kvm_qemu,omitempty"`
 	CloudHypervisor *PreparedCloudHypervisorLaunch `json:"cloud_hypervisor,omitempty"`
 	Firecracker     *PreparedFirecrackerLaunch     `json:"firecracker,omitempty"`

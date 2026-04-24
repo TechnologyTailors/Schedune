@@ -69,7 +69,12 @@ func (b *RecoveryBootstrapper) recoverExecution(ctx context.Context, rec launch.
 	var msg string
 
 	if rec.PID != nil {
-		obs, err := b.Inspector.Inspect(*rec.PID)
+		var prepared launch.PreparedLaunch
+		if rec.PreparedState != nil {
+			prepared = *rec.PreparedState
+		}
+
+		obs, err := b.Inspector.Inspect(rec.ExecutionID, rec.PID, prepared)
 		if err != nil {
 			lifecycle.TransitionTo(&rec, launch.StateUnknown, "ERR_RECOVERY_REHYDRATE_FAILED", fmt.Sprintf("Failed to inspect PID: %v", err))
 			eventType = "ExecutionRecoveryUnknown"
