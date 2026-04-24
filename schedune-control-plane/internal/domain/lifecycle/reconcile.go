@@ -36,6 +36,16 @@ func Reconcile(rec *launch.LaunchExecutionRecord, inspector inspect.Inspector) e
 		return TransitionTo(rec, launch.StateUnknown, "ERR_RECONCILE_STATUS_UNREADABLE", err.Error())
 	}
 
+	rec.ReadinessSignal = &launch.ReadinessSignalSummary{
+		ControlSocketPath:   obs.ControlSocketPath,
+		ControlSocketExists: obs.ControlSocketExists,
+		ControlSocketDialOK: obs.ControlSocketDialOK,
+		BackendReadySignal:  obs.BackendReadySignal,
+		BackendSignalSource: obs.BackendSignalSource,
+		StartupGraceElapsed: obs.StartupGraceElapsed,
+		LastObservedAtSec:   obs.ObservedAtSec,
+	}
+
 	// Terminating state has special fast-path logic
 	if rec.State == launch.StateTerminating && !obs.ProcessExists {
 		termTime := now

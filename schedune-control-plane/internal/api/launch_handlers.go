@@ -124,3 +124,106 @@ func (h *LaunchHandler) TerminateLaunch(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, rec)
 }
+
+// InspectReadiness returns a focused readiness view
+func (h *LaunchHandler) InspectReadiness(c *gin.Context) {
+	id := c.Param("id")
+	rec, found, err := h.execStore.GetExecution(context.Background(), id)
+	if err != nil || !found {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Execution not found"})
+		return
+	}
+
+	backend := ""
+	if rec.PreparedState != nil {
+		backend = rec.PreparedState.RuntimeBackend
+	}
+
+	sigView := launch.ReadinessSignalView{}
+	if rec.ReadinessSignal != nil {
+		sigView = launch.ReadinessSignalView{
+			ControlSocketPath:   rec.ReadinessSignal.ControlSocketPath,
+			ControlSocketExists: rec.ReadinessSignal.ControlSocketExists,
+			ControlSocketDialOK: rec.ReadinessSignal.ControlSocketDialOK,
+			BackendReadySignal:  rec.ReadinessSignal.BackendReadySignal,
+			BackendSignalSource: rec.ReadinessSignal.BackendSignalSource,
+		}
+	}
+
+	var graceSec int64 = 0
+	if rec.PreparedState != nil {
+		graceSec = rec.PreparedState.StartupGraceSec
+	}
+
+	var deadlineSec int64 = 0
+	if rec.StartedAtSec != nil {
+		deadlineSec = *rec.StartedAtSec + 15
+	}
+	
+	var lastObsSec int64 = 0
+	if rec.ReadinessSignal != nil {
+		lastObsSec = rec.ReadinessSignal.LastObservedAtSec
+	}
+
+	timingView := launch.ReadinessTimingView{
+		StartupGraceSec:      graceSec,
+		StartupGraceElapsed:  rec.ReadinessSignal != nil && rec.ReadinessSignal.StartupGraceElapsed,
+		ReadinessTimeoutSec:  15,
+		ReadinessDeadlineSec: deadlineSec,
+		LastObservedAtSec:    lastObsSec,
+	}
+
+	msg := ""
+	if rec.State == launch.StateStarting {
+		msg = "process alive but readiness signal not yet observed"
+	} else if rec.RuntimeReadiness == "Ready" {
+		msg = "readiness signal observed"
+	} else if rec.RuntimeReadiness == "Failed" {
+		msg = "readiness failed or timed out"
+	} else if rec.RuntimeReadiness == "Unknown" {
+		msg = "process missing during readiness evaluation"
+	}
+
+	reasonCode := ""
+	if rec.FailureReasonCode != nil {
+		reasonCode = *rec.FailureReasonCode
+	}
+
+	res := launch.LaunchReadinessResponse{
+		ExecutionID:      rec.ExecutionID,
+		WorkloadID:       rec.WorkloadID,
+		NodeID:           rec.NodeID,
+		Backend:          backend,
+		State:            rec.State,
+		RuntimeLiveness:  rec.RuntimeLiveness,
+		RuntimeReadiness: rec.RuntimeReadiness,
+		ReasonCode:       reasonCode,
+		Message:          msg,
+		Signal:           sigView,
+		Timing:           timingView,
+	}
+
+	c.JSON(http.StatusOK, res)
+}
+
+// InspectTrace returns the append-only lifecycle history
+func (h *LaunchHandler) InspectTrace(c *gin.Context) {
+	id := c.Param("id")
+	rec, found, err := h.execStore.GetExecution(context.Background(), id)
+	if err != nil || !found {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Execution not found"})
+		return
+	}
+	c.JSON(http.StatusOK, rec.Trace)
+}
+
+// InspectEvents returns operational events related to readiness
+func (h *LaunchHandler) InspectEvents(c *gin.Context) {
+	id := c.Param("id")
+	events, err := h.execStore.ListEvents(context.Background(), id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, events)
+}

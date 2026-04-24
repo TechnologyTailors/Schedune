@@ -64,6 +64,9 @@ func main() {
 		v1.POST("/launch/dry-run", launchHandler.DryRunLaunch)
 		v1.POST("/launch/execute", launchHandler.ExecuteLaunch)
 		v1.GET("/launch/:id", launchHandler.InspectLaunch)
+		v1.GET("/launch/:id/readiness", launchHandler.InspectReadiness)
+		v1.GET("/launch/:id/trace", launchHandler.InspectTrace)
+		v1.GET("/launch/:id/events", launchHandler.InspectEvents)
 		v1.POST("/launch/:id/terminate", launchHandler.TerminateLaunch)
 	}
 
