@@ -13,7 +13,7 @@ type MockInspector struct {
 	Err error
 }
 
-func (m *MockInspector) Inspect(pid int) (inspect.RuntimeObservation, error) {
+func (m *MockInspector) Inspect(executionID string, pid *int, prepared launch.PreparedLaunch) (inspect.RuntimeObservation, error) {
 	return m.Obs, m.Err
 }
 
@@ -30,8 +30,8 @@ func TestReconcile_StartingToRunning(t *testing.T) {
 	inspector := &MockInspector{
 		Obs: inspect.RuntimeObservation{
 			ProcessExists:        true,
-			PID:                  pid,
-			BackendSpecificReady: true,
+			BackendReadySignal:   true,
+			BackendSignalSource:  "qmp_socket_dial_ok",
 		},
 	}
 
@@ -50,7 +50,7 @@ func TestReconcile_StartingToRunning(t *testing.T) {
 
 func TestReconcile_StartingToFailed_Timeout(t *testing.T) {
 	pid := 1234
-	startedAt := time.Now().Unix() - 40 // Past 30s timeout
+	startedAt := time.Now().Unix() - 40 // Past 15s timeout
 
 	rec := launch.LaunchExecutionRecord{
 		State:        launch.StateStarting,
@@ -61,8 +61,7 @@ func TestReconcile_StartingToFailed_Timeout(t *testing.T) {
 	inspector := &MockInspector{
 		Obs: inspect.RuntimeObservation{
 			ProcessExists:        true,
-			PID:                  pid,
-			BackendSpecificReady: false, // Not ready yet
+			BackendReadySignal:   false, // Not ready yet
 		},
 	}
 
@@ -90,7 +89,6 @@ func TestReconcile_RunningToExited(t *testing.T) {
 	inspector := &MockInspector{
 		Obs: inspect.RuntimeObservation{
 			ProcessExists: false, // Process died
-			PID:           pid,
 		},
 	}
 
@@ -115,7 +113,6 @@ func TestReconcile_TerminatingToTerminated(t *testing.T) {
 	inspector := &MockInspector{
 		Obs: inspect.RuntimeObservation{
 			ProcessExists: false, // Process died as requested
-			PID:           pid,
 		},
 	}
 

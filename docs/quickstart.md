@@ -4,103 +4,126 @@ Get a single-node Schedune control plane and agent running in under 5 minutes.
 
 ## Prerequisites
 
-- Linux host with `/dev/kvm` accessible.
+- Linux host (Schedune requires Linux for execution).
 - Go 1.22+ installed.
 - Rust and Cargo installed.
-- `qemu-system-aarch64` or `qemu-system-x86_64` (matching your architecture) installed to launch standard VMs.
-- `cloud-hypervisor` (optional, for Cloud Hypervisor tests).
+- Required for VMs: `/dev/kvm` accessible to the current user.
+- `qemu-system-aarch64` or `qemu-system-x86_64` (matching your architecture) installed.
+- `cloud-hypervisor` (optional, for Cloud Hypervisor execution/validation).
+- `firecracker` (optional, for MicroVM validation).
 
-## 1. Build and Start the Control Plane
+## Evaluator Flow
 
-```bash
-cd schedune-control-plane
-go build ./cmd/intake
-./intake &
-```
+You can evaluate Schedune using our automated demo mode or by walking through the manual flow.
 
-## 2. Build and Run the Node Agent
+### Automated Demo Mode
 
-```bash
-cd schedune-agent
-cargo build --release
-./target/release/schedune_agent inspect > payload.json
-```
-
-## 3. Ingest Node Truth
-
-Post the Node capabilities and health envelope to the intake endpoint.
+The easiest way to see Schedune in action:
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d @payload.json http://localhost:9090/api/v1alpha1/intake/envelope
+make demo
 ```
 
-## 4. Evaluate and Schedule
+This will run the preflight checks, build the binaries, reset the database, start the control plane, ingest your local node's capabilities, and run a workload scheduling explanation.
 
-Create a WorkloadIntent representing your workload requirements:
+### Manual Step-by-Step Flow
 
-`workload.json`
-```json
-{
-  "schema_version": "v1alpha1",
-  "workload_id": "wl-test-001",
-  "tenant_id": "tenant-1",
-  "runtime_class": "VirtualMachine",
-  "required_architecture": "x86_64",
-  "max_telemetry_age_sec": 600,
-  "requires_kvm": true,
-  "required_compatibility_classes": ["X86HoldingPool"]
-}
-```
+#### 1. Preflight Check
 
-Run the scheduler explain endpoint to see which nodes are eligible and why.
+Ensure your system is capable of running Schedune:
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d @workload.json http://localhost:9090/api/v1alpha1/schedule/explain
+make dev-preflight
 ```
 
-## 5. Execute the Launch
+#### 2. Build the Binaries
 
-Create a dummy image to run:
-```bash
-qemu-img create -f qcow2 dummy.qcow2 1G
-```
-
-Create a LaunchSpec describing the execution intent:
-
-`launch.json`
-```json
-{
-  "schema_version": "v1alpha1",
-  "workload_id": "wl-test-001",
-  "tenant_id": "tenant-1",
-  "node_id": "<INSERT_NODE_ID_FROM_PAYLOAD_HERE>",
-  "runtime_class": "VirtualMachine",
-  "architecture": "x86_64",
-  "image_reference": "dummy.qcow2",
-  "vcpu": 2,
-  "memory_mb": 1024,
-  "launch_mode": "Execute"
-}
-```
-
-Launch the workload:
+Build both the control plane (`./bin/schedune`) and the agent (`./bin/schedune-agent`):
 
 ```bash
-curl -X POST -H "Content-Type: application/json" -d @launch.json http://localhost:9090/api/v1alpha1/launch/execute
+make build
 ```
 
-## 6. Inspect the Lifecycle Trace
+#### 3. Start the Control Plane
 
-Grab the `execution_id` from the previous output.
+Start the control plane in the background on port `9090`:
 
 ```bash
-curl http://localhost:9090/api/v1alpha1/launch/<EXECUTION_ID>
+make dev-up
 ```
 
-This returns a `LaunchExecutionRecord` containing the full `trace` of preparation, spawn, and liveness.
+#### 4. Ingest Local Node
 
-## 7. Terminate
+Generate the node capability payload using the agent and POST it to the control plane:
 
 ```bash
-curl -X POST http://localhost:9090/api/v1alpha1/launch/<EXECUTION_ID>/terminate
+make example-intake
 ```
+*(This runs `./bin/schedune-agent inspect` and pushes the payload to `/api/v1alpha1/intake/envelope`)*
+
+#### 5. Schedule Explain
+
+Evaluate a sample workload intent against the ingested node:
+
+```bash
+make example-schedule
+```
+*(This evaluates an x86 VM intent and explains the eligibility outcome.)*
+
+#### 6. Validate Launch
+
+Validate a launch payload to ensure the backend is available and capabilities match, without starting the VM:
+
+```bash
+make example-launch-validate
+```
+
+#### 7. Execute Launch
+
+If your host has the required binary (`cloud-hypervisor`), execute the launch:
+
+```bash
+make example-launch-execute
+```
+*Note the returned `execution_id`.*
+
+#### 8. Inspect Lifecycle
+
+Use the `execution_id` to inspect the VM's state, readiness, trace, and events:
+
+```bash
+# Check the launch status and trace
+curl http://127.0.0.1:9090/api/v1alpha1/launch/<EXECUTION_ID>
+
+# Check specific readiness
+make example-readiness EXECUTION_ID=<EXECUTION_ID>
+
+# Check execution events
+curl http://127.0.0.1:9090/api/v1alpha1/launch/<EXECUTION_ID>/events
+```
+
+#### 9. Inspect Orphans
+
+Schedune automatically sweeps for orphan processes. You can list them via:
+
+```bash
+make example-orphans
+```
+
+#### 10. Terminate
+
+When you are done, terminate the execution and stop the control plane:
+
+```bash
+curl -X POST http://127.0.0.1:9090/api/v1alpha1/launch/<EXECUTION_ID>/terminate
+make dev-down
+```
+
+## Common Preflight Outcomes
+
+When running `make dev-preflight` or `./bin/schedune doctor`, you might encounter the following states:
+
+- **Missing `/dev/kvm`:** `[INFO] /dev/kvm: missing`. You can still run the control plane, agent inspect, and API tests, but VM launches will fail.
+- **Cloud Hypervisor Missing:** `[INFO] Cloud Hypervisor: not found`. Cloud Hypervisor validates and executes will fail, but QEMU might still work.
+- **Firecracker Partial:** `[INFO] Firecracker: not found` or `[INFO] /dev/net/tun: missing`. Firecracker is currently only supported for validation/dry-runs. Missing it won't block other tasks.
+- **API Port in Use:** `[FAIL] API Port: 127.0.0.1:9090 is in use`. You must free the port before starting the control plane.

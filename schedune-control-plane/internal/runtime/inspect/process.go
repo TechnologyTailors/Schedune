@@ -4,18 +4,25 @@ import (
 	"os"
 	"syscall"
 	"time"
+
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
 )
 
 // ProcessInspector is the generic fallback inspector for simple PID-based runtimes
 type ProcessInspector struct{}
 
-func (i *ProcessInspector) Inspect(pid int) (RuntimeObservation, error) {
+func (i *ProcessInspector) Inspect(executionID string, pid *int, prepared launch.PreparedLaunch) (RuntimeObservation, error) {
 	obs := RuntimeObservation{
 		PID:           pid,
 		ObservedAtSec: time.Now().Unix(),
 	}
 
-	proc, err := os.FindProcess(pid)
+	if pid == nil {
+		obs.ProcessExists = false
+		return obs, nil
+	}
+
+	proc, err := os.FindProcess(*pid)
 	if err != nil {
 		obs.ProcessExists = false
 		return obs, nil
@@ -25,12 +32,11 @@ func (i *ProcessInspector) Inspect(pid int) (RuntimeObservation, error) {
 	err = proc.Signal(syscall.Signal(0))
 	if err == nil {
 		obs.ProcessExists = true
-		obs.BackendSpecificReady = true // For V1, if it's alive, it's "ready"
+		obs.BackendReadySignal = true // For V1, if it's alive, it's "ready"
+		obs.BackendSignalSource = "process_exists"
 	} else {
 		// Process does not exist or we don't have permission (which implies it's gone for us)
 		obs.ProcessExists = false
-		// We cannot easily get the exit code from an un-Wait()ed child in Go
-		// without a dedicated supervisor, so we leave ExitCode nil.
 	}
 
 	return obs, nil

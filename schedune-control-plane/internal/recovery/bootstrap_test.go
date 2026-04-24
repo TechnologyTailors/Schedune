@@ -48,7 +48,7 @@ type MockInspector struct {
 	Err error
 }
 
-func (m *MockInspector) Inspect(pid int) (inspect.RuntimeObservation, error) {
+func (m *MockInspector) Inspect(executionID string, pid *int, prepared launch.PreparedLaunch) (inspect.RuntimeObservation, error) {
 	return m.Obs, m.Err
 }
 

@@ -2,3 +2,4 @@
 schedune-agent/target/
 schedune-control-plane/intake
 schedune-control-plane/schedune-control-plane
+bin/
