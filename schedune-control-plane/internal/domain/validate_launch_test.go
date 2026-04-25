@@ -361,3 +361,144 @@ func TestValidateLaunch_MissingQemuBinary(t *testing.T) {
 		t.Errorf("expected remediation hint for missing qemu binary, got %v", result.RemediationHints)
 	}
 }
+
+func TestValidateLaunch_TypedStorage(t *testing.T) {
+	env := readFixture(t, "cloudhypervisor_ready_arm.json")
+	now := time.Now().Unix()
+	for i := range env.Capabilities {
+		env.Capabilities[i].ObservedAtSec = now
+		staleAfter := now + 300
+		env.Capabilities[i].StaleAfterSec = &staleAfter
+	}
+	node := ProjectEnvelope(env)
+
+	spec := launch.LaunchSpec{
+		SchemaVersion: "v1alpha1",
+		WorkloadID:    "wl-launch-typed",
+		TenantID:      "tenant-1",
+		NodeID:        node.ID,
+		RuntimeClass:  "VirtualMachine",
+		Architecture:  "aarch64",
+		Vcpu:          4,
+		MemoryMB:      8192,
+		LaunchMode:    "DryRun",
+		Storage: []launch.StorageAttachmentSpec{
+			{HostPath: "/tmp/vol1.qcow2", Format: "qcow2"},
+		},
+	}
+
+	result := ValidateLaunch(spec, node)
+	if !result.IsValid {
+		t.Errorf("expected typed storage to validate successfully, got false: %v", result.BlockingReasonCodes)
+	}
+}
+
+func TestValidateLaunch_TypedStoragePrecedence(t *testing.T) {
+	env := readFixture(t, "cloudhypervisor_ready_arm.json")
+	now := time.Now().Unix()
+	for i := range env.Capabilities {
+		env.Capabilities[i].ObservedAtSec = now
+		staleAfter := now + 300
+		env.Capabilities[i].StaleAfterSec = &staleAfter
+	}
+	node := ProjectEnvelope(env)
+
+	spec := launch.LaunchSpec{
+		SchemaVersion:  "v1alpha1",
+		WorkloadID:     "wl-launch-prec",
+		TenantID:       "tenant-1",
+		NodeID:         node.ID,
+		RuntimeClass:   "VirtualMachine",
+		Architecture:   "aarch64",
+		Vcpu:           4,
+		MemoryMB:       8192,
+		LaunchMode:     "DryRun",
+		ImageReference: "/tmp/legacy.img", // Should trigger warning
+		Storage: []launch.StorageAttachmentSpec{
+			{HostPath: "/tmp/typed.qcow2", Format: "qcow2"},
+		},
+	}
+
+	result := ValidateLaunch(spec, node)
+	if !result.IsValid {
+		t.Errorf("expected validation to pass, got false")
+	}
+
+	hasWarning := false
+	for _, w := range result.Warnings {
+		if w == "WARN_DEPRECATED_IMAGE_REFERENCE" {
+			hasWarning = true
+		}
+	}
+	if !hasWarning {
+		t.Errorf("expected warning for legacy image reference, got: %v", result.Warnings)
+	}
+}
+
+func TestValidateLaunch_FirecrackerQcow2Rejected(t *testing.T) {
+	env := readFixture(t, "firecracker_host_ready.json")
+	now := time.Now().Unix()
+	for i := range env.Capabilities {
+		env.Capabilities[i].ObservedAtSec = now
+		staleAfter := now + 300
+		env.Capabilities[i].StaleAfterSec = &staleAfter
+	}
+	node := ProjectEnvelope(env)
+
+	spec := launch.LaunchSpec{
+		SchemaVersion: "v1alpha1",
+		WorkloadID:    "wl-launch-fc-qcow2",
+		TenantID:      "tenant-1",
+		NodeID:        node.ID,
+		RuntimeClass:  "MicroVM",
+		Architecture:  "x86_64",
+		Vcpu:          2,
+		MemoryMB:      1024,
+		LaunchMode:    "DryRun",
+		Storage: []launch.StorageAttachmentSpec{
+			{HostPath: "/tmp/vol.qcow2", Format: "qcow2"},
+		},
+	}
+
+	result := ValidateLaunch(spec, node)
+	if result.IsValid {
+		t.Errorf("expected firecracker to reject qcow2, but it validated")
+	}
+
+	if reason, ok := result.RejectedBackends["firecracker"]; !ok || !strings.Contains(reason, "ERR_LAUNCH_INVALID_STORAGE_FORMAT") {
+		t.Errorf("expected firecracker rejection with ERR_LAUNCH_INVALID_STORAGE_FORMAT, got %v", result.RejectedBackends)
+	}
+}
+
+func TestValidateLaunch_MissingArtifact(t *testing.T) {
+	env := readFixture(t, "healthy_arm_production.json")
+	now := time.Now().Unix()
+	for i := range env.Capabilities {
+		env.Capabilities[i].ObservedAtSec = now
+		staleAfter := now + 300
+		env.Capabilities[i].StaleAfterSec = &staleAfter
+	}
+	node := ProjectEnvelope(env)
+
+	spec := launch.LaunchSpec{
+		SchemaVersion: "v1alpha1",
+		WorkloadID:    "wl-launch-missing-artifact",
+		TenantID:      "tenant-1",
+		NodeID:        node.ID,
+		RuntimeClass:  "VirtualMachine",
+		Architecture:  "aarch64",
+		Vcpu:          2,
+		MemoryMB:      1024,
+		LaunchMode:    "DryRun",
+		// No ImageReference, no Storage
+	}
+
+	result := ValidateLaunch(spec, node)
+	if result.IsValid {
+		t.Errorf("expected failure due to missing artifact, but it validated")
+	}
+
+	if reason, ok := result.RejectedBackends["kvm_qemu"]; !ok || !strings.Contains(reason, "ERR_LAUNCH_MISSING_ARTIFACT") {
+		t.Errorf("expected rejection ERR_LAUNCH_MISSING_ARTIFACT for kvm_qemu, got %v", result.RejectedBackends)
+	}
+}

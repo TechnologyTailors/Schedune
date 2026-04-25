@@ -1,22 +1,52 @@
 package launch
 
+type StorageAttachmentSpec struct {
+	VolumeID   string `json:"volume_id,omitempty"`
+	HostPath   string `json:"host_path" binding:"required"`
+	ReadOnly   bool   `json:"read_only,omitempty"`
+	Format     string `json:"format" binding:"required,oneof=qcow2 raw ext4"`
+	MountPoint string `json:"mount_point,omitempty"` // For microVMs or direct mounts
+}
+
+type NetworkAttachmentSpec struct {
+	NetworkID  string `json:"network_id,omitempty"`
+	Type       string `json:"type" binding:"required,oneof=tap macvtap bridge"`
+	HostDevice string `json:"host_device" binding:"required"`
+	MacAddress string `json:"mac_address,omitempty"`
+}
+
+type SecurityContextSpec struct {
+	Privileged       bool     `json:"privileged,omitempty"`
+	SeccompProfile   string   `json:"seccomp_profile,omitempty"`
+	AppArmorProfile  string   `json:"apparmor_profile,omitempty"`
+	DropCapabilities []string `json:"drop_capabilities,omitempty"`
+}
+
 // LaunchSpec defines the runtime configuration to validate or dry-run.
 type LaunchSpec struct {
-	SchemaVersion            string   `json:"schema_version" binding:"required,eq=v1alpha1"`
-	WorkloadID               string   `json:"workload_id" binding:"required"`
-	TenantID                 string   `json:"tenant_id" binding:"required"`
-	NodeID                   string   `json:"node_id" binding:"required"`
-	RuntimeClass             string   `json:"runtime_class" binding:"required,oneof=VirtualMachine MicroVM"`
-	Architecture             string   `json:"architecture" binding:"required,oneof=aarch64 x86_64"`
-	ImageReference           string   `json:"image_reference"` // Optional for Firecracker
-	KernelImagePath          string   `json:"kernel_image_path"`
-	RootfsPath               string   `json:"rootfs_path"`
-	Vcpu                     int      `json:"vcpu" binding:"required,gt=0"`
-	MemoryMB                 int64    `json:"memory_mb" binding:"required,gt=0"`
-	NetworkAttachments       []string `json:"network_attachments"`
-	LaunchMode               string   `json:"launch_mode" binding:"required,oneof=Validate DryRun Execute"`
-	RuntimeBackendPreference string   `json:"runtime_backend_preference"`
-	AllowBackendFallback     bool     `json:"allow_backend_fallback"`
+	SchemaVersion string `json:"schema_version" binding:"required,eq=v1alpha1"`
+	WorkloadID    string `json:"workload_id" binding:"required"`
+	TenantID      string `json:"tenant_id" binding:"required"`
+	NodeID        string `json:"node_id" binding:"required"`
+	RuntimeClass  string `json:"runtime_class" binding:"required,oneof=VirtualMachine MicroVM"`
+	Architecture  string `json:"architecture" binding:"required,oneof=aarch64 x86_64"`
+
+	// Legacy fields (Preserved for compatibility)
+	ImageReference     string   `json:"image_reference,omitempty"` // Optional for Firecracker
+	KernelImagePath    string   `json:"kernel_image_path,omitempty"`
+	RootfsPath         string   `json:"rootfs_path,omitempty"`
+	NetworkAttachments []string `json:"network_attachments,omitempty"`
+
+	// New Strongly Typed Fields
+	Storage  []StorageAttachmentSpec `json:"storage,omitempty"`
+	Networks []NetworkAttachmentSpec `json:"networks,omitempty"`
+	Security *SecurityContextSpec    `json:"security,omitempty"`
+
+	Vcpu                     int    `json:"vcpu" binding:"required,gt=0"`
+	MemoryMB                 int64  `json:"memory_mb" binding:"required,gt=0"`
+	LaunchMode               string `json:"launch_mode" binding:"required,oneof=Validate DryRun Execute"`
+	RuntimeBackendPreference string `json:"runtime_backend_preference,omitempty"`
+	AllowBackendFallback     bool   `json:"allow_backend_fallback,omitempty"`
 }
 
 // LaunchValidationResult explains exactly what host-level blockers exist.
