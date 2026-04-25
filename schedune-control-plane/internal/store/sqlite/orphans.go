@@ -85,7 +85,7 @@ func (s *SQLiteStore) ListOrphans(ctx context.Context, filter domain.OrphanFilte
 	execution_id_hint, workload_id_hint, classification, status, reason_code,
 	first_seen_at_sec, last_seen_at_sec, node_id, recovery_epoch, details_json
 	FROM orphans`
-	
+
 	var conditions []string
 	var args []interface{}
 

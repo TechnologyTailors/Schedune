@@ -90,7 +90,7 @@ func Reconcile(rec *launch.LaunchExecutionRecord, inspector inspect.Inspector) e
 			rec.RuntimeReadiness = "Ready"
 			readyTime := now
 			rec.ReadyAtSec = &readyTime
-			return TransitionTo(rec, launch.StateRunning, "", "Runtime reached readiness criteria via " + obs.BackendSignalSource)
+			return TransitionTo(rec, launch.StateRunning, "", "Runtime reached readiness criteria via "+obs.BackendSignalSource)
 		}
 
 		// Check for readiness timeout

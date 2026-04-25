@@ -67,7 +67,7 @@ func TestClassifyOrphan(t *testing.T) {
 		Backend:            "kvm_qemu",
 	}
 	match := MatchResult{Matched: false, Ambiguous: false}
-	
+
 	orphan := ClassifyOrphan(p, match)
 	if orphan.Classification != domain.OrphanStaleExecutionArtifact {
 		t.Errorf("expected StaleExecutionArtifact, got %s", orphan.Classification)

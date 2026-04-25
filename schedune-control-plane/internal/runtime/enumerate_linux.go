@@ -26,7 +26,7 @@ func (e *LinuxProcEnumerator) Enumerate() ([]EnumeratedProcess, error) {
 		if !entry.IsDir() {
 			continue
 		}
-		
+
 		pid, err := strconv.Atoi(entry.Name())
 		if err != nil {
 			continue // not a PID directory

@@ -31,6 +31,7 @@ type LaunchValidationResult struct {
 	RecommendedRuntime   string            `json:"recommended_runtime"`
 	ExplainabilityText   string            `json:"explainability_text"`
 	ValidationTrace      []string          `json:"validation_trace"`
+	RemediationHints     map[string]string `json:"remediation_hints,omitempty"`
 }
 
 type LaunchState string

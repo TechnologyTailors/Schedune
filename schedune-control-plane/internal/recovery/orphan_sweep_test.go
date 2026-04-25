@@ -58,7 +58,7 @@ func TestSweepOnce_CreatesOrphans(t *testing.T) {
 	if len(orphanStore.Orphans) != 1 {
 		t.Fatalf("expected 1 orphan, got %d", len(orphanStore.Orphans))
 	}
-	
+
 	// Should generate an event
 	if len(eventStore.Events) != 1 || eventStore.Events[0].EventType != "OrphanDetected" {
 		t.Errorf("expected OrphanDetected event")

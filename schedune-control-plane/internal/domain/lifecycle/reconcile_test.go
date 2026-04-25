@@ -29,9 +29,9 @@ func TestReconcile_StartingToRunning(t *testing.T) {
 
 	inspector := &MockInspector{
 		Obs: inspect.RuntimeObservation{
-			ProcessExists:        true,
-			BackendReadySignal:   true,
-			BackendSignalSource:  "qmp_socket_dial_ok",
+			ProcessExists:       true,
+			BackendReadySignal:  true,
+			BackendSignalSource: "qmp_socket_dial_ok",
 		},
 	}
 
@@ -60,8 +60,8 @@ func TestReconcile_StartingToFailed_Timeout(t *testing.T) {
 
 	inspector := &MockInspector{
 		Obs: inspect.RuntimeObservation{
-			ProcessExists:        true,
-			BackendReadySignal:   false, // Not ready yet
+			ProcessExists:      true,
+			BackendReadySignal: false, // Not ready yet
 		},
 	}
 
