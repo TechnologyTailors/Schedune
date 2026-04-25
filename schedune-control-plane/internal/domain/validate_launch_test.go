@@ -357,6 +357,20 @@ func TestValidateLaunch_MissingQemuBinary(t *testing.T) {
 		t.Errorf("expected rejected backend kvm_qemu with CAP_QEMU_BINARY_MISSING error, got %v", result.RejectedBackends)
 	}
 
+	foundEvidence := false
+	for _, ev := range result.BackendRejectionEvidence {
+		if ev.Backend == "kvm_qemu" && ev.ReasonCode == "ERR_LAUNCH_MISSING_CAPABILITY_QEMU_BINARY" {
+			if ev.CapabilityName != nil && *ev.CapabilityName == "qemu_binary_present" {
+				if ev.CapabilityReasonCode != nil && *ev.CapabilityReasonCode == "CAP_QEMU_BINARY_MISSING" {
+					foundEvidence = true
+				}
+			}
+		}
+	}
+	if !foundEvidence {
+		t.Errorf("expected structured evidence for missing qemu binary, got %+v", result.BackendRejectionEvidence)
+	}
+
 	if hint, ok := result.RemediationHints["kvm_qemu_binary"]; !ok || !strings.Contains(hint, "Install qemu-system") {
 		t.Errorf("expected remediation hint for missing qemu binary, got %v", result.RemediationHints)
 	}

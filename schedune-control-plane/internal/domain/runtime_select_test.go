@@ -23,14 +23,14 @@ func TestSelectBackend_MicroVM(t *testing.T) {
 		RootfsPath:      "/tmp/rootfs.ext4",
 	}
 
-	backend, rejected := SelectBackend(spec, node)
+	backend, _, rejected := SelectBackend(spec, node)
 	if backend != "firecracker" {
 		t.Errorf("expected firecracker, got %s. rejections: %v", backend, rejected)
 	}
 
 	// Missing artifacts
 	spec.KernelImagePath = ""
-	backend, rejected = SelectBackend(spec, node)
+	backend, _, rejected = SelectBackend(spec, node)
 	if backend != "" {
 		t.Errorf("expected rejection due to missing artifact, got %s", backend)
 	}
@@ -56,7 +56,7 @@ func TestSelectBackend_VirtualMachine(t *testing.T) {
 	}
 
 	// Should prefer cloud_hypervisor
-	backend, rejected := SelectBackend(spec, node)
+	backend, _, rejected := SelectBackend(spec, node)
 	if backend != "cloud_hypervisor" {
 		t.Errorf("expected cloud_hypervisor, got %s. rejections: %v", backend, rejected)
 	}
@@ -77,7 +77,7 @@ func TestSelectBackend_Fallback(t *testing.T) {
 		ImageReference: "/tmp/image.qcow2",
 	}
 
-	backend, rejected := SelectBackend(spec, node)
+	backend, _, rejected := SelectBackend(spec, node)
 	if backend != "kvm_qemu" {
 		t.Errorf("expected kvm_qemu fallback, got %s. rejections: %v", backend, rejected)
 	}

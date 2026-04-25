@@ -62,8 +62,9 @@ func ValidateLaunch(spec launch.LaunchSpec, node NodeRecord) launch.LaunchValida
 	}
 
 	// 2. Layer 2 & 3: Backend-specific capability and artifact checks via Runtime Selector
-	selectedBackend, rejectedBackends := SelectBackend(spec, node)
+	selectedBackend, evidence, rejectedBackends := SelectBackend(spec, node)
 	result.RejectedBackends = rejectedBackends
+	result.BackendRejectionEvidence = evidence
 	result.SelectedBackend = selectedBackend
 
 	if selectedBackend == "" {

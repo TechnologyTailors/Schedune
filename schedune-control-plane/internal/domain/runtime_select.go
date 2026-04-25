@@ -38,66 +38,95 @@ func normalizeNetworks(spec launch.LaunchSpec) []launch.NetworkAttachmentSpec {
 }
 
 // SelectBackend determines the appropriate runtime backend for a given launch spec and node.
-// It returns the selected backend name, and a map of rejected backends to their rejection reason codes.
-func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, map[string]string) {
+// It returns the selected backend name, the structured rejection evidence, and a legacy map of rejected backends to their rejection reason codes.
+func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, []launch.BackendRejectionEvidence, map[string]string) {
 	rejected := make(map[string]string)
+	var evidence []launch.BackendRejectionEvidence
+
+	reject := func(backend, reasonCode string, capName *string, cap *NodeCapabilityRecord) {
+		rejected[backend] = reasonCode
+		ev := launch.BackendRejectionEvidence{
+			Backend:    backend,
+			ReasonCode: reasonCode,
+		}
+		if capName != nil {
+			ev.CapabilityName = capName
+		}
+		if cap != nil {
+			state := cap.State
+			ev.CapabilityState = &state
+			if cap.ReasonCode != "" {
+				rc := cap.ReasonCode
+				ev.CapabilityReasonCode = &rc
+				rejected[backend] += " (" + cap.ReasonCode + ")"
+			}
+			stale := cap.IsStale
+			ev.CapabilityStale = &stale
+		}
+		evidence = append(evidence, ev)
+	}
+
 	storage := normalizeStorage(spec)
 
 	if spec.RuntimeClass == "MicroVM" {
 		// Firecracker path
-		kvmCap, kvmExists := node.Capabilities["kvm_vm_launch"]
+		capName := "kvm_vm_launch"
+		kvmCap, kvmExists := node.Capabilities[capName]
 		if !kvmExists || kvmCap.State != "Supported" || kvmCap.IsStale {
-			reason := "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU"
-			if kvmExists && kvmCap.ReasonCode != "" {
-				reason += " (" + kvmCap.ReasonCode + ")"
+			var capPtr *NodeCapabilityRecord
+			if kvmExists {
+				capPtr = &kvmCap
 			}
-			rejected["firecracker"] = reason
-			return "", rejected
+			reject("firecracker", "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU", &capName, capPtr)
+			return "", evidence, rejected
 		}
 
-		binCap, binExists := node.Capabilities["firecracker_binary_present"]
+		capName = "firecracker_binary_present"
+		binCap, binExists := node.Capabilities[capName]
 		if !binExists || binCap.State != "Supported" || binCap.IsStale {
-			reason := "ERR_LAUNCH_MISSING_CAPABILITY_FC_BINARY"
-			if binExists && binCap.ReasonCode != "" {
-				reason += " (" + binCap.ReasonCode + ")"
+			var capPtr *NodeCapabilityRecord
+			if binExists {
+				capPtr = &binCap
 			}
-			rejected["firecracker"] = reason
-			return "", rejected
+			reject("firecracker", "ERR_LAUNCH_MISSING_CAPABILITY_FC_BINARY", &capName, capPtr)
+			return "", evidence, rejected
 		}
 
-		tunCap, tunExists := node.Capabilities["firecracker_tun_ready"]
+		capName = "firecracker_tun_ready"
+		tunCap, tunExists := node.Capabilities[capName]
 		if !tunExists || tunCap.State != "Supported" || tunCap.IsStale {
-			reason := "ERR_LAUNCH_MISSING_CAPABILITY_FC_TUN"
-			if tunExists && tunCap.ReasonCode != "" {
-				reason += " (" + tunCap.ReasonCode + ")"
+			var capPtr *NodeCapabilityRecord
+			if tunExists {
+				capPtr = &tunCap
 			}
-			rejected["firecracker"] = reason
-			return "", rejected
+			reject("firecracker", "ERR_LAUNCH_MISSING_CAPABILITY_FC_TUN", &capName, capPtr)
+			return "", evidence, rejected
 		}
 
-		cgCap, cgExists := node.Capabilities["firecracker_cgroups_ready"]
+		capName = "firecracker_cgroups_ready"
+		cgCap, cgExists := node.Capabilities[capName]
 		if !cgExists || cgCap.State != "Supported" || cgCap.IsStale {
-			reason := "ERR_LAUNCH_MISSING_CAPABILITY_FC_CGROUPS"
-			if cgExists && cgCap.ReasonCode != "" {
-				reason += " (" + cgCap.ReasonCode + ")"
+			var capPtr *NodeCapabilityRecord
+			if cgExists {
+				capPtr = &cgCap
 			}
-			rejected["firecracker"] = reason
-			return "", rejected
+			reject("firecracker", "ERR_LAUNCH_MISSING_CAPABILITY_FC_CGROUPS", &capName, capPtr)
+			return "", evidence, rejected
 		}
 
 		// Artifact validation
 		if len(storage) == 0 {
-			rejected["firecracker"] = "ERR_LAUNCH_INVALID_FIRECRACKER_ARTIFACT_MODEL"
-			return "", rejected
+			reject("firecracker", "ERR_LAUNCH_INVALID_FIRECRACKER_ARTIFACT_MODEL", nil, nil)
+			return "", evidence, rejected
 		}
 		for _, s := range storage {
 			if s.Format == "qcow2" {
-				rejected["firecracker"] = "ERR_LAUNCH_INVALID_STORAGE_FORMAT"
-				return "", rejected
+				reject("firecracker", "ERR_LAUNCH_INVALID_STORAGE_FORMAT", nil, nil)
+				return "", evidence, rejected
 			}
 		}
 
-		return "firecracker", rejected
+		return "firecracker", evidence, rejected
 	}
 
 	if spec.RuntimeClass == "VirtualMachine" {
@@ -115,67 +144,73 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, map[string]
 					}
 				}
 			} else {
-				rejected[spec.RuntimeBackendPreference] = "ERR_LAUNCH_BACKEND_NOT_SUPPORTED"
-				return "", rejected
+				reject(spec.RuntimeBackendPreference, "ERR_LAUNCH_BACKEND_NOT_SUPPORTED", nil, nil)
+				return "", evidence, rejected
 			}
 		}
 
 		for _, backend := range backends {
 			if backend == "cloud_hypervisor" {
-				kvmCap, kvmExists := node.Capabilities["kvm_vm_launch"]
+				capName := "kvm_vm_launch"
+				kvmCap, kvmExists := node.Capabilities[capName]
 				if !kvmExists || kvmCap.State != "Supported" || kvmCap.IsStale {
-					reason := "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU"
-					if kvmExists && kvmCap.ReasonCode != "" {
-						reason += " (" + kvmCap.ReasonCode + ")"
+					var capPtr *NodeCapabilityRecord
+					if kvmExists {
+						capPtr = &kvmCap
 					}
-					rejected["cloud_hypervisor"] = reason
+					reject("cloud_hypervisor", "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU", &capName, capPtr)
 					continue
 				}
 
-				binCap, binExists := node.Capabilities["cloud_hypervisor_binary_present"]
+				capName = "cloud_hypervisor_binary_present"
+				binCap, binExists := node.Capabilities[capName]
 				if !binExists || binCap.State != "Supported" || binCap.IsStale {
-					reason := "ERR_LAUNCH_MISSING_CAPABILITY_CH_BINARY"
-					if binExists && binCap.ReasonCode != "" {
-						reason += " (" + binCap.ReasonCode + ")"
+					var capPtr *NodeCapabilityRecord
+					if binExists {
+						capPtr = &binCap
 					}
-					rejected["cloud_hypervisor"] = reason
+					reject("cloud_hypervisor", "ERR_LAUNCH_MISSING_CAPABILITY_CH_BINARY", &capName, capPtr)
 					continue
 				}
 
 				if len(storage) == 0 {
-					rejected["cloud_hypervisor"] = "ERR_LAUNCH_MISSING_ARTIFACT"
+					reject("cloud_hypervisor", "ERR_LAUNCH_MISSING_ARTIFACT", nil, nil)
 					continue
 				}
-				return "cloud_hypervisor", rejected
+				return "cloud_hypervisor", evidence, rejected
 			}
 
 			if backend == "kvm_qemu" {
-				cap, exists := node.Capabilities["kvm_vm_launch"]
+				capName := "kvm_vm_launch"
+				cap, exists := node.Capabilities[capName]
 				if !exists || cap.State != "Supported" || cap.IsStale {
-					reason := "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU"
-					if exists && cap.ReasonCode != "" {
-						reason += " (" + cap.ReasonCode + ")"
+					var capPtr *NodeCapabilityRecord
+					if exists {
+						capPtr = &cap
 					}
-					rejected["kvm_qemu"] = reason
+					reject("kvm_qemu", "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU", &capName, capPtr)
 					continue
 				}
-				binCap, binExists := node.Capabilities["qemu_binary_present"]
+
+				capName = "qemu_binary_present"
+				binCap, binExists := node.Capabilities[capName]
 				if !binExists || binCap.State != "Supported" || binCap.IsStale {
-					reason := "ERR_LAUNCH_MISSING_CAPABILITY_QEMU_BINARY"
-					if binExists && binCap.ReasonCode != "" {
-						reason += " (" + binCap.ReasonCode + ")"
+					var capPtr *NodeCapabilityRecord
+					if binExists {
+						capPtr = &binCap
 					}
-					rejected["kvm_qemu"] = reason
+					reject("kvm_qemu", "ERR_LAUNCH_MISSING_CAPABILITY_QEMU_BINARY", &capName, capPtr)
 					continue
 				}
+
 				if len(storage) == 0 {
-					rejected["kvm_qemu"] = "ERR_LAUNCH_MISSING_ARTIFACT"
+					reject("kvm_qemu", "ERR_LAUNCH_MISSING_ARTIFACT", nil, nil)
 					continue
 				}
-				return "kvm_qemu", rejected
+				return "kvm_qemu", evidence, rejected
 			}
 		}
 	}
 
-	return "", rejected
+	return "", evidence, rejected
 }
