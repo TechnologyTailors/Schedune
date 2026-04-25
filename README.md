@@ -3,6 +3,7 @@
 **Schedune is an alpha-stage control plane and node agent for explainable scheduling, launch validation, managed runtime lifecycle, restart recovery, and orphan visibility across heterogeneous ARM and x86 infrastructure.**
 
 **Status:** v0.1.0-alpha / Experimental (Single-node technical preview)
+**Community:** [Join the Schedune Discord](https://discord.gg/mdr8tyCQvc)
 **Control Plane:** Go
 **Agent:** Rust
 **Persistence:** SQLite
