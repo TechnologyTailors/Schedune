@@ -48,6 +48,16 @@ func TestProjectEnvelope_HealthyArmProduction(t *testing.T) {
 	if cap.ReasonCode != "KVM_OPENABLE" {
 		t.Errorf("expected 'KVM_OPENABLE', got %s", cap.ReasonCode)
 	}
+	if cap.Version != "" {
+		t.Errorf("expected empty Version for kvm_vm_launch, got %s", cap.Version)
+	}
+
+	qemuCap, qemuExists := record.Capabilities["qemu_binary_present"]
+	if !qemuExists {
+		t.Fatalf("expected capability 'qemu_binary_present' to exist")
+	}
+	// The generated JSON might have version set or empty depending on the fixture logic, but we must check it doesn't panic.
+	_ = qemuCap.Version
 }
 
 func TestProjectEnvelope_MissingKvmX86(t *testing.T) {

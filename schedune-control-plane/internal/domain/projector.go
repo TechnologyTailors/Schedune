@@ -37,6 +37,7 @@ type NodeCapabilityRecord struct {
 	State      string
 	Provenance string
 	ReasonCode string
+	Version    string
 	IsStale    bool
 }
 
@@ -107,6 +108,11 @@ func ProjectEnvelope(env schema.SchedulerEnvelope) NodeRecord {
 			reason = *cap.ReasonCode
 		}
 
+		version := ""
+		if cap.Version != nil {
+			version = *cap.Version
+		}
+
 		// Unpack the provenance interface (this is simplified for the Go backend V1)
 		provStr := "Observed"
 		if provMap, ok := cap.Provenance.(map[string]interface{}); ok {
@@ -121,6 +127,7 @@ func ProjectEnvelope(env schema.SchedulerEnvelope) NodeRecord {
 			State:      cap.State,
 			Provenance: provStr,
 			ReasonCode: reason,
+			Version:    version,
 			IsStale:    isStale,
 		}
 	}

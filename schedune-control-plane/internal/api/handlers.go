@@ -77,6 +77,7 @@ func (h *IntakeHandler) ExplainNodeDecision(c *gin.Context) {
 			"is_only_eligible_for_holding":     engine.IsOnlyEligibleForHoldingPool(),
 			"is_healthy_but_policy_ineligible": engine.IsHealthyButPolicyIneligible(),
 		},
+		"capabilities":                record.Capabilities,
 		"blocking_constraints":        record.Constraints,
 		"stale_collectors":            record.Freshness.StaleCollectors,
 		"remediation_relevant_alarms": record.Health.ActiveAlarms,
