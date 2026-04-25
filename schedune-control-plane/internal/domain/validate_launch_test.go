@@ -307,3 +307,49 @@ func TestValidateLaunch_KvmExistsNotOpenable(t *testing.T) {
 		t.Errorf("expected trace to contain KVM_NOT_OPENABLE_PERMS, got %s", traceStr)
 	}
 }
+
+func TestValidateLaunch_MissingQemuBinary(t *testing.T) {
+	env := readFixture(t, "missing_qemu_binary.json")
+	now := time.Now().Unix()
+	env.TimestampSec = now
+	for i := range env.Capabilities {
+		env.Capabilities[i].ObservedAtSec = now
+		staleAfter := now + 300
+		env.Capabilities[i].StaleAfterSec = &staleAfter
+	}
+	node := ProjectEnvelope(env)
+
+	spec := launch.LaunchSpec{
+		SchemaVersion:  "v1alpha1",
+		WorkloadID:     "wl-launch-006",
+		TenantID:       "tenant-1",
+		NodeID:         node.ID,
+		RuntimeClass:   "VirtualMachine",
+		Architecture:   "x86_64",
+		ImageReference: "oci://registry/img",
+		Vcpu:           2,
+		MemoryMB:       2048,
+		LaunchMode:     "DryRun",
+	}
+
+	result := ValidateLaunch(spec, node)
+
+	if result.IsValid {
+		t.Errorf("expected launch to be invalid due to missing qemu binary")
+	}
+
+	hasQemuBlocker := false
+	for _, code := range result.BlockingReasonCodes {
+		if code == "ERR_LAUNCH_BACKEND_NOT_SUPPORTED" {
+			hasQemuBlocker = true
+		}
+	}
+
+	if !hasQemuBlocker {
+		t.Errorf("expected ERR_LAUNCH_BACKEND_NOT_SUPPORTED blocker, got %v", result.BlockingReasonCodes)
+	}
+
+	if result.RejectedBackends["kvm_qemu"] != "ERR_LAUNCH_MISSING_CAPABILITY_QEMU_BINARY (CAP_QEMU_BINARY_MISSING)" {
+		t.Errorf("expected rejected backend kvm_qemu with CAP_QEMU_BINARY_MISSING error, got %v", result.RejectedBackends)
+	}
+}

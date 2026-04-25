@@ -1,8 +1,8 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "6379c657-f7b1-476b-88c4-666141c289ad",
-  "timestamp_sec": 1776988281,
+  "collection_id": "03348537-7d77-49be-845c-ab00667af0a7",
+  "timestamp_sec": 1777076315,
   "node_id": "arm-prod-01",
   "compatibility": {
     "class": "ArmProduction",
@@ -31,6 +31,14 @@
       "state": "Supported",
       "provenance": "Observed",
       "reason_code": "KVM_OPENABLE",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "qemu_binary_present",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_QEMU_BINARY_PRESENT",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     },

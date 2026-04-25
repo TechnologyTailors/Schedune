@@ -1,9 +1,9 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "31e90e8e-b313-4358-955e-54c28204fae3",
+  "collection_id": "b822d9c4-e185-46c2-8818-7fdad30c452a",
   "timestamp_sec": 1777076315,
-  "node_id": "x86-pool-01",
+  "node_id": "x86-no-qemu-01",
   "compatibility": {
     "class": "X86HoldingPool",
     "reason_codes": [
@@ -13,14 +13,14 @@
   "facts": {
     "cpu": {
       "architecture": "x86_64",
-      "cores": 32,
-      "vendor_id": "AMD"
+      "cores": 16,
+      "vendor_id": "GenuineIntel"
     },
     "memory": {
-      "total_mb": 131072
+      "total_mb": 65536
     },
     "os": {
-      "hostname": "x86-pool-01",
+      "hostname": "x86-no-qemu-01",
       "name": "Ubuntu",
       "kernel_version": "6.8.0"
     }
@@ -30,7 +30,15 @@
       "feature": "kvm_vm_launch",
       "state": "Supported",
       "provenance": "Observed",
-      "reason_code": "KVM_OPENABLE",
+      "reason_code": "CAP_KVM_OPENABLE",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "qemu_binary_present",
+      "state": "Unsupported",
+      "provenance": "Observed",
+      "reason_code": "CAP_QEMU_BINARY_MISSING",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     }
@@ -44,7 +52,7 @@
     {
       "collector_name": "MockCollector",
       "success": true,
-      "duration_ms": 10,
+      "duration_ms": 15,
       "error_message": null
     }
   ]
