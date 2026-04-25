@@ -110,8 +110,20 @@ func generateRemediationHints(result launch.LaunchValidationResult) map[string]s
 		if backend == "cloud_hypervisor" && strings.Contains(reason, "CAP_CLOUDHYPERVISOR_BINARY_MISSING") {
 			hints["cloud_hypervisor_binary"] = "Install cloud-hypervisor binary on the host."
 		}
-		if backend == "firecracker" && strings.Contains(reason, "CAP_FIRECRACKER_PREREQS_MISSING") {
-			hints["firecracker_prereqs"] = "Ensure firecracker binary, /dev/net/tun, and cgroups v2 are available."
+		if backend == "cloud_hypervisor" && strings.Contains(reason, "CAP_KVM_MISSING") {
+			hints["cloud_hypervisor_kvm"] = "Enable KVM in BIOS or load kvm kernel modules."
+		}
+		if backend == "firecracker" && strings.Contains(reason, "CAP_FIRECRACKER_BINARY_MISSING") {
+			hints["firecracker_binary"] = "Install firecracker binary on the host."
+		}
+		if backend == "firecracker" && strings.Contains(reason, "CAP_FIRECRACKER_TUN_MISSING") {
+			hints["firecracker_tun"] = "Ensure the tun kernel module is loaded (/dev/net/tun)."
+		}
+		if backend == "firecracker" && strings.Contains(reason, "CAP_FIRECRACKER_CGROUPS_MISSING") {
+			hints["firecracker_cgroups"] = "Ensure cgroups v2 are mounted on the host."
+		}
+		if backend == "firecracker" && strings.Contains(reason, "CAP_KVM_MISSING") {
+			hints["firecracker_kvm"] = "Enable KVM in BIOS or load kvm kernel modules."
 		}
 		if strings.Contains(reason, "ERR_LAUNCH_MISSING_ARTIFACT") {
 			hints["artifact_missing"] = "Ensure ImageReference is provided for the workload."

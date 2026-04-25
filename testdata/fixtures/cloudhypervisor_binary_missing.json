@@ -1,8 +1,8 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "404853fe-13b0-47f4-9af4-45ab1e623e10",
-  "timestamp_sec": 1777076315,
+  "collection_id": "4493f97e-b90b-489d-b92b-81c661934c87",
+  "timestamp_sec": 1777079254,
   "node_id": "arm-ch-fail-01",
   "compatibility": {
     "class": "ArmProduction",
@@ -39,14 +39,6 @@
       "state": "Unsupported",
       "provenance": "Observed",
       "reason_code": "CAP_CLOUDHYPERVISOR_BINARY_MISSING",
-      "observed_at_sec": 1776978000,
-      "stale_after_sec": 1776978300
-    },
-    {
-      "feature": "cloud_hypervisor_launch",
-      "state": "Unavailable",
-      "provenance": "Inferred",
-      "reason_code": "CAP_CLOUDHYPERVISOR_PREREQS_MISSING",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     }

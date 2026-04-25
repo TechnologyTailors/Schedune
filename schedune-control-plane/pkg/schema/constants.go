@@ -90,6 +90,10 @@ const (
 	ReasonErrLaunchInvalidStorageFormat             = "ERR_LAUNCH_INVALID_STORAGE_FORMAT"
 	ReasonErrLaunchInvalidFirecrackerArtifactModel  = "ERR_LAUNCH_INVALID_FIRECRACKER_ARTIFACT_MODEL"
 	ReasonErrLaunchMissingCapabilityCloudHypervisor = "ERR_LAUNCH_MISSING_CAPABILITY_CLOUDHYPERVISOR"
+	ReasonErrLaunchMissingCapabilityChBinary        = "ERR_LAUNCH_MISSING_CAPABILITY_CH_BINARY"
+	ReasonErrLaunchMissingCapabilityFcBinary        = "ERR_LAUNCH_MISSING_CAPABILITY_FC_BINARY"
+	ReasonErrLaunchMissingCapabilityFcTun           = "ERR_LAUNCH_MISSING_CAPABILITY_FC_TUN"
+	ReasonErrLaunchMissingCapabilityFcCgroups       = "ERR_LAUNCH_MISSING_CAPABILITY_FC_CGROUPS"
 	ReasonErrLaunchMissingCapabilityKvmQemu         = "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU"
 	ReasonErrLaunchMissingCapabilityQemuBinary      = "ERR_LAUNCH_MISSING_CAPABILITY_QEMU_BINARY"
 

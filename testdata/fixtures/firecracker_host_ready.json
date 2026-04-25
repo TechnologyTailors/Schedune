@@ -1,8 +1,8 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "5e4bee7c-5385-449d-92f7-133c382360cc",
-  "timestamp_sec": 1777076315,
+  "collection_id": "fd81d8e8-0278-467a-9d73-a380b9626f2b",
+  "timestamp_sec": 1777079254,
   "node_id": "x86-fc-01",
   "compatibility": {
     "class": "X86HoldingPool",
@@ -55,14 +55,6 @@
       "state": "Supported",
       "provenance": "Observed",
       "reason_code": "CAP_FIRECRACKER_CGROUPS_READY",
-      "observed_at_sec": 1776978000,
-      "stale_after_sec": 1776978300
-    },
-    {
-      "feature": "firecracker_launch",
-      "state": "Supported",
-      "provenance": "Inferred",
-      "reason_code": "CAP_FIRECRACKER_READY",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     }

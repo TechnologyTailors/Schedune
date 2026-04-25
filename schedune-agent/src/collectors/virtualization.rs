@@ -135,26 +135,6 @@ impl VirtualizationCollector {
             default_stale_after,
         ));
 
-        // --- Cloud Hypervisor Launch Readiness ---
-        let ch_launch_ready = kvm_openable && ch_binary_present;
-        let (ch_launch_state, ch_launch_reason) = if ch_launch_ready {
-            (SupportState::Supported, "CAP_CLOUDHYPERVISOR_READY")
-        } else {
-            (
-                SupportState::Unavailable,
-                "CAP_CLOUDHYPERVISOR_PREREQS_MISSING",
-            )
-        };
-
-        capabilities.push(Self::build_cap(
-            "cloud_hypervisor_launch",
-            ch_launch_state,
-            Provenance::Inferred,
-            ch_launch_reason,
-            now_sec,
-            default_stale_after,
-        ));
-
         // --- Firecracker Host Prerequisites ---
         let tun_exists = Path::new("/dev/net/tun").exists();
         let cgroup_v2 = Path::new("/sys/fs/cgroup/cgroup.controllers").exists();
@@ -185,22 +165,6 @@ impl VirtualizationCollector {
             fc_cg_state,
             Provenance::Observed,
             fc_cg_reason,
-            now_sec,
-            default_stale_after,
-        ));
-
-        let fc_supported = kvm_openable && tun_exists && cgroup_v2 && fc_binary_present;
-        let (fc_launch_state, fc_launch_reason) = if fc_supported {
-            (SupportState::Supported, "CAP_FIRECRACKER_READY")
-        } else {
-            (SupportState::Unavailable, "CAP_FIRECRACKER_PREREQS_MISSING")
-        };
-
-        capabilities.push(Self::build_cap(
-            "firecracker_launch",
-            fc_launch_state,
-            Provenance::Inferred,
-            fc_launch_reason,
             now_sec,
             default_stale_after,
         ));

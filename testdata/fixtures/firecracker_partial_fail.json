@@ -1,8 +1,8 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "1ce16234-9faa-4d50-8deb-02c693bab499",
-  "timestamp_sec": 1777076315,
+  "collection_id": "1bb8befa-9ab0-4096-af84-799895cc4ef3",
+  "timestamp_sec": 1777079254,
   "node_id": "arm-fc-fail-01",
   "compatibility": {
     "class": "ArmProduction",
@@ -31,14 +31,6 @@
       "state": "Supported",
       "provenance": "Observed",
       "reason_code": "KVM_OPENABLE",
-      "observed_at_sec": 1776978000,
-      "stale_after_sec": 1776978300
-    },
-    {
-      "feature": "firecracker_launch",
-      "state": "Unavailable",
-      "provenance": "Observed",
-      "reason_code": "FC_PREREQS_MISSING",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     }
