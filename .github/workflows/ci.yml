@@ -20,7 +20,7 @@ jobs:
 
       - name: Set up Rust
         run: |
-          rustup toolchain install stable --profile minimal --component clippy rustfmt
+          rustup toolchain install stable --profile minimal --component clippy --component rustfmt
           rustup default stable
 
       - name: Set up Python
