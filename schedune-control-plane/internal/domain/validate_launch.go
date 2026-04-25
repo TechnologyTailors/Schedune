@@ -41,6 +41,31 @@ func ValidateLaunch(spec launch.LaunchSpec, node NodeRecord) launch.LaunchValida
 		result.ValidationTrace = append(result.ValidationTrace, "Warning: Using deprecated NetworkAttachments field. Please migrate to typed Networks array.")
 	}
 
+	// Security Context Validation
+	if spec.Security != nil {
+		if spec.Security.SeccompProfile != "" {
+			cap, exists := node.Capabilities["kernel_seccomp_supported"]
+			if !exists || cap.State != "Supported" || cap.IsStale {
+				result.IsValid = false
+				result.BlockingReasonCodes = append(result.BlockingReasonCodes, "ERR_LAUNCH_MISSING_CAPABILITY_SECCOMP")
+				result.ValidationTrace = append(result.ValidationTrace, "Failed: Security Context requires seccomp profile, but kernel seccomp is not supported or missing.")
+			} else {
+				result.ValidationTrace = append(result.ValidationTrace, "Passed: Node supports kernel seccomp for requested profile.")
+			}
+		}
+
+		if len(spec.Security.DropCapabilities) > 0 {
+			cap, exists := node.Capabilities["kernel_namespaces_supported"]
+			if !exists || cap.State != "Supported" || cap.IsStale {
+				result.IsValid = false
+				result.BlockingReasonCodes = append(result.BlockingReasonCodes, "ERR_LAUNCH_MISSING_CAPABILITY_NAMESPACES")
+				result.ValidationTrace = append(result.ValidationTrace, "Failed: Security Context requires dropping capabilities, but kernel namespaces are not supported or missing.")
+			} else {
+				result.ValidationTrace = append(result.ValidationTrace, "Passed: Node supports kernel namespaces for capability dropping.")
+			}
+		}
+	}
+
 	if !result.IsValid {
 		result.ExplainabilityText = "Node cannot launch workload due to generic preflight blockers."
 		result.RemediationHints = generateRemediationHints(result)
@@ -94,6 +119,12 @@ func generateRemediationHints(result launch.LaunchValidationResult) map[string]s
 		}
 		if code == "ERR_LAUNCH_BACKEND_NOT_SUPPORTED" {
 			hints["backend"] = "Check the RejectedBackends map for specific missing capabilities."
+		}
+		if code == "ERR_LAUNCH_MISSING_CAPABILITY_SECCOMP" {
+			hints["kernel_seccomp"] = "Ensure the host kernel is compiled with CONFIG_SECCOMP and actions_avail is readable."
+		}
+		if code == "ERR_LAUNCH_MISSING_CAPABILITY_NAMESPACES" {
+			hints["kernel_namespaces"] = "Ensure the host kernel supports user, pid, and net namespaces."
 		}
 	}
 

@@ -169,6 +169,41 @@ impl VirtualizationCollector {
             default_stale_after,
         ));
 
+        // --- Sandboxing Prerequisites ---
+        let seccomp_exists = Path::new("/proc/sys/kernel/seccomp/actions_avail").exists();
+        let (seccomp_state, seccomp_reason) = if seccomp_exists {
+            (SupportState::Supported, "CAP_SECCOMP_SUPPORTED")
+        } else {
+            (SupportState::Unsupported, "CAP_SECCOMP_MISSING")
+        };
+
+        capabilities.push(Self::build_cap(
+            "kernel_seccomp_supported",
+            seccomp_state,
+            Provenance::Observed,
+            seccomp_reason,
+            now_sec,
+            default_stale_after,
+        ));
+
+        let ns_supported = Path::new("/proc/self/ns/user").exists()
+            && Path::new("/proc/self/ns/pid").exists()
+            && Path::new("/proc/self/ns/net").exists();
+        let (ns_state, ns_reason) = if ns_supported {
+            (SupportState::Supported, "CAP_NAMESPACES_SUPPORTED")
+        } else {
+            (SupportState::Unsupported, "CAP_NAMESPACES_MISSING")
+        };
+
+        capabilities.push(Self::build_cap(
+            "kernel_namespaces_supported",
+            ns_state,
+            Provenance::Observed,
+            ns_reason,
+            now_sec,
+            default_stale_after,
+        ));
+
         let status = CollectorStatus {
             collector_name: "VirtualizationCollector".to_string(),
             success: true,

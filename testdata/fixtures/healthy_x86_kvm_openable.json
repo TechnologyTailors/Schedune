@@ -1,8 +1,8 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "0240da05-c0d8-4abd-978d-cc8c1a07788a",
-  "timestamp_sec": 1777079254,
+  "collection_id": "6d8034a8-81db-4503-9f86-0d78345370f5",
+  "timestamp_sec": 1777084685,
   "node_id": "x86-pool-01",
   "compatibility": {
     "class": "X86HoldingPool",
@@ -31,6 +31,22 @@
       "state": "Supported",
       "provenance": "Observed",
       "reason_code": "KVM_OPENABLE",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "kernel_seccomp_supported",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_SECCOMP_SUPPORTED",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "kernel_namespaces_supported",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_NAMESPACES_SUPPORTED",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     }

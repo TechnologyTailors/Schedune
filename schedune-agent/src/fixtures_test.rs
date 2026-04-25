@@ -65,6 +65,22 @@ mod tests {
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
             },
+            NodeCapability {
+                feature: "kernel_seccomp_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_SECCOMP_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_namespaces_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_NAMESPACES_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
         ];
 
         let health = NodeHealth {
@@ -113,14 +129,32 @@ mod tests {
             reason_codes: vec!["CLASS_UNSUPPORTED_NO_KVM".to_string()],
         };
 
-        let capabilities = vec![NodeCapability {
-            feature: "kvm_vm_launch".to_string(),
-            state: SupportState::Unsupported,
-            provenance: Provenance::Observed,
-            reason_code: Some("KVM_MISSING".to_string()),
-            observed_at_sec: 1776978000,
-            stale_after_sec: Some(1776978300),
-        }];
+        let capabilities = vec![
+            NodeCapability {
+                feature: "kvm_vm_launch".to_string(),
+                state: SupportState::Unsupported,
+                provenance: Provenance::Observed,
+                reason_code: Some("KVM_MISSING".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_seccomp_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_SECCOMP_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_namespaces_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_NAMESPACES_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+        ];
 
         let constraints = vec![NodeConstraint {
             constraint_type: "VirtualizationDisabled".to_string(),
@@ -177,14 +211,32 @@ mod tests {
         };
 
         // Note: The timestamps here are very old, making them explicitly stale
-        let capabilities = vec![NodeCapability {
-            feature: "kvm_vm_launch".to_string(),
-            state: SupportState::Supported,
-            provenance: Provenance::Observed,
-            reason_code: Some("KVM_OPENABLE".to_string()),
-            observed_at_sec: 1000000000, // Very old
-            stale_after_sec: Some(1000000300),
-        }];
+        let capabilities = vec![
+            NodeCapability {
+                feature: "kvm_vm_launch".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("KVM_OPENABLE".to_string()),
+                observed_at_sec: 1000000000, // Very old
+                stale_after_sec: Some(1000000300),
+            },
+            NodeCapability {
+                feature: "kernel_seccomp_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_SECCOMP_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_namespaces_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_NAMESPACES_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+        ];
 
         let health = NodeHealth {
             state: HealthState::Healthy,
@@ -233,14 +285,32 @@ mod tests {
             reason_codes: vec!["CLASS_X86_HOLDING_READY".to_string()],
         };
 
-        let capabilities = vec![NodeCapability {
-            feature: "kvm_vm_launch".to_string(),
-            state: SupportState::Supported,
-            provenance: Provenance::Observed,
-            reason_code: Some("KVM_OPENABLE".to_string()),
-            observed_at_sec: 1776978000,
-            stale_after_sec: Some(1776978300),
-        }];
+        let capabilities = vec![
+            NodeCapability {
+                feature: "kvm_vm_launch".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("KVM_OPENABLE".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_seccomp_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_SECCOMP_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_namespaces_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_NAMESPACES_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+        ];
 
         let envelope = SchedulerEnvelope::new(
             "x86-pool-01".to_string(),
@@ -284,14 +354,32 @@ mod tests {
             reason_codes: vec!["CLASS_DEGRADED_KVM_PERMS".to_string()],
         };
 
-        let capabilities = vec![NodeCapability {
-            feature: "kvm_vm_launch".to_string(),
-            state: SupportState::Unavailable,
-            provenance: Provenance::Observed,
-            reason_code: Some("KVM_NOT_OPENABLE_PERMS".to_string()),
-            observed_at_sec: 1776978000,
-            stale_after_sec: Some(1776978300),
-        }];
+        let capabilities = vec![
+            NodeCapability {
+                feature: "kvm_vm_launch".to_string(),
+                state: SupportState::Unavailable,
+                provenance: Provenance::Observed,
+                reason_code: Some("KVM_NOT_OPENABLE_PERMS".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_seccomp_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_SECCOMP_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_namespaces_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_NAMESPACES_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+        ];
 
         let constraints = vec![NodeConstraint {
             constraint_type: "VirtualizationDisabled".to_string(),
@@ -343,14 +431,32 @@ mod tests {
             reason_codes: vec!["CLASS_ARM_PROD_READY".to_string()],
         };
 
-        let capabilities = vec![NodeCapability {
-            feature: "kvm_vm_launch".to_string(),
-            state: SupportState::Supported,
-            provenance: Provenance::Observed,
-            reason_code: Some("KVM_OPENABLE".to_string()),
-            observed_at_sec: 1776978000,
-            stale_after_sec: Some(1776978300),
-        }];
+        let capabilities = vec![
+            NodeCapability {
+                feature: "kvm_vm_launch".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("KVM_OPENABLE".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_seccomp_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_SECCOMP_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_namespaces_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_NAMESPACES_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+        ];
 
         let envelope = SchedulerEnvelope::new(
             "arm-fc-fail-01".to_string(),
@@ -397,14 +503,32 @@ mod tests {
             ],
         };
 
-        let capabilities = vec![NodeCapability {
-            feature: "kvm_vm_launch".to_string(),
-            state: SupportState::Unsupported,
-            provenance: Provenance::Observed,
-            reason_code: Some("KVM_MISSING".to_string()),
-            observed_at_sec: 1776978000,
-            stale_after_sec: Some(1776978300),
-        }];
+        let capabilities = vec![
+            NodeCapability {
+                feature: "kvm_vm_launch".to_string(),
+                state: SupportState::Unsupported,
+                provenance: Provenance::Observed,
+                reason_code: Some("KVM_MISSING".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_seccomp_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_SECCOMP_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_namespaces_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_NAMESPACES_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+        ];
 
         let envelope = SchedulerEnvelope::new(
             "x86-storage-only-01".to_string(),
@@ -463,6 +587,22 @@ mod tests {
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
             },
+            NodeCapability {
+                feature: "kernel_seccomp_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_SECCOMP_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_namespaces_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_NAMESPACES_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
         ];
         let envelope = SchedulerEnvelope::new(
             "arm-ch-01".to_string(),
@@ -512,6 +652,22 @@ mod tests {
                 state: SupportState::Unsupported,
                 provenance: Provenance::Observed,
                 reason_code: Some("CAP_CLOUDHYPERVISOR_BINARY_MISSING".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_seccomp_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_SECCOMP_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_namespaces_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_NAMESPACES_SUPPORTED".to_string()),
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
             },
@@ -583,6 +739,22 @@ mod tests {
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
             },
+            NodeCapability {
+                feature: "kernel_seccomp_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_SECCOMP_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_namespaces_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_NAMESPACES_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
         ];
         let envelope = SchedulerEnvelope::new(
             "x86-fc-01".to_string(),
@@ -648,6 +820,22 @@ mod tests {
                 state: SupportState::Supported,
                 provenance: Provenance::Observed,
                 reason_code: Some("CAP_FIRECRACKER_CGROUPS_READY".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_seccomp_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_SECCOMP_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_namespaces_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_NAMESPACES_SUPPORTED".to_string()),
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
             },
@@ -719,6 +907,22 @@ mod tests {
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
             },
+            NodeCapability {
+                feature: "kernel_seccomp_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_SECCOMP_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_namespaces_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_NAMESPACES_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
         ];
         let envelope = SchedulerEnvelope::new(
             "x86-fc-fail-cgroups".to_string(),
@@ -773,6 +977,22 @@ mod tests {
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
             },
+            NodeCapability {
+                feature: "kernel_seccomp_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_SECCOMP_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_namespaces_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_NAMESPACES_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
         ];
 
         let envelope = SchedulerEnvelope::new(
@@ -794,5 +1014,74 @@ mod tests {
         );
 
         write_fixture("missing_qemu_binary.json", &envelope);
+    }
+
+    #[test]
+    fn generate_missing_seccomp() {
+        let facts = NodeFacts {
+            cpu: CpuFacts {
+                architecture: "x86_64".to_string(),
+                cores: 16,
+                vendor_id: Some("GenuineIntel".to_string()),
+            },
+            memory: MemoryFacts { total_mb: 65536 },
+            os: OsFacts {
+                hostname: "x86-no-seccomp-01".to_string(),
+                name: "Ubuntu".to_string(),
+                kernel_version: Some("6.8.0".to_string()),
+            },
+        };
+
+        let class = CompatibilityClassification {
+            class: CompatibilityClassType::X86HoldingPool,
+            reason_codes: vec!["CLASS_X86_HOLDING_READY".to_string()],
+        };
+
+        let capabilities = vec![
+            NodeCapability {
+                feature: "kvm_vm_launch".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_KVM_OPENABLE".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_seccomp_supported".to_string(),
+                state: SupportState::Unsupported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_SECCOMP_MISSING".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "kernel_namespaces_supported".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_NAMESPACES_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+        ];
+
+        let envelope = SchedulerEnvelope::new(
+            "x86-no-seccomp-01".to_string(),
+            class,
+            facts,
+            capabilities,
+            vec![],
+            NodeHealth {
+                state: HealthState::Healthy,
+                active_alarms: vec![],
+            },
+            vec![CollectorStatus {
+                collector_name: "MockCollector".to_string(),
+                success: true,
+                duration_ms: 15,
+                error_message: None,
+            }],
+        );
+
+        write_fixture("missing_seccomp.json", &envelope);
     }
 }
