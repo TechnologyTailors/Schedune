@@ -14,7 +14,12 @@ type CloudHypervisorExecutor struct{}
 func (k *CloudHypervisorExecutor) Prepare(spec launch.LaunchSpec) (launch.PreparedLaunch, error) {
 	binPath := "cloud-hypervisor"
 
-	artifactPath := spec.ImageReference
+	artifactPath, _ := resolvePrimaryDisk(spec)
+
+	if artifactPath == "" {
+		return launch.PreparedLaunch{}, fmt.Errorf("artifact missing for execution")
+	}
+
 	if _, err := os.Stat(artifactPath); os.IsNotExist(err) {
 		return launch.PreparedLaunch{}, fmt.Errorf("artifact missing at host path: %s", artifactPath)
 	}

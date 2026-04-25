@@ -22,7 +22,11 @@ func (k *KvmExecutor) Prepare(spec launch.LaunchSpec) (launch.PreparedLaunch, er
 	// For V0 MVP, resolve strictly to the qemu-system binary for the requested arch
 	binPath := "qemu-system-" + spec.Architecture
 
-	artifactPath := spec.ImageReference
+	artifactPath, format := resolvePrimaryDisk(spec)
+
+	if artifactPath == "" {
+		return launch.PreparedLaunch{}, fmt.Errorf("artifact missing for execution")
+	}
 
 	if _, err := os.Stat(artifactPath); os.IsNotExist(err) {
 		return launch.PreparedLaunch{}, fmt.Errorf("artifact missing at host path: %s", artifactPath)
@@ -31,7 +35,7 @@ func (k *KvmExecutor) Prepare(spec launch.LaunchSpec) (launch.PreparedLaunch, er
 	args := []string{
 		"-m", fmt.Sprintf("%d", spec.MemoryMB),
 		"-smp", fmt.Sprintf("%d", spec.Vcpu),
-		"-drive", fmt.Sprintf("file=%s,format=qcow2", artifactPath),
+		"-drive", fmt.Sprintf("file=%s,format=%s", artifactPath, format),
 		"-nographic",
 	}
 
