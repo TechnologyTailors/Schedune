@@ -83,6 +83,13 @@ Schedune explicitly **does not** support:
 
 ## Documentation
 
+The full documentation is available in the `docs/` directory and can be built locally using MkDocs:
+
+```bash
+pip install -r docs/requirements.txt
+mkdocs serve
+```
+
 - [Quickstart](docs/quickstart.md)
 - [Architecture Overview](docs/architecture.md)
 - [API Reference](docs/api.md)
