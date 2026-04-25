@@ -1,0 +1,15 @@
+site_name: Schedune
+site_description: A production-grade, explainable control plane and node agent for scheduling and managing VMs and MicroVMs.
+theme:
+  name: material
+  palette:
+    scheme: default
+nav:
+  - Home: index.md
+  - Quickstart: quickstart.md
+  - Architecture: architecture.md
+  - API: api.md
+  - Runtime Support: runtime-support.md
+  - State Machine: state-machine.md
+  - Recovery: recovery.md
+  - Troubleshooting: troubleshooting.md
