@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
 )
 
@@ -604,5 +605,66 @@ func TestValidateLaunch_SecurityContextRequiresNamespaces(t *testing.T) {
 	result := ValidateLaunch(spec, node)
 	if !result.IsValid {
 		t.Errorf("expected validation to pass even when namespaces capability is missing, because dropping capabilities does not require full namespace support, got false: %v", result.BlockingReasonCodes)
+	}
+}
+
+func TestValidateLaunch_ReasonCodeRegistryHygiene(t *testing.T) {
+	// Pick a few representative fixtures that test different validation failure modes
+	fixtures := []string{
+		"cloudhypervisor_binary_missing.json",
+		"firecracker_partial_fail.json",
+		"missing_kvm_x86.json",
+		"missing_qemu_binary.json",
+		"healthy_unsupported_compatibility.json",
+		"healthy_x86_kvm_openable.json",
+		"stale_telemetry.json",
+	}
+
+	for _, fname := range fixtures {
+		env := readFixture(t, fname)
+		node := ProjectEnvelope(env)
+
+		spec := launch.LaunchSpec{
+			SchemaVersion: "v1alpha1",
+			WorkloadID:    "wl-test",
+			TenantID:      "tenant-1",
+			NodeID:        node.ID,
+			RuntimeClass:  "VirtualMachine",
+			Architecture:  "x86_64",
+			LaunchMode:    "DryRun",
+			Vcpu:          2,
+			MemoryMB:      1024,
+		}
+
+		res := ValidateLaunch(spec, node)
+
+		for _, code := range res.BlockingReasonCodes {
+			if !schema.IsKnownReasonCode(code) {
+				t.Errorf("fixture %s produced unregistered blocking reason code: %q", fname, code)
+			}
+		}
+
+		for _, code := range res.Warnings {
+			if !schema.IsKnownReasonCode(code) {
+				t.Errorf("fixture %s produced unregistered warning reason code: %q", fname, code)
+			}
+		}
+
+		for _, reason := range res.RejectedBackends {
+			// Backend rejection reasons can contain capabilities inside them,
+			// but we know they are usually formatted as REASON_CODE or REASON_CODE [CAPABILITY_CODE]
+			// Let's parse it out simply or just ensure if it's an exact code, it is registered.
+			// For simplicity, we just check if any registered code is a substring,
+			// or if we can extract it.
+			words := strings.Split(reason, " ")
+			for _, w := range words {
+				w = strings.Trim(w, "[]")
+				if strings.HasPrefix(w, "ERR_") || strings.HasPrefix(w, "CAP_") {
+					if !schema.IsKnownReasonCode(w) {
+						t.Errorf("fixture %s produced unregistered backend rejection code in message %q: %q", fname, reason, w)
+					}
+				}
+			}
+		}
 	}
 }
