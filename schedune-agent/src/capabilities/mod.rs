@@ -61,6 +61,8 @@ pub struct NodeCapability {
     pub state: SupportState,
     pub provenance: Provenance,
     pub reason_code: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
     pub observed_at_sec: u64,
     pub stale_after_sec: Option<u64>,
 }

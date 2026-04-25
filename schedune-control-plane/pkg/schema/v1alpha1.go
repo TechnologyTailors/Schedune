@@ -47,6 +47,7 @@ type NodeCapability struct {
 	State         string      `json:"state" binding:"required,oneof=Supported Unsupported Unknown Unavailable"`
 	Provenance    interface{} `json:"provenance" binding:"required"`
 	ReasonCode    *string     `json:"reason_code"`
+	Version       *string     `json:"version,omitempty"`
 	ObservedAtSec int64       `json:"observed_at_sec" binding:"required"`
 	StaleAfterSec *int64      `json:"stale_after_sec"`
 }

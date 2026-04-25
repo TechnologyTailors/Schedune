@@ -1,8 +1,8 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "351ebc1a-3131-4a21-a67b-7c90a1b940cc",
-  "timestamp_sec": 1777085950,
+  "collection_id": "df283061-3405-47b6-b5e5-9a8e71cf77bf",
+  "timestamp_sec": 1777086729,
   "node_id": "x86-storage-01",
   "compatibility": {
     "class": "Unsupported",
