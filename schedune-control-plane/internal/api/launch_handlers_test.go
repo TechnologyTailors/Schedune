@@ -244,7 +244,7 @@ func TestDryRunLaunch_PreparationFails(t *testing.T) {
 		t.Errorf("expected preparation error, got %v", res.PreparationError)
 	}
 
-	if res.PreparationReasonCode == nil || *res.PreparationReasonCode != "ERR_PREPARATION_FAILED" {
+	if res.PreparationReasonCode == nil || *res.PreparationReasonCode != schema.ReasonErrPreparationFailed {
 		t.Errorf("expected preparation reason code, got %v", res.PreparationReasonCode)
 	}
 }

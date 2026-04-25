@@ -7,6 +7,7 @@ import (
 
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/domain/lifecycle"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime"
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
 	"github.com/google/uuid"
 )
@@ -78,7 +79,7 @@ func (o *LaunchOrchestrator) validateAndRecord(spec launch.LaunchSpec, rec *laun
 	node, err := o.nodeStore.GetNode(spec.NodeID)
 	if err != nil {
 		lifecycle.TransitionTo(rec, launch.StatePreparing, "", "Initializing preparation")
-		lifecycle.TransitionTo(rec, launch.StateFailed, "ERR_NODE_NOT_FOUND", "Target node not found in store")
+		lifecycle.TransitionTo(rec, launch.StateFailed, schema.ReasonErrNodeNotFound, "Target node not found in store")
 		o.save(rec)
 		return false
 	}
@@ -86,7 +87,7 @@ func (o *LaunchOrchestrator) validateAndRecord(spec launch.LaunchSpec, rec *laun
 	valRes := ValidateLaunch(spec, node)
 	if !valRes.IsValid {
 		lifecycle.TransitionTo(rec, launch.StatePreparing, "", "Initializing preparation")
-		lifecycle.TransitionTo(rec, launch.StateFailed, "ERR_VALIDATION_FAILED", fmt.Sprintf("Node missing prerequisites: %v", valRes.BlockingReasonCodes))
+		lifecycle.TransitionTo(rec, launch.StateFailed, schema.ReasonErrValidationFailed, fmt.Sprintf("Node missing prerequisites: %v", valRes.BlockingReasonCodes))
 		o.save(rec)
 		return false
 	}
@@ -106,14 +107,14 @@ func (o *LaunchOrchestrator) prepareAndRecord(spec launch.LaunchSpec, rec *launc
 
 	exec, err := o.resolver.Resolve(selectedBackend)
 	if err != nil {
-		lifecycle.TransitionTo(rec, launch.StateFailed, "ERR_PREPARATION_FAILED", fmt.Sprintf("Failed to resolve executor for backend %s: %v", selectedBackend, err))
+		lifecycle.TransitionTo(rec, launch.StateFailed, schema.ReasonErrPreparationFailed, fmt.Sprintf("Failed to resolve executor for backend %s: %v", selectedBackend, err))
 		o.save(rec)
 		return nil, false
 	}
 
 	prep, err := exec.Prepare(spec)
 	if err != nil {
-		lifecycle.TransitionTo(rec, launch.StateFailed, "ERR_PREPARATION_FAILED", err.Error())
+		lifecycle.TransitionTo(rec, launch.StateFailed, schema.ReasonErrPreparationFailed, err.Error())
 		o.save(rec)
 		return nil, false
 	}
@@ -137,7 +138,7 @@ func (o *LaunchOrchestrator) spawnAndRecord(spec launch.LaunchSpec, rec *launch.
 
 	pid, err := exec.Execute(*rec.PreparedState)
 	if err != nil {
-		lifecycle.TransitionTo(rec, launch.StateFailed, "ERR_EXEC_RUNTIME_SPAWN_FAILED", err.Error())
+		lifecycle.TransitionTo(rec, launch.StateFailed, schema.ReasonErrExecRuntimeSpawnFailed, err.Error())
 		o.save(rec)
 		return
 	}
@@ -175,7 +176,7 @@ func (o *LaunchOrchestrator) TerminateLaunch(executionID string) (launch.LaunchE
 		}
 		if err != nil {
 			// Do not jump to Failed immediately; let reconcile loop handle stubborn processes
-			lifecycle.AppendTrace(&rec, "Termination", "Failed", "ERR_TERM_SIGNAL_FAILED", err.Error())
+			lifecycle.AppendTrace(&rec, "Termination", "Failed", schema.ReasonErrTermSignalFailed, err.Error())
 			o.save(&rec)
 			return rec, err
 		}

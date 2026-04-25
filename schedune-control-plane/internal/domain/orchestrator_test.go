@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime"
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
 	"testing"
 	"time"
@@ -145,7 +146,7 @@ func TestLaunchOrchestrator_ValidationFails(t *testing.T) {
 
 	hasValFailed := false
 	for _, tr := range rec.Trace {
-		if tr.Stage == "StateTransition" && tr.ReasonCode == "ERR_VALIDATION_FAILED" {
+		if tr.Stage == "StateTransition" && tr.ReasonCode == schema.ReasonErrValidationFailed {
 			hasValFailed = true
 		}
 	}

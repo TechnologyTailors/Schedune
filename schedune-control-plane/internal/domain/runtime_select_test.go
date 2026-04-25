@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
 	"testing"
 	"time"
@@ -34,7 +35,7 @@ func TestSelectBackend_MicroVM(t *testing.T) {
 	if backend != "" {
 		t.Errorf("expected rejection due to missing artifact, got %s", backend)
 	}
-	if reason := rejected["firecracker"]; reason != "ERR_LAUNCH_INVALID_FIRECRACKER_ARTIFACT_MODEL" {
+	if reason := rejected["firecracker"]; reason != schema.ReasonErrLaunchInvalidFirecrackerArtifactModel {
 		t.Errorf("expected ERR_LAUNCH_INVALID_FIRECRACKER_ARTIFACT_MODEL, got %s", reason)
 	}
 }
