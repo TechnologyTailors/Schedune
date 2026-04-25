@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
 )
 
@@ -77,7 +78,7 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, []launch.Ba
 			if kvmExists {
 				capPtr = &kvmCap
 			}
-			reject("firecracker", "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU", &capName, capPtr)
+			reject("firecracker", schema.ReasonErrLaunchMissingCapabilityKvmQemu, &capName, capPtr)
 			return "", evidence, rejected
 		}
 
@@ -88,7 +89,7 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, []launch.Ba
 			if binExists {
 				capPtr = &binCap
 			}
-			reject("firecracker", "ERR_LAUNCH_MISSING_CAPABILITY_FC_BINARY", &capName, capPtr)
+			reject("firecracker", schema.ReasonErrLaunchMissingCapabilityFcBinary, &capName, capPtr)
 			return "", evidence, rejected
 		}
 
@@ -99,7 +100,7 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, []launch.Ba
 			if tunExists {
 				capPtr = &tunCap
 			}
-			reject("firecracker", "ERR_LAUNCH_MISSING_CAPABILITY_FC_TUN", &capName, capPtr)
+			reject("firecracker", schema.ReasonErrLaunchMissingCapabilityFcTun, &capName, capPtr)
 			return "", evidence, rejected
 		}
 
@@ -110,18 +111,18 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, []launch.Ba
 			if cgExists {
 				capPtr = &cgCap
 			}
-			reject("firecracker", "ERR_LAUNCH_MISSING_CAPABILITY_FC_CGROUPS", &capName, capPtr)
+			reject("firecracker", schema.ReasonErrLaunchMissingCapabilityFcCgroups, &capName, capPtr)
 			return "", evidence, rejected
 		}
 
 		// Artifact validation
 		if len(storage) == 0 {
-			reject("firecracker", "ERR_LAUNCH_INVALID_FIRECRACKER_ARTIFACT_MODEL", nil, nil)
+			reject("firecracker", schema.ReasonErrLaunchInvalidFirecrackerArtifactModel, nil, nil)
 			return "", evidence, rejected
 		}
 		for _, s := range storage {
 			if s.Format == "qcow2" {
-				reject("firecracker", "ERR_LAUNCH_INVALID_STORAGE_FORMAT", nil, nil)
+				reject("firecracker", schema.ReasonErrLaunchInvalidStorageFormat, nil, nil)
 				return "", evidence, rejected
 			}
 		}
@@ -144,7 +145,7 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, []launch.Ba
 					}
 				}
 			} else {
-				reject(spec.RuntimeBackendPreference, "ERR_LAUNCH_BACKEND_NOT_SUPPORTED", nil, nil)
+				reject(spec.RuntimeBackendPreference, schema.ReasonErrLaunchBackendNotSupported, nil, nil)
 				return "", evidence, rejected
 			}
 		}
@@ -158,7 +159,7 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, []launch.Ba
 					if kvmExists {
 						capPtr = &kvmCap
 					}
-					reject("cloud_hypervisor", "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU", &capName, capPtr)
+					reject("cloud_hypervisor", schema.ReasonErrLaunchMissingCapabilityKvmQemu, &capName, capPtr)
 					continue
 				}
 
@@ -169,12 +170,12 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, []launch.Ba
 					if binExists {
 						capPtr = &binCap
 					}
-					reject("cloud_hypervisor", "ERR_LAUNCH_MISSING_CAPABILITY_CH_BINARY", &capName, capPtr)
+					reject("cloud_hypervisor", schema.ReasonErrLaunchMissingCapabilityChBinary, &capName, capPtr)
 					continue
 				}
 
 				if len(storage) == 0 {
-					reject("cloud_hypervisor", "ERR_LAUNCH_MISSING_ARTIFACT", nil, nil)
+					reject("cloud_hypervisor", schema.ReasonErrLaunchMissingArtifact, nil, nil)
 					continue
 				}
 				return "cloud_hypervisor", evidence, rejected
@@ -188,7 +189,7 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, []launch.Ba
 					if exists {
 						capPtr = &cap
 					}
-					reject("kvm_qemu", "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU", &capName, capPtr)
+					reject("kvm_qemu", schema.ReasonErrLaunchMissingCapabilityKvmQemu, &capName, capPtr)
 					continue
 				}
 
@@ -199,12 +200,12 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, []launch.Ba
 					if binExists {
 						capPtr = &binCap
 					}
-					reject("kvm_qemu", "ERR_LAUNCH_MISSING_CAPABILITY_QEMU_BINARY", &capName, capPtr)
+					reject("kvm_qemu", schema.ReasonErrLaunchMissingCapabilityQemuBinary, &capName, capPtr)
 					continue
 				}
 
 				if len(storage) == 0 {
-					reject("kvm_qemu", "ERR_LAUNCH_MISSING_ARTIFACT", nil, nil)
+					reject("kvm_qemu", schema.ReasonErrLaunchMissingArtifact, nil, nil)
 					continue
 				}
 				return "kvm_qemu", evidence, rejected

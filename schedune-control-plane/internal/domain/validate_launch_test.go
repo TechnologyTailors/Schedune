@@ -115,7 +115,7 @@ func TestValidateLaunch_FirecrackerHostReadyArtifactInvalid(t *testing.T) {
 
 	hasArtifactBlocker := false
 	for _, tr := range result.ValidationTrace {
-		if strings.Contains(tr, "ERR_LAUNCH_INVALID_FIRECRACKER_ARTIFACT_MODEL") {
+		if strings.Contains(tr, schema.ReasonErrLaunchInvalidFirecrackerArtifactModel) {
 			hasArtifactBlocker = true
 		}
 	}
@@ -157,7 +157,7 @@ func TestValidateLaunch_MissingKvmX86(t *testing.T) {
 
 	hasKvmBlocker := false
 	for _, code := range result.BlockingReasonCodes {
-		if code == "ERR_LAUNCH_BACKEND_NOT_SUPPORTED" {
+		if code == schema.ReasonErrLaunchBackendNotSupported {
 			hasKvmBlocker = true
 		}
 	}
@@ -166,7 +166,7 @@ func TestValidateLaunch_MissingKvmX86(t *testing.T) {
 		t.Errorf("expected ERR_LAUNCH_BACKEND_NOT_SUPPORTED blocker, got %v", result.BlockingReasonCodes)
 	}
 
-	if result.RejectedBackends["kvm_qemu"] != "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU (CAP_KVM_MISSING)" {
+	if result.RejectedBackends["kvm_qemu"] != schema.ReasonErrLaunchMissingCapabilityKvmQemu+" ("+schema.ReasonCapKvmMissing+")" {
 		t.Errorf("expected rejected backend kvm_qemu with CAP_KVM_MISSING, got %v", result.RejectedBackends)
 	}
 }
@@ -198,7 +198,7 @@ func TestValidateLaunch_ArchitectureMismatch(t *testing.T) {
 
 	hasArchBlocker := false
 	for _, code := range result.BlockingReasonCodes {
-		if code == "ERR_LAUNCH_ARCH_MISMATCH" {
+		if code == schema.ReasonErrLaunchArchMismatch {
 			hasArchBlocker = true
 		}
 	}
@@ -244,7 +244,7 @@ func TestValidateLaunch_FirecrackerPartialFail(t *testing.T) {
 
 	hasFcBlocker := false
 	for _, code := range result.BlockingReasonCodes {
-		if code == "ERR_LAUNCH_BACKEND_NOT_SUPPORTED" {
+		if code == schema.ReasonErrLaunchBackendNotSupported {
 			hasFcBlocker = true
 		}
 	}
@@ -253,7 +253,7 @@ func TestValidateLaunch_FirecrackerPartialFail(t *testing.T) {
 		t.Errorf("expected ERR_LAUNCH_BACKEND_NOT_SUPPORTED blocker, got %v", result.BlockingReasonCodes)
 	}
 
-	if result.RejectedBackends["firecracker"] != "ERR_LAUNCH_MISSING_CAPABILITY_FC_BINARY" {
+	if result.RejectedBackends["firecracker"] != schema.ReasonErrLaunchMissingCapabilityFcBinary {
 		t.Errorf("expected rejected backend firecracker, got %v", result.RejectedBackends)
 	}
 }
@@ -290,7 +290,7 @@ func TestValidateLaunch_KvmExistsNotOpenable(t *testing.T) {
 
 	hasKvmBlocker := false
 	for _, code := range result.BlockingReasonCodes {
-		if code == "ERR_LAUNCH_BACKEND_NOT_SUPPORTED" {
+		if code == schema.ReasonErrLaunchBackendNotSupported {
 			hasKvmBlocker = true
 		}
 	}
@@ -299,7 +299,7 @@ func TestValidateLaunch_KvmExistsNotOpenable(t *testing.T) {
 		t.Errorf("expected ERR_LAUNCH_BACKEND_NOT_SUPPORTED blocker, got %v", result.BlockingReasonCodes)
 	}
 
-	if result.RejectedBackends["kvm_qemu"] != "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU (CAP_KVM_NOT_OPENABLE_PERMS)" {
+	if result.RejectedBackends["kvm_qemu"] != schema.ReasonErrLaunchMissingCapabilityKvmQemu+" ("+schema.ReasonCapKvmNotOpenablePerms+")" {
 		t.Errorf("expected rejected backend kvm_qemu, got %v", result.RejectedBackends)
 	}
 
@@ -345,7 +345,7 @@ func TestValidateLaunch_MissingQemuBinary(t *testing.T) {
 
 	hasQemuBlocker := false
 	for _, code := range result.BlockingReasonCodes {
-		if code == "ERR_LAUNCH_BACKEND_NOT_SUPPORTED" {
+		if code == schema.ReasonErrLaunchBackendNotSupported {
 			hasQemuBlocker = true
 		}
 	}
@@ -354,13 +354,13 @@ func TestValidateLaunch_MissingQemuBinary(t *testing.T) {
 		t.Errorf("expected ERR_LAUNCH_BACKEND_NOT_SUPPORTED blocker, got %v", result.BlockingReasonCodes)
 	}
 
-	if result.RejectedBackends["kvm_qemu"] != "ERR_LAUNCH_MISSING_CAPABILITY_QEMU_BINARY (CAP_QEMU_BINARY_MISSING)" {
+	if result.RejectedBackends["kvm_qemu"] != schema.ReasonErrLaunchMissingCapabilityQemuBinary+" ("+schema.ReasonCapQemuBinaryMissing+")" {
 		t.Errorf("expected rejected backend kvm_qemu with CAP_QEMU_BINARY_MISSING error, got %v", result.RejectedBackends)
 	}
 
 	foundEvidence := false
 	for _, ev := range result.BackendRejectionEvidence {
-		if ev.Backend == "kvm_qemu" && ev.ReasonCode == "ERR_LAUNCH_MISSING_CAPABILITY_QEMU_BINARY" {
+		if ev.Backend == "kvm_qemu" && ev.ReasonCode == schema.ReasonErrLaunchMissingCapabilityQemuBinary {
 			if ev.CapabilityName != nil && *ev.CapabilityName == "qemu_binary_present" {
 				if ev.CapabilityReasonCode != nil && *ev.CapabilityReasonCode == "CAP_QEMU_BINARY_MISSING" {
 					foundEvidence = true
@@ -441,7 +441,7 @@ func TestValidateLaunch_TypedStoragePrecedence(t *testing.T) {
 
 	hasWarning := false
 	for _, w := range result.Warnings {
-		if w == "WARN_DEPRECATED_IMAGE_REFERENCE" {
+		if w == schema.ReasonWarnDeprecatedImageReference {
 			hasWarning = true
 		}
 	}
@@ -480,7 +480,7 @@ func TestValidateLaunch_FirecrackerQcow2Rejected(t *testing.T) {
 		t.Errorf("expected firecracker to reject qcow2, but it validated")
 	}
 
-	if reason, ok := result.RejectedBackends["firecracker"]; !ok || !strings.Contains(reason, "ERR_LAUNCH_INVALID_STORAGE_FORMAT") {
+	if reason, ok := result.RejectedBackends["firecracker"]; !ok || !strings.Contains(reason, schema.ReasonErrLaunchInvalidStorageFormat) {
 		t.Errorf("expected firecracker rejection with ERR_LAUNCH_INVALID_STORAGE_FORMAT, got %v", result.RejectedBackends)
 	}
 }
@@ -513,7 +513,7 @@ func TestValidateLaunch_MissingArtifact(t *testing.T) {
 		t.Errorf("expected failure due to missing artifact, but it validated")
 	}
 
-	if reason, ok := result.RejectedBackends["kvm_qemu"]; !ok || !strings.Contains(reason, "ERR_LAUNCH_MISSING_ARTIFACT") {
+	if reason, ok := result.RejectedBackends["kvm_qemu"]; !ok || !strings.Contains(reason, schema.ReasonErrLaunchMissingArtifact) {
 		t.Errorf("expected rejection ERR_LAUNCH_MISSING_ARTIFACT for kvm_qemu, got %v", result.RejectedBackends)
 	}
 }
@@ -554,7 +554,7 @@ func TestValidateLaunch_SecurityContextRequiresSeccomp(t *testing.T) {
 
 	hasSeccompBlocker := false
 	for _, code := range result.BlockingReasonCodes {
-		if code == "ERR_LAUNCH_MISSING_CAPABILITY_SECCOMP" {
+		if code == schema.ReasonErrLaunchMissingCapabilitySeccomp {
 			hasSeccompBlocker = true
 		}
 	}
