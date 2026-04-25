@@ -22,6 +22,11 @@ type SecurityContextSpec struct {
 	DropCapabilities []string `json:"drop_capabilities,omitempty"`
 }
 
+type RuntimeVersionRequirement struct {
+	MinimumVersion string `json:"minimum_version,omitempty"`
+	ExactVersion   string `json:"exact_version,omitempty"`
+}
+
 // LaunchSpec defines the runtime configuration to validate or dry-run.
 type LaunchSpec struct {
 	SchemaVersion string `json:"schema_version" binding:"required,eq=v1alpha1"`
@@ -42,11 +47,12 @@ type LaunchSpec struct {
 	Networks []NetworkAttachmentSpec `json:"networks,omitempty"`
 	Security *SecurityContextSpec    `json:"security,omitempty"`
 
-	Vcpu                     int    `json:"vcpu" binding:"required,gt=0"`
-	MemoryMB                 int64  `json:"memory_mb" binding:"required,gt=0"`
-	LaunchMode               string `json:"launch_mode" binding:"required,oneof=Validate DryRun Execute"`
-	RuntimeBackendPreference string `json:"runtime_backend_preference,omitempty"`
-	AllowBackendFallback     bool   `json:"allow_backend_fallback,omitempty"`
+	Vcpu                     int                        `json:"vcpu" binding:"required,gt=0"`
+	MemoryMB                 int64                      `json:"memory_mb" binding:"required,gt=0"`
+	LaunchMode               string                     `json:"launch_mode" binding:"required,oneof=Validate DryRun Execute"`
+	RuntimeBackendPreference string                     `json:"runtime_backend_preference,omitempty"`
+	AllowBackendFallback     bool                       `json:"allow_backend_fallback,omitempty"`
+	RuntimeVersion           *RuntimeVersionRequirement `json:"runtime_version,omitempty"`
 }
 
 // LaunchValidationResult explains exactly what host-level blockers exist.

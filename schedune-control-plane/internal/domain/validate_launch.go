@@ -82,6 +82,9 @@ func ValidateLaunch(spec launch.LaunchSpec, node NodeRecord) launch.LaunchValida
 
 	// 3. Layer 4: Setup context for preparation phase validation
 	result.ValidationTrace = append(result.ValidationTrace, "Passed: Selected backend "+selectedBackend)
+	if spec.RuntimeVersion != nil && (spec.RuntimeVersion.MinimumVersion != "" || spec.RuntimeVersion.ExactVersion != "") {
+		result.ValidationTrace = append(result.ValidationTrace, "Passed: Runtime version requirement satisfied by "+selectedBackend)
+	}
 
 	result.ExplainabilityText = "Node is fully capable of executing this launch spec."
 
@@ -143,6 +146,18 @@ func generateRemediationHints(result launch.LaunchValidationResult) map[string]s
 		}
 		if backend == schema.BackendFirecracker && strings.Contains(reason, schema.ReasonCapKvmMissing) {
 			hints["firecracker_kvm"] = "Enable KVM in BIOS or load kvm kernel modules."
+		}
+		if strings.Contains(reason, schema.ReasonErrLaunchRuntimeVersionUnknown) {
+			hints["runtime_version_unknown"] = "Wait for the agent to observe the runtime version, or ensure the binary is correctly installed."
+		}
+		if strings.Contains(reason, schema.ReasonErrLaunchRuntimeVersionUnparseable) {
+			hints["runtime_version_unparseable"] = "Ensure the requested version is a valid semver-like format, or check host agent logs."
+		}
+		if strings.Contains(reason, schema.ReasonErrLaunchRuntimeVersionTooOld) {
+			hints["runtime_version_too_old"] = "Upgrade the runtime binary on the host to meet the minimum version requirement."
+		}
+		if strings.Contains(reason, schema.ReasonErrLaunchRuntimeVersionMismatch) {
+			hints["runtime_version_mismatch"] = "Install the exact runtime binary version requested on the host."
 		}
 		if strings.Contains(reason, schema.ReasonErrLaunchMissingArtifact) {
 			hints["artifact_missing"] = "Ensure ImageReference is provided for the workload."
