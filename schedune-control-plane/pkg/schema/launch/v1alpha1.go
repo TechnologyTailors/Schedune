@@ -64,6 +64,15 @@ type LaunchValidationResult struct {
 	RemediationHints     map[string]string `json:"remediation_hints,omitempty"`
 }
 
+// LaunchDryRunResult expands on validation to include the generated configuration
+// without executing it on the host.
+type LaunchDryRunResult struct {
+	Validation            LaunchValidationResult `json:"validation"`
+	PreparedLaunch        *PreparedLaunch        `json:"prepared_launch,omitempty"`
+	PreparationReasonCode *string                `json:"preparation_reason_code,omitempty"`
+	PreparationError      *string                `json:"preparation_error,omitempty"`
+}
+
 type LaunchState string
 
 const (
