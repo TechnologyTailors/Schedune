@@ -5,8 +5,19 @@
   "node_id": "PUT_NODE_ID_HERE",
   "runtime_class": "MicroVM",
   "architecture": "x86_64",
-  "kernel_image_path": "/tmp/vmlinux",
-  "rootfs_path": "/tmp/rootfs.ext4",
+  "storage": [
+    {
+      "host_path": "/tmp/rootfs.ext4",
+      "format": "ext4",
+      "mount_point": "/"
+    },
+    {
+      "host_path": "/tmp/vmlinux",
+      "format": "raw",
+      "read_only": true,
+      "mount_point": "/boot/vmlinux"
+    }
+  ],
   "vcpu": 2,
   "memory_mb": 512,
   "launch_mode": "DryRun"
