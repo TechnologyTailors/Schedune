@@ -1,8 +1,8 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "f0631954-8e0d-4bae-b80e-468050838f3c",
-  "timestamp_sec": 1777084685,
+  "collection_id": "459828b9-4a26-4052-a29f-3fdc4ddc374a",
+  "timestamp_sec": 1777085950,
   "node_id": "x86-no-seccomp-01",
   "compatibility": {
     "class": "X86HoldingPool",
@@ -31,6 +31,14 @@
       "state": "Supported",
       "provenance": "Observed",
       "reason_code": "CAP_KVM_OPENABLE",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "qemu_binary_present",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_QEMU_BINARY_PRESENT",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     },
