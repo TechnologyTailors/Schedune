@@ -252,7 +252,7 @@ func TestValidateLaunch_FirecrackerPartialFail(t *testing.T) {
 		t.Errorf("expected ERR_LAUNCH_BACKEND_NOT_SUPPORTED blocker, got %v", result.BlockingReasonCodes)
 	}
 
-	if result.RejectedBackends["firecracker"] != "CAP_FIRECRACKER_PREREQS_MISSING" {
+	if result.RejectedBackends["firecracker"] != "ERR_LAUNCH_MISSING_CAPABILITY_FC_BINARY" {
 		t.Errorf("expected rejected backend firecracker, got %v", result.RejectedBackends)
 	}
 }

@@ -343,24 +343,14 @@ mod tests {
             reason_codes: vec!["CLASS_ARM_PROD_READY".to_string()],
         };
 
-        let capabilities = vec![
-            NodeCapability {
-                feature: "kvm_vm_launch".to_string(),
-                state: SupportState::Supported,
-                provenance: Provenance::Observed,
-                reason_code: Some("KVM_OPENABLE".to_string()),
-                observed_at_sec: 1776978000,
-                stale_after_sec: Some(1776978300),
-            },
-            NodeCapability {
-                feature: "firecracker_launch".to_string(),
-                state: SupportState::Unavailable,
-                provenance: Provenance::Observed,
-                reason_code: Some("FC_PREREQS_MISSING".to_string()),
-                observed_at_sec: 1776978000,
-                stale_after_sec: Some(1776978300),
-            },
-        ];
+        let capabilities = vec![NodeCapability {
+            feature: "kvm_vm_launch".to_string(),
+            state: SupportState::Supported,
+            provenance: Provenance::Observed,
+            reason_code: Some("KVM_OPENABLE".to_string()),
+            observed_at_sec: 1776978000,
+            stale_after_sec: Some(1776978300),
+        }];
 
         let envelope = SchedulerEnvelope::new(
             "arm-fc-fail-01".to_string(),
@@ -473,14 +463,6 @@ mod tests {
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
             },
-            NodeCapability {
-                feature: "cloud_hypervisor_launch".to_string(),
-                state: SupportState::Supported,
-                provenance: Provenance::Inferred,
-                reason_code: Some("CAP_CLOUDHYPERVISOR_READY".to_string()),
-                observed_at_sec: 1776978000,
-                stale_after_sec: Some(1776978300),
-            },
         ];
         let envelope = SchedulerEnvelope::new(
             "arm-ch-01".to_string(),
@@ -530,14 +512,6 @@ mod tests {
                 state: SupportState::Unsupported,
                 provenance: Provenance::Observed,
                 reason_code: Some("CAP_CLOUDHYPERVISOR_BINARY_MISSING".to_string()),
-                observed_at_sec: 1776978000,
-                stale_after_sec: Some(1776978300),
-            },
-            NodeCapability {
-                feature: "cloud_hypervisor_launch".to_string(),
-                state: SupportState::Unavailable,
-                provenance: Provenance::Inferred,
-                reason_code: Some("CAP_CLOUDHYPERVISOR_PREREQS_MISSING".to_string()),
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
             },
@@ -609,14 +583,6 @@ mod tests {
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
             },
-            NodeCapability {
-                feature: "firecracker_launch".to_string(),
-                state: SupportState::Supported,
-                provenance: Provenance::Inferred,
-                reason_code: Some("CAP_FIRECRACKER_READY".to_string()),
-                observed_at_sec: 1776978000,
-                stale_after_sec: Some(1776978300),
-            },
         ];
         let envelope = SchedulerEnvelope::new(
             "x86-fc-01".to_string(),
@@ -685,14 +651,6 @@ mod tests {
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
             },
-            NodeCapability {
-                feature: "firecracker_launch".to_string(),
-                state: SupportState::Unavailable,
-                provenance: Provenance::Inferred,
-                reason_code: Some("CAP_FIRECRACKER_PREREQS_MISSING".to_string()),
-                observed_at_sec: 1776978000,
-                stale_after_sec: Some(1776978300),
-            },
         ];
         let envelope = SchedulerEnvelope::new(
             "x86-fc-fail-tun".to_string(),
@@ -758,14 +716,6 @@ mod tests {
                 state: SupportState::Unsupported,
                 provenance: Provenance::Observed,
                 reason_code: Some("CAP_FIRECRACKER_CGROUPS_MISSING".to_string()),
-                observed_at_sec: 1776978000,
-                stale_after_sec: Some(1776978300),
-            },
-            NodeCapability {
-                feature: "firecracker_launch".to_string(),
-                state: SupportState::Unavailable,
-                provenance: Provenance::Inferred,
-                reason_code: Some("CAP_FIRECRACKER_PREREQS_MISSING".to_string()),
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
             },

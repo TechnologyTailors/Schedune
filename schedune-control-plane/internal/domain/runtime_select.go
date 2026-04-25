@@ -45,9 +45,43 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, map[string]
 
 	if spec.RuntimeClass == "MicroVM" {
 		// Firecracker path
-		cap, exists := node.Capabilities["firecracker_launch"]
-		if !exists || cap.State != "Supported" || cap.IsStale {
-			rejected["firecracker"] = "CAP_FIRECRACKER_PREREQS_MISSING"
+		kvmCap, kvmExists := node.Capabilities["kvm_vm_launch"]
+		if !kvmExists || kvmCap.State != "Supported" || kvmCap.IsStale {
+			reason := "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU"
+			if kvmExists && kvmCap.ReasonCode != "" {
+				reason += " (" + kvmCap.ReasonCode + ")"
+			}
+			rejected["firecracker"] = reason
+			return "", rejected
+		}
+
+		binCap, binExists := node.Capabilities["firecracker_binary_present"]
+		if !binExists || binCap.State != "Supported" || binCap.IsStale {
+			reason := "ERR_LAUNCH_MISSING_CAPABILITY_FC_BINARY"
+			if binExists && binCap.ReasonCode != "" {
+				reason += " (" + binCap.ReasonCode + ")"
+			}
+			rejected["firecracker"] = reason
+			return "", rejected
+		}
+
+		tunCap, tunExists := node.Capabilities["firecracker_tun_ready"]
+		if !tunExists || tunCap.State != "Supported" || tunCap.IsStale {
+			reason := "ERR_LAUNCH_MISSING_CAPABILITY_FC_TUN"
+			if tunExists && tunCap.ReasonCode != "" {
+				reason += " (" + tunCap.ReasonCode + ")"
+			}
+			rejected["firecracker"] = reason
+			return "", rejected
+		}
+
+		cgCap, cgExists := node.Capabilities["firecracker_cgroups_ready"]
+		if !cgExists || cgCap.State != "Supported" || cgCap.IsStale {
+			reason := "ERR_LAUNCH_MISSING_CAPABILITY_FC_CGROUPS"
+			if cgExists && cgCap.ReasonCode != "" {
+				reason += " (" + cgCap.ReasonCode + ")"
+			}
+			rejected["firecracker"] = reason
 			return "", rejected
 		}
 
@@ -88,15 +122,26 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, map[string]
 
 		for _, backend := range backends {
 			if backend == "cloud_hypervisor" {
-				cap, exists := node.Capabilities["cloud_hypervisor_launch"]
-				if !exists || cap.State != "Supported" || cap.IsStale {
-					reason := "ERR_LAUNCH_MISSING_CAPABILITY_CLOUDHYPERVISOR"
-					if exists && cap.ReasonCode != "" {
-						reason += " (" + cap.ReasonCode + ")"
+				kvmCap, kvmExists := node.Capabilities["kvm_vm_launch"]
+				if !kvmExists || kvmCap.State != "Supported" || kvmCap.IsStale {
+					reason := "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU"
+					if kvmExists && kvmCap.ReasonCode != "" {
+						reason += " (" + kvmCap.ReasonCode + ")"
 					}
 					rejected["cloud_hypervisor"] = reason
 					continue
 				}
+
+				binCap, binExists := node.Capabilities["cloud_hypervisor_binary_present"]
+				if !binExists || binCap.State != "Supported" || binCap.IsStale {
+					reason := "ERR_LAUNCH_MISSING_CAPABILITY_CH_BINARY"
+					if binExists && binCap.ReasonCode != "" {
+						reason += " (" + binCap.ReasonCode + ")"
+					}
+					rejected["cloud_hypervisor"] = reason
+					continue
+				}
+
 				if len(storage) == 0 {
 					rejected["cloud_hypervisor"] = "ERR_LAUNCH_MISSING_ARTIFACT"
 					continue
