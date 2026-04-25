@@ -15,16 +15,13 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version-file: schedune-control-plane/go.mod
           cache-dependency-path: schedune-control-plane/go.sum
 
       - name: Set up Rust
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          components: clippy, rustfmt
-          override: true
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy rustfmt
+          rustup default stable
 
       - name: Set up Python
         uses: actions/setup-python@v5
