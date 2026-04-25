@@ -5,7 +5,12 @@
   "node_id": "PUT_NODE_ID_HERE",
   "runtime_class": "VirtualMachine",
   "architecture": "x86_64",
-  "image_reference": "/tmp/dummy.qcow2",
+  "storage": [
+    {
+      "host_path": "/tmp/dummy.qcow2",
+      "format": "qcow2"
+    }
+  ],
   "vcpu": 2,
   "memory_mb": 1024,
   "launch_mode": "Execute",
