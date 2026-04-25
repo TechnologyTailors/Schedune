@@ -1,8 +1,8 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "f8b42e3c-abae-4a08-ad69-7d87bc03e7cc",
-  "timestamp_sec": 1777085950,
+  "collection_id": "dc387c06-2c1d-49d7-adba-b940a47e1f2d",
+  "timestamp_sec": 1777086729,
   "node_id": "x86-no-qemu-01",
   "compatibility": {
     "class": "X86HoldingPool",

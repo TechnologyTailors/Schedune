@@ -72,6 +72,7 @@ impl SystemCollector {
                 } else {
                     Some("CAP_KVM_MISSING".to_string())
                 },
+                version: None,
                 observed_at_sec: now_sec,
                 stale_after_sec: Some(default_stale_after),
             },
@@ -88,6 +89,7 @@ impl SystemCollector {
                 } else {
                     Some("CAP_TPM_MISSING".to_string())
                 },
+                version: None,
                 observed_at_sec: now_sec,
                 stale_after_sec: Some(default_stale_after),
             },
@@ -96,6 +98,7 @@ impl SystemCollector {
                 state: SupportState::Unknown,
                 provenance: Provenance::Unavailable("PCIe scan not implemented".to_string()),
                 reason_code: None,
+                version: None,
                 observed_at_sec: now_sec,
                 stale_after_sec: Some(default_stale_after),
             },

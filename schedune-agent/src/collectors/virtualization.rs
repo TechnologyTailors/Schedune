@@ -2,16 +2,40 @@ use crate::capabilities::{NodeCapability, NodeConstraint, Provenance, SupportSta
 use crate::scheduler_contract::CollectorStatus;
 use std::fs::OpenOptions;
 use std::path::Path;
+use std::process::{Command, Stdio};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct VirtualizationCollector;
 
 impl VirtualizationCollector {
+    fn get_binary_version(path: &str) -> Option<String> {
+        let output = Command::new("timeout")
+            .arg("1s")
+            .arg(path)
+            .arg("--version")
+            .stdin(Stdio::null())
+            .output()
+            .ok()?;
+
+        if output.status.success() {
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let first_line = stdout.lines().next()?.trim();
+            if first_line.is_empty() {
+                None
+            } else {
+                Some(first_line.chars().take(128).collect()) // truncate to reasonable length
+            }
+        } else {
+            None
+        }
+    }
+
     fn build_cap(
         feature: &str,
         state: SupportState,
         provenance: Provenance,
         reason_code: &str,
+        version: Option<String>,
         now_sec: u64,
         stale_after_sec: u64,
     ) -> NodeCapability {
@@ -20,6 +44,7 @@ impl VirtualizationCollector {
             state,
             provenance,
             reason_code: Some(reason_code.to_string()),
+            version,
             observed_at_sec: now_sec,
             stale_after_sec: Some(stale_after_sec),
         }
@@ -58,6 +83,7 @@ impl VirtualizationCollector {
             kvm_state,
             Provenance::Observed,
             kvm_reason,
+            None,
             now_sec,
             default_stale_after,
         ));
@@ -77,6 +103,17 @@ impl VirtualizationCollector {
             false
         };
 
+        let qemu_version = if qemu_binary_present {
+            let path = if Path::new(&format!("/usr/bin/{}", qemu_binary_name)).exists() {
+                format!("/usr/bin/{}", qemu_binary_name)
+            } else {
+                format!("/usr/local/bin/{}", qemu_binary_name)
+            };
+            Self::get_binary_version(&path)
+        } else {
+            None
+        };
+
         let (qemu_bin_state, qemu_bin_reason) = if qemu_binary_present {
             (SupportState::Supported, "CAP_QEMU_BINARY_PRESENT")
         } else if qemu_binary_name.is_empty() {
@@ -90,6 +127,7 @@ impl VirtualizationCollector {
             qemu_bin_state,
             Provenance::Observed,
             qemu_bin_reason,
+            qemu_version,
             now_sec,
             default_stale_after,
         ));
@@ -98,6 +136,17 @@ impl VirtualizationCollector {
             || Path::new("/usr/local/bin/cloud-hypervisor").exists();
         let fc_binary_present = Path::new("/usr/bin/firecracker").exists()
             || Path::new("/usr/local/bin/firecracker").exists();
+
+        let ch_version = if ch_binary_present {
+            let path = if Path::new("/usr/bin/cloud-hypervisor").exists() {
+                "/usr/bin/cloud-hypervisor"
+            } else {
+                "/usr/local/bin/cloud-hypervisor"
+            };
+            Self::get_binary_version(path)
+        } else {
+            None
+        };
 
         let (ch_bin_state, ch_bin_reason) = if ch_binary_present {
             (
@@ -116,9 +165,21 @@ impl VirtualizationCollector {
             ch_bin_state,
             Provenance::Observed,
             ch_bin_reason,
+            ch_version,
             now_sec,
             default_stale_after,
         ));
+
+        let fc_version = if fc_binary_present {
+            let path = if Path::new("/usr/bin/firecracker").exists() {
+                "/usr/bin/firecracker"
+            } else {
+                "/usr/local/bin/firecracker"
+            };
+            Self::get_binary_version(path)
+        } else {
+            None
+        };
 
         let (fc_bin_state, fc_bin_reason) = if fc_binary_present {
             (SupportState::Supported, "CAP_FIRECRACKER_BINARY_PRESENT")
@@ -131,6 +192,7 @@ impl VirtualizationCollector {
             fc_bin_state,
             Provenance::Observed,
             fc_bin_reason,
+            fc_version,
             now_sec,
             default_stale_after,
         ));
@@ -150,6 +212,7 @@ impl VirtualizationCollector {
             fc_tun_state,
             Provenance::Observed,
             fc_tun_reason,
+            None,
             now_sec,
             default_stale_after,
         ));
@@ -165,6 +228,7 @@ impl VirtualizationCollector {
             fc_cg_state,
             Provenance::Observed,
             fc_cg_reason,
+            None,
             now_sec,
             default_stale_after,
         ));
@@ -182,6 +246,7 @@ impl VirtualizationCollector {
             seccomp_state,
             Provenance::Observed,
             seccomp_reason,
+            None,
             now_sec,
             default_stale_after,
         ));
@@ -200,6 +265,7 @@ impl VirtualizationCollector {
             ns_state,
             Provenance::Observed,
             ns_reason,
+            None,
             now_sec,
             default_stale_after,
         ));
