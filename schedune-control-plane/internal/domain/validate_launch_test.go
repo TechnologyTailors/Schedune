@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
 )
 
@@ -165,7 +166,7 @@ func TestValidateLaunch_MissingKvmX86(t *testing.T) {
 		t.Errorf("expected ERR_LAUNCH_BACKEND_NOT_SUPPORTED blocker, got %v", result.BlockingReasonCodes)
 	}
 
-	if result.RejectedBackends["kvm_qemu"] != "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU (KVM_MISSING)" {
+	if result.RejectedBackends["kvm_qemu"] != "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU (CAP_KVM_MISSING)" {
 		t.Errorf("expected rejected backend kvm_qemu with CAP_KVM_MISSING, got %v", result.RejectedBackends)
 	}
 }
@@ -298,7 +299,7 @@ func TestValidateLaunch_KvmExistsNotOpenable(t *testing.T) {
 		t.Errorf("expected ERR_LAUNCH_BACKEND_NOT_SUPPORTED blocker, got %v", result.BlockingReasonCodes)
 	}
 
-	if result.RejectedBackends["kvm_qemu"] != "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU (KVM_NOT_OPENABLE_PERMS)" {
+	if result.RejectedBackends["kvm_qemu"] != "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU (CAP_KVM_NOT_OPENABLE_PERMS)" {
 		t.Errorf("expected rejected backend kvm_qemu, got %v", result.RejectedBackends)
 	}
 
@@ -307,8 +308,8 @@ func TestValidateLaunch_KvmExistsNotOpenable(t *testing.T) {
 	for _, tr := range result.ValidationTrace {
 		traceStr += tr + " "
 	}
-	if !strings.Contains(traceStr, "KVM_NOT_OPENABLE_PERMS") {
-		t.Errorf("expected trace to contain KVM_NOT_OPENABLE_PERMS, got %s", traceStr)
+	if !strings.Contains(traceStr, "CAP_KVM_NOT_OPENABLE_PERMS") {
+		t.Errorf("expected trace to contain CAP_KVM_NOT_OPENABLE_PERMS, got %s", traceStr)
 	}
 }
 
@@ -604,5 +605,75 @@ func TestValidateLaunch_SecurityContextRequiresNamespaces(t *testing.T) {
 	result := ValidateLaunch(spec, node)
 	if !result.IsValid {
 		t.Errorf("expected validation to pass even when namespaces capability is missing, because dropping capabilities does not require full namespace support, got false: %v", result.BlockingReasonCodes)
+	}
+}
+
+func TestValidateLaunch_ReasonCodeRegistryHygiene(t *testing.T) {
+	// Pick a few representative fixtures that test different validation failure modes
+	fixtures := []string{
+		"cloudhypervisor_binary_missing.json",
+		"firecracker_partial_fail.json",
+		"missing_kvm_x86.json",
+		"missing_qemu_binary.json",
+		"healthy_unsupported_compatibility.json",
+		"healthy_x86_kvm_openable.json",
+		"stale_telemetry.json",
+	}
+
+	for _, fname := range fixtures {
+		env := readFixture(t, fname)
+		node := ProjectEnvelope(env)
+
+		spec := launch.LaunchSpec{
+			SchemaVersion: "v1alpha1",
+			WorkloadID:    "wl-test",
+			TenantID:      "tenant-1",
+			NodeID:        node.ID,
+			RuntimeClass:  "VirtualMachine",
+			Architecture:  "x86_64",
+			LaunchMode:    "DryRun",
+			Vcpu:          2,
+			MemoryMB:      1024,
+		}
+
+		res := ValidateLaunch(spec, node)
+
+		for _, code := range res.BlockingReasonCodes {
+			if !schema.IsKnownReasonCode(code) {
+				t.Errorf("fixture %s produced unregistered blocking reason code: %q", fname, code)
+			}
+		}
+
+		for _, code := range res.Warnings {
+			if !schema.IsKnownReasonCode(code) {
+				t.Errorf("fixture %s produced unregistered warning reason code: %q", fname, code)
+			}
+		}
+
+		for _, ev := range res.BackendRejectionEvidence {
+			if !schema.IsKnownReasonCode(ev.ReasonCode) {
+				t.Errorf("fixture %s produced unregistered structured reason code: %q", fname, ev.ReasonCode)
+			}
+			if ev.CapabilityReasonCode != nil && *ev.CapabilityReasonCode != "" {
+				if !schema.IsKnownReasonCode(*ev.CapabilityReasonCode) {
+					t.Errorf("fixture %s produced unregistered structured capability reason code: %q", fname, *ev.CapabilityReasonCode)
+				}
+			}
+		}
+
+		for _, reason := range res.RejectedBackends {
+			if reason == "" {
+				t.Errorf("fixture %s produced an empty rejected backend reason", fname)
+			}
+			words := strings.Split(reason, " ")
+			for _, w := range words {
+				w = strings.Trim(w, "()[]")
+				if strings.HasPrefix(w, "ERR_") || strings.HasPrefix(w, "CAP_") {
+					if !schema.IsKnownReasonCode(w) {
+						t.Errorf("fixture %s produced unregistered backend rejection code in message %q: %q", fname, reason, w)
+					}
+				}
+			}
+		}
 	}
 }

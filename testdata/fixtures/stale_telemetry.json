@@ -1,7 +1,7 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "6b7ba1b9-7739-4549-a116-1061f08e0028",
+  "collection_id": "11111111-2222-3333-4444-00000000083b",
   "timestamp_sec": 1000000300,
   "node_id": "stale-arm-01",
   "compatibility": {
@@ -30,7 +30,7 @@
       "feature": "kvm_vm_launch",
       "state": "Supported",
       "provenance": "Observed",
-      "reason_code": "KVM_OPENABLE",
+      "reason_code": "CAP_KVM_OPENABLE",
       "observed_at_sec": 1000000000,
       "stale_after_sec": 1000000300
     },

@@ -112,10 +112,13 @@ const (
 	ReasonErrTermSignalFailed       = "ERR_TERM_SIGNAL_FAILED"
 
 	// Readiness / Reconciliation
-	ReasonErrReadyProbeFailed          = "ERR_READY_PROBE_FAILED"
-	ReasonErrReadyTimeout              = "ERR_READY_TIMEOUT"
-	ReasonErrReconcileProcessMissing   = "ERR_RECONCILE_PROCESS_MISSING"
-	ReasonErrReconcileStatusUnreadable = "ERR_RECONCILE_STATUS_UNREADABLE"
+	ReasonErrReadyProbeFailed                  = "ERR_READY_PROBE_FAILED"
+	ReasonErrReadyTimeout                      = "ERR_READY_TIMEOUT"
+	ReasonErrReadyQemuSocketTimeout            = "ERR_READY_QEMU_SOCKET_TIMEOUT"
+	ReasonErrReadyCloudHypervisorSocketTimeout = "ERR_READY_CLOUDHYPERVISOR_SOCKET_TIMEOUT"
+	ReasonErrReadyBackendUnsupported           = "ERR_READY_BACKEND_UNSUPPORTED"
+	ReasonErrReconcileProcessMissing           = "ERR_RECONCILE_PROCESS_MISSING"
+	ReasonErrReconcileStatusUnreadable         = "ERR_RECONCILE_STATUS_UNREADABLE"
 
 	// Recovery
 	ReasonErrRecoveryExecutionMissing       = "ERR_RECOVERY_EXECUTION_MISSING"
@@ -124,4 +127,9 @@ const (
 	ReasonErrRecoveryStaleHandle            = "ERR_RECOVERY_STALE_HANDLE"
 	ReasonRecoveryConfirmed                 = "RECOVERY_CONFIRMED"
 	ReasonRecoveryTerminatedMissing         = "RECOVERY_TERMINATED_MISSING"
+
+	// Orphans
+	ReasonErrOrphanPossibleScheduneProcess = "ERR_ORPHAN_POSSIBLE_SCHEDUNE_PROCESS"
+	ReasonErrOrphanStaleArtifactState      = "ERR_ORPHAN_STALE_ARTIFACT_STATE"
+	ReasonErrOrphanUnmanagedBackendProcess = "ERR_ORPHAN_UNMANAGED_BACKEND_PROCESS"
 )

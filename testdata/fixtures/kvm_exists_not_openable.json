@@ -1,7 +1,7 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "bc4a69ee-b411-417e-bafb-8c34055a6f1b",
+  "collection_id": "11111111-2222-3333-4444-000000000b8a",
   "timestamp_sec": 1777086729,
   "node_id": "x86-perms-fail-01",
   "compatibility": {
@@ -30,7 +30,7 @@
       "feature": "kvm_vm_launch",
       "state": "Unavailable",
       "provenance": "Observed",
-      "reason_code": "KVM_NOT_OPENABLE_PERMS",
+      "reason_code": "CAP_KVM_NOT_OPENABLE_PERMS",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     },
