@@ -51,17 +51,28 @@ type LaunchSpec struct {
 
 // LaunchValidationResult explains exactly what host-level blockers exist.
 type LaunchValidationResult struct {
-	IsValid              bool              `json:"is_valid"`
-	SelectedBackend      string            `json:"selected_backend"`
-	RejectedBackends     map[string]string `json:"rejected_backends"` // Backend -> Reason code
-	BlockingReasonCodes  []string          `json:"blocking_reason_codes"`
-	Warnings             []string          `json:"warnings"`
-	RequiredHostFeatures []string          `json:"required_host_features"`
-	MissingHostFeatures  []string          `json:"missing_host_features"`
-	RecommendedRuntime   string            `json:"recommended_runtime"`
-	ExplainabilityText   string            `json:"explainability_text"`
-	ValidationTrace      []string          `json:"validation_trace"`
-	RemediationHints     map[string]string `json:"remediation_hints,omitempty"`
+	IsValid                  bool                       `json:"is_valid"`
+	SelectedBackend          string                     `json:"selected_backend"`
+	RejectedBackends         map[string]string          `json:"rejected_backends"` // Backend -> Reason code
+	BackendRejectionEvidence []BackendRejectionEvidence `json:"backend_rejection_evidence,omitempty"`
+	BlockingReasonCodes      []string                   `json:"blocking_reason_codes"`
+	Warnings                 []string                   `json:"warnings"`
+	RequiredHostFeatures     []string                   `json:"required_host_features"`
+	MissingHostFeatures      []string                   `json:"missing_host_features"`
+	RecommendedRuntime       string                     `json:"recommended_runtime"`
+	ExplainabilityText       string                     `json:"explainability_text"`
+	ValidationTrace          []string                   `json:"validation_trace"`
+	RemediationHints         map[string]string          `json:"remediation_hints,omitempty"`
+}
+
+type BackendRejectionEvidence struct {
+	Backend              string  `json:"backend"`
+	ReasonCode           string  `json:"reason_code"`
+	CapabilityName       *string `json:"capability_name,omitempty"`
+	CapabilityState      *string `json:"capability_state,omitempty"`
+	CapabilityReasonCode *string `json:"capability_reason_code,omitempty"`
+	CapabilityStale      *bool   `json:"capability_stale,omitempty"`
+	Message              *string `json:"message,omitempty"`
 }
 
 // LaunchDryRunResult expands on validation to include the generated configuration

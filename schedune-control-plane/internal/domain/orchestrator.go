@@ -102,7 +102,7 @@ func (o *LaunchOrchestrator) prepareAndRecord(spec launch.LaunchSpec, rec *launc
 	// We can run ValidateLaunch again or assume the backend is already in ValidationTrace,
 	// but it's cleaner to query the backend from the node + spec using the selector.
 	node, _ := o.nodeStore.GetNode(spec.NodeID)
-	selectedBackend, _ := SelectBackend(spec, node)
+	selectedBackend, _, _ := SelectBackend(spec, node)
 
 	exec, err := o.resolver.Resolve(selectedBackend)
 	if err != nil {
