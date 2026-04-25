@@ -159,7 +159,7 @@ func (h *LaunchHandler) InspectReadiness(c *gin.Context) {
 	if rec.StartedAtSec != nil {
 		deadlineSec = *rec.StartedAtSec + 15
 	}
-	
+
 	var lastObsSec int64 = 0
 	if rec.ReadinessSignal != nil {
 		lastObsSec = rec.ReadinessSignal.LastObservedAtSec

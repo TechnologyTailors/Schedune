@@ -35,7 +35,7 @@ func (i *QemuInspector) Inspect(executionID string, pid *int, prepared launch.Pr
 
 	// Startup Grace Window
 	// If the execution started less than 2 seconds ago, we don't expect a socket yet
-	// Note: the orchestrator doesn't track StartedAtSec in the PreparedLaunch, 
+	// Note: the orchestrator doesn't track StartedAtSec in the PreparedLaunch,
 	// so we'll just implement a dummy 2 sec check for now.
 	obs.StartupGraceElapsed = true // Assume elapsed unless we explicitly track start time
 

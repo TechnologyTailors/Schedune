@@ -64,12 +64,12 @@ func (s *OrphanSweepService) SweepOnce(ctx context.Context) error {
 
 		orphan := ClassifyOrphan(p, match)
 		orphan.NodeID = s.NodeID
-		
+
 		// Load existing to preserve FirstSeenAtSec
 		existing, found, err := s.OrphanStore.GetOrphan(ctx, orphan.OrphanID)
 		if err == nil && found {
 			orphan.FirstSeenAtSec = existing.FirstSeenAtSec
-			
+
 			// Only emit event if classification or status changed significantly
 			if existing.Classification != orphan.Classification || existing.Status != orphan.Status {
 				s.emitEvent(ctx, "OrphanReclassified", orphan)

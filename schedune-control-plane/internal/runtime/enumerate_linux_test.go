@@ -10,7 +10,7 @@ func TestFingerprintProcess(t *testing.T) {
 	args := []string{"--api-socket", "/run/schedune/exe-123/ch.sock", "--memory", "size=1024M"}
 
 	fp1 := FingerprintProcess(backend, command, args)
-	
+
 	// Same command, should produce same fingerprint
 	fp2 := FingerprintProcess(backend, command, args)
 

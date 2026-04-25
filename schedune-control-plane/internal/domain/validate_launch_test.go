@@ -205,6 +205,10 @@ func TestValidateLaunch_ArchitectureMismatch(t *testing.T) {
 	if !hasArchBlocker {
 		t.Errorf("expected ERR_LAUNCH_ARCH_MISMATCH blocker, got %v", result.BlockingReasonCodes)
 	}
+
+	if hint, ok := result.RemediationHints["architecture"]; !ok || !strings.Contains(hint, "matches the node") {
+		t.Errorf("expected remediation hint for architecture, got %v", result.RemediationHints)
+	}
 }
 
 func TestValidateLaunch_FirecrackerPartialFail(t *testing.T) {
@@ -351,5 +355,9 @@ func TestValidateLaunch_MissingQemuBinary(t *testing.T) {
 
 	if result.RejectedBackends["kvm_qemu"] != "ERR_LAUNCH_MISSING_CAPABILITY_QEMU_BINARY (CAP_QEMU_BINARY_MISSING)" {
 		t.Errorf("expected rejected backend kvm_qemu with CAP_QEMU_BINARY_MISSING error, got %v", result.RejectedBackends)
+	}
+
+	if hint, ok := result.RemediationHints["kvm_qemu_binary"]; !ok || !strings.Contains(hint, "Install qemu-system") {
+		t.Errorf("expected remediation hint for missing qemu binary, got %v", result.RemediationHints)
 	}
 }

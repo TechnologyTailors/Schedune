@@ -2,6 +2,8 @@ package domain
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
 )
 
@@ -15,6 +17,7 @@ func ValidateLaunch(spec launch.LaunchSpec, node NodeRecord) launch.LaunchValida
 		RequiredHostFeatures: []string{},
 		MissingHostFeatures:  []string{},
 		ValidationTrace:      []string{"Started validation against node " + node.ID},
+		RemediationHints:     make(map[string]string),
 	}
 
 	// 1. Layer 1: Generic launch checks
@@ -26,6 +29,7 @@ func ValidateLaunch(spec launch.LaunchSpec, node NodeRecord) launch.LaunchValida
 
 	if !result.IsValid {
 		result.ExplainabilityText = "Node cannot launch workload due to generic preflight blockers."
+		result.RemediationHints = generateRemediationHints(result)
 		return result
 	}
 
@@ -42,6 +46,7 @@ func ValidateLaunch(spec launch.LaunchSpec, node NodeRecord) launch.LaunchValida
 			result.ValidationTrace = append(result.ValidationTrace, fmt.Sprintf("Backend %s rejected: %s", backend, reason))
 		}
 		result.ExplainabilityText = "Node cannot launch workload due to missing backend prerequisites or constraints."
+		result.RemediationHints = generateRemediationHints(result)
 		return result
 	}
 
@@ -62,5 +67,45 @@ func ValidateLaunch(spec launch.LaunchSpec, node NodeRecord) launch.LaunchValida
 		result.ValidationTrace = append(result.ValidationTrace, fmt.Sprintf("DryRun: Successfully simulated allocation of %d vcpus.", spec.Vcpu))
 	}
 
+	result.RemediationHints = generateRemediationHints(result)
 	return result
+}
+
+func generateRemediationHints(result launch.LaunchValidationResult) map[string]string {
+	hints := make(map[string]string)
+
+	for _, code := range result.BlockingReasonCodes {
+		if code == "ERR_LAUNCH_ARCH_MISMATCH" {
+			hints["architecture"] = "Ensure the requested architecture matches the node architecture."
+		}
+		if code == "ERR_LAUNCH_BACKEND_NOT_SUPPORTED" {
+			hints["backend"] = "Check the RejectedBackends map for specific missing capabilities."
+		}
+	}
+
+	for backend, reason := range result.RejectedBackends {
+		if backend == "kvm_qemu" && strings.Contains(reason, "CAP_QEMU_BINARY_MISSING") {
+			hints["kvm_qemu_binary"] = "Install qemu-system-x86_64 or qemu-system-aarch64 on the host."
+		}
+		if backend == "kvm_qemu" && strings.Contains(reason, "CAP_KVM_MISSING") {
+			hints["kvm_qemu_kvm"] = "Enable KVM in BIOS or load kvm kernel modules."
+		}
+		if backend == "kvm_qemu" && strings.Contains(reason, "CAP_KVM_NOT_OPENABLE_PERMS") {
+			hints["kvm_qemu_perms"] = "Ensure the Schedune agent has rw permissions to /dev/kvm."
+		}
+		if backend == "cloud_hypervisor" && strings.Contains(reason, "CAP_CLOUDHYPERVISOR_BINARY_MISSING") {
+			hints["cloud_hypervisor_binary"] = "Install cloud-hypervisor binary on the host."
+		}
+		if backend == "firecracker" && strings.Contains(reason, "CAP_FIRECRACKER_PREREQS_MISSING") {
+			hints["firecracker_prereqs"] = "Ensure firecracker binary, /dev/net/tun, and cgroups v2 are available."
+		}
+		if strings.Contains(reason, "ERR_LAUNCH_MISSING_ARTIFACT") {
+			hints["artifact_missing"] = "Ensure ImageReference is provided for the workload."
+		}
+		if strings.Contains(reason, "ERR_LAUNCH_INVALID_FIRECRACKER_ARTIFACT_MODEL") {
+			hints["firecracker_artifact"] = "Ensure KernelImagePath and RootfsPath are provided for MicroVMs."
+		}
+	}
+
+	return hints
 }
