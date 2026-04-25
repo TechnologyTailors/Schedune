@@ -4,7 +4,7 @@ mod tests {
         CompatibilityClassType, CompatibilityClassification, CpuFacts, MemoryFacts, NodeCapability,
         NodeConstraint, NodeFacts, OsFacts, Provenance, SupportState,
     };
-    use crate::health::{ActiveAlarm, AlarmSeverity, HealthState, NodeHealth};
+    use crate::health::{HealthState, NodeHealth};
     use crate::scheduler_contract::{CollectorStatus, SchedulerEnvelope};
     use std::fs;
     use std::path::PathBuf;
@@ -1043,6 +1043,14 @@ mod tests {
                 state: SupportState::Supported,
                 provenance: Provenance::Observed,
                 reason_code: Some("CAP_KVM_OPENABLE".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "qemu_binary_present".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_QEMU_BINARY_PRESENT".to_string()),
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
             },
