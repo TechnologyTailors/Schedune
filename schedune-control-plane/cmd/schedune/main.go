@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -82,6 +83,31 @@ func checkPort(port string) bool {
 	}
 	l.Close()
 	return true
+}
+
+func getBinaryVersion(path string) string {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, path, "--version")
+	out, err := cmd.Output()
+	if err != nil {
+		return "unknown"
+	}
+
+	lines := strings.Split(string(out), "\n")
+	if len(lines) == 0 {
+		return "unknown"
+	}
+
+	version := strings.TrimSpace(lines[0])
+	if len(version) > 128 {
+		version = version[:128]
+	}
+	if version == "" {
+		return "unknown"
+	}
+	return version
 }
 
 func runDoctor() {
