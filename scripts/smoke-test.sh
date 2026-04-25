@@ -110,5 +110,39 @@ python3 -m json.tool < "$VALIDATE_RESP" > /dev/null
 echo "Launch Validate API success. (is_valid status not asserted for generic CI environments)"
 
 echo "--------------------------------------------"
+echo "5. Launch Dry-Run (POST /api/v1alpha1/launch/dry-run)..."
+LAUNCH_SPEC_DRYRUN="examples/launch-specs/cloudhypervisor-validate.json"
+TMP_SPEC_DRYRUN="$TMP_DIR/launch_spec_dryrun.json"
+DRYRUN_RESP="$TMP_DIR/dryrun_resp.json"
+
+# Safely inject node_id and override launch_mode
+python3 -c "import json, sys; d = json.load(sys.stdin); d['node_id'] = '${NODE_ID}'; d['launch_mode'] = 'DryRun'; json.dump(d, sys.stdout)" < "$LAUNCH_SPEC_DRYRUN" > "$TMP_SPEC_DRYRUN"
+
+HTTP_CODE=$(curl -s -w "%{http_code}" -X POST -H "Content-Type: application/json" -d @"$TMP_SPEC_DRYRUN" "${API_BASE}/api/v1alpha1/launch/dry-run" -o "$DRYRUN_RESP")
+
+if [ "$HTTP_CODE" -ne 200 ]; then
+    echo "Error: Launch Dry-Run API failed with HTTP $HTTP_CODE"
+    cat "$DRYRUN_RESP"
+    exit 1
+fi
+python3 -m json.tool < "$DRYRUN_RESP" > /dev/null
+
+# Assert stable fields exist in response regardless of actual is_valid boolean status
+python3 -c "import json, sys
+try:
+    d = json.load(open('$DRYRUN_RESP'))
+    assert 'validation' in d, 'missing validation object'
+    v = d['validation']
+    assert 'is_valid' in v, 'missing is_valid'
+    if not v['is_valid']:
+        assert 'rejected_backends' in v or 'backend_rejection_evidence' in v, 'missing rejection evidence'
+except Exception as e:
+    print(f'Assertion Error: {e}')
+    sys.exit(1)
+" || { echo "Error: Launch Dry-Run assertions failed"; cat "$DRYRUN_RESP"; exit 1; }
+
+echo "Launch Dry-Run API success. (is_valid status not asserted for generic CI environments)"
+
+echo "--------------------------------------------"
 echo "Smoke test completed successfully."
 exit 0
