@@ -13,6 +13,8 @@
 
 Unlike generic orchestrators or traditional hypervisors, Schedune is built specifically to help organizations exit expensive legacy virtualization, adopt ARM infrastructure safely, and manage mixed fleets with lower operational risk.
 
+![Schedune Architecture Diagram](docs/assets/how-schedune-works.png)
+
 ## What Schedune does today
 
 - **Node capability ingestion:** Agent inspects and emits versioned node truth.
