@@ -1,8 +1,8 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "03d5ec55-e676-4ccf-b7d3-9e1d004b37d5",
-  "timestamp_sec": 1776988281,
+  "collection_id": "404853fe-13b0-47f4-9af4-45ab1e623e10",
+  "timestamp_sec": 1777076315,
   "node_id": "arm-ch-fail-01",
   "compatibility": {
     "class": "ArmProduction",

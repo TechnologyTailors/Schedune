@@ -1,8 +1,8 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "3c409c4a-5f59-40ce-8e5d-02f6340184a8",
-  "timestamp_sec": 1776988281,
+  "collection_id": "68dbaada-9d22-467c-a1b8-6f840656422e",
+  "timestamp_sec": 1777076315,
   "node_id": "x86-fc-fail-cgroups",
   "compatibility": {
     "class": "X86HoldingPool",

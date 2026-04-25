@@ -63,15 +63,52 @@ impl VirtualizationCollector {
         ));
 
         // --- Binary Presence Checks (Mocking standard paths for V0) ---
+        let arch = std::env::consts::ARCH;
+        let qemu_binary_name = match arch {
+            "x86_64" => "qemu-system-x86_64",
+            "aarch64" => "qemu-system-aarch64",
+            _ => "",
+        };
+
+        let qemu_binary_present = if !qemu_binary_name.is_empty() {
+            Path::new(&format!("/usr/bin/{}", qemu_binary_name)).exists()
+                || Path::new(&format!("/usr/local/bin/{}", qemu_binary_name)).exists()
+        } else {
+            false
+        };
+
+        let (qemu_bin_state, qemu_bin_reason) = if qemu_binary_present {
+            (SupportState::Supported, "CAP_QEMU_BINARY_PRESENT")
+        } else if qemu_binary_name.is_empty() {
+            (SupportState::Unsupported, "CAP_QEMU_UNSUPPORTED_ARCH")
+        } else {
+            (SupportState::Unsupported, "CAP_QEMU_BINARY_MISSING")
+        };
+
+        capabilities.push(Self::build_cap(
+            "qemu_binary_present",
+            qemu_bin_state,
+            Provenance::Observed,
+            qemu_bin_reason,
+            now_sec,
+            default_stale_after,
+        ));
+
         let ch_binary_present = Path::new("/usr/bin/cloud-hypervisor").exists()
             || Path::new("/usr/local/bin/cloud-hypervisor").exists();
         let fc_binary_present = Path::new("/usr/bin/firecracker").exists()
             || Path::new("/usr/local/bin/firecracker").exists();
 
         let (ch_bin_state, ch_bin_reason) = if ch_binary_present {
-            (SupportState::Supported, "CAP_CLOUDHYPERVISOR_BINARY_PRESENT")
+            (
+                SupportState::Supported,
+                "CAP_CLOUDHYPERVISOR_BINARY_PRESENT",
+            )
         } else {
-            (SupportState::Unsupported, "CAP_CLOUDHYPERVISOR_BINARY_MISSING")
+            (
+                SupportState::Unsupported,
+                "CAP_CLOUDHYPERVISOR_BINARY_MISSING",
+            )
         };
 
         capabilities.push(Self::build_cap(
@@ -103,7 +140,10 @@ impl VirtualizationCollector {
         let (ch_launch_state, ch_launch_reason) = if ch_launch_ready {
             (SupportState::Supported, "CAP_CLOUDHYPERVISOR_READY")
         } else {
-            (SupportState::Unavailable, "CAP_CLOUDHYPERVISOR_PREREQS_MISSING")
+            (
+                SupportState::Unavailable,
+                "CAP_CLOUDHYPERVISOR_PREREQS_MISSING",
+            )
         };
 
         capabilities.push(Self::build_cap(

@@ -50,6 +50,14 @@ mod tests {
                 stale_after_sec: Some(1776978300),
             },
             NodeCapability {
+                feature: "qemu_binary_present".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_QEMU_BINARY_PRESENT".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
                 feature: "hardware_tpm".to_string(),
                 state: SupportState::Supported,
                 provenance: Provenance::Observed,
@@ -775,5 +783,66 @@ mod tests {
             vec![],
         );
         write_fixture("firecracker_cgroups_missing.json", &envelope);
+    }
+
+    #[test]
+    fn generate_missing_qemu_binary() {
+        let facts = NodeFacts {
+            cpu: CpuFacts {
+                architecture: "x86_64".to_string(),
+                cores: 16,
+                vendor_id: Some("GenuineIntel".to_string()),
+            },
+            memory: MemoryFacts { total_mb: 65536 },
+            os: OsFacts {
+                hostname: "x86-no-qemu-01".to_string(),
+                name: "Ubuntu".to_string(),
+                kernel_version: Some("6.8.0".to_string()),
+            },
+        };
+
+        let class = CompatibilityClassification {
+            class: CompatibilityClassType::X86HoldingPool,
+            reason_codes: vec!["CLASS_X86_HOLDING_READY".to_string()],
+        };
+
+        let capabilities = vec![
+            NodeCapability {
+                feature: "kvm_vm_launch".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_KVM_OPENABLE".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "qemu_binary_present".to_string(),
+                state: SupportState::Unsupported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_QEMU_BINARY_MISSING".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+        ];
+
+        let envelope = SchedulerEnvelope::new(
+            "x86-no-qemu-01".to_string(),
+            class,
+            facts,
+            capabilities,
+            vec![],
+            NodeHealth {
+                state: HealthState::Healthy,
+                active_alarms: vec![],
+            },
+            vec![CollectorStatus {
+                collector_name: "MockCollector".to_string(),
+                success: true,
+                duration_ms: 15,
+                error_message: None,
+            }],
+        );
+
+        write_fixture("missing_qemu_binary.json", &envelope);
     }
 }

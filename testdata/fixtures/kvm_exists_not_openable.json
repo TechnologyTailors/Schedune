@@ -1,8 +1,8 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "f3198190-0e4c-4506-861d-48e9f41b16e4",
-  "timestamp_sec": 1776988281,
+  "collection_id": "93bd45e6-81b5-46ca-acd2-69ad4e214e91",
+  "timestamp_sec": 1777076315,
   "node_id": "x86-perms-fail-01",
   "compatibility": {
     "class": "Degraded",

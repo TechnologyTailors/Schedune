@@ -89,14 +89,24 @@ mod tests {
             reason_codes: vec!["CLASS_ARM_PROD_READY".to_string()],
         };
 
-        let capabilities = vec![NodeCapability {
-            feature: "kvm_virtualization".to_string(),
-            state: SupportState::Supported,
-            provenance: Provenance::Observed,
-            reason_code: Some("CAP_KVM_SUPPORTED".to_string()),
-            observed_at_sec: 1776978000,
-            stale_after_sec: Some(1776978300),
-        }];
+        let capabilities = vec![
+            NodeCapability {
+                feature: "kvm_virtualization".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_KVM_SUPPORTED".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+            NodeCapability {
+                feature: "qemu_binary_present".to_string(),
+                state: SupportState::Supported,
+                provenance: Provenance::Observed,
+                reason_code: Some("CAP_QEMU_BINARY_PRESENT".to_string()),
+                observed_at_sec: 1776978000,
+                stale_after_sec: Some(1776978300),
+            },
+        ];
 
         let health = NodeHealth {
             state: HealthState::Healthy,

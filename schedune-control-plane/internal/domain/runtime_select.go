@@ -74,6 +74,15 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, map[string]
 					rejected["kvm_qemu"] = reason
 					continue
 				}
+				binCap, binExists := node.Capabilities["qemu_binary_present"]
+				if !binExists || binCap.State != "Supported" || binCap.IsStale {
+					reason := "ERR_LAUNCH_MISSING_CAPABILITY_QEMU_BINARY"
+					if binExists && binCap.ReasonCode != "" {
+						reason += " (" + binCap.ReasonCode + ")"
+					}
+					rejected["kvm_qemu"] = reason
+					continue
+				}
 				if spec.ImageReference == "" {
 					rejected["kvm_qemu"] = "ERR_LAUNCH_MISSING_ARTIFACT"
 					continue
