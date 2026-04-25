@@ -87,10 +87,14 @@ const (
 	ReasonErrLaunchArchMismatch                     = "ERR_LAUNCH_ARCH_MISMATCH"
 	ReasonErrLaunchBackendNotSupported              = "ERR_LAUNCH_BACKEND_NOT_SUPPORTED"
 	ReasonErrLaunchMissingArtifact                  = "ERR_LAUNCH_MISSING_ARTIFACT"
+	ReasonErrLaunchInvalidStorageFormat             = "ERR_LAUNCH_INVALID_STORAGE_FORMAT"
 	ReasonErrLaunchInvalidFirecrackerArtifactModel  = "ERR_LAUNCH_INVALID_FIRECRACKER_ARTIFACT_MODEL"
 	ReasonErrLaunchMissingCapabilityCloudHypervisor = "ERR_LAUNCH_MISSING_CAPABILITY_CLOUDHYPERVISOR"
 	ReasonErrLaunchMissingCapabilityKvmQemu         = "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU"
 	ReasonErrLaunchMissingCapabilityQemuBinary      = "ERR_LAUNCH_MISSING_CAPABILITY_QEMU_BINARY"
+
+	ReasonWarnDeprecatedImageReference     = "WARN_DEPRECATED_IMAGE_REFERENCE"
+	ReasonWarnDeprecatedNetworkAttachments = "WARN_DEPRECATED_NETWORK_ATTACHMENTS"
 
 	// Execution / Preparation
 	ReasonErrPreparationFailed      = "ERR_PREPARATION_FAILED"

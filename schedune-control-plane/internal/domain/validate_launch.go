@@ -27,6 +27,20 @@ func ValidateLaunch(spec launch.LaunchSpec, node NodeRecord) launch.LaunchValida
 		result.ValidationTrace = append(result.ValidationTrace, "Failed: Architecture mismatch. Node is "+node.Identity.Architecture)
 	}
 
+	if spec.ImageReference != "" || spec.KernelImagePath != "" {
+		result.Warnings = append(result.Warnings, "WARN_DEPRECATED_IMAGE_REFERENCE")
+		if len(spec.Storage) > 0 {
+			result.ValidationTrace = append(result.ValidationTrace, "Warning: Both typed Storage and legacy ImageReference provided. Typed Storage takes precedence.")
+		} else {
+			result.ValidationTrace = append(result.ValidationTrace, "Warning: Using deprecated legacy artifact fields. Please migrate to typed Storage array.")
+		}
+	}
+
+	if len(spec.NetworkAttachments) > 0 {
+		result.Warnings = append(result.Warnings, "WARN_DEPRECATED_NETWORK_ATTACHMENTS")
+		result.ValidationTrace = append(result.ValidationTrace, "Warning: Using deprecated NetworkAttachments field. Please migrate to typed Networks array.")
+	}
+
 	if !result.IsValid {
 		result.ExplainabilityText = "Node cannot launch workload due to generic preflight blockers."
 		result.RemediationHints = generateRemediationHints(result)

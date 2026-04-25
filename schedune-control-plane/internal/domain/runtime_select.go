@@ -4,10 +4,44 @@ import (
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
 )
 
+func normalizeStorage(spec launch.LaunchSpec) []launch.StorageAttachmentSpec {
+	if len(spec.Storage) > 0 {
+		return spec.Storage
+	}
+	if spec.RuntimeClass == "MicroVM" {
+		if spec.KernelImagePath != "" && spec.RootfsPath != "" {
+			return []launch.StorageAttachmentSpec{
+				{HostPath: spec.RootfsPath, Format: "ext4", ReadOnly: false, MountPoint: "/"},
+				{HostPath: spec.KernelImagePath, Format: "raw", ReadOnly: true, MountPoint: "/boot/vmlinux"},
+			}
+		}
+	} else if spec.ImageReference != "" {
+		return []launch.StorageAttachmentSpec{
+			{HostPath: spec.ImageReference, Format: "qcow2", ReadOnly: false},
+		}
+	}
+	return nil
+}
+
+func normalizeNetworks(spec launch.LaunchSpec) []launch.NetworkAttachmentSpec {
+	if len(spec.Networks) > 0 {
+		return spec.Networks
+	}
+	var nets []launch.NetworkAttachmentSpec
+	for _, net := range spec.NetworkAttachments {
+		nets = append(nets, launch.NetworkAttachmentSpec{
+			Type:       "tap",
+			HostDevice: net,
+		})
+	}
+	return nets
+}
+
 // SelectBackend determines the appropriate runtime backend for a given launch spec and node.
 // It returns the selected backend name, and a map of rejected backends to their rejection reason codes.
 func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, map[string]string) {
 	rejected := make(map[string]string)
+	storage := normalizeStorage(spec)
 
 	if spec.RuntimeClass == "MicroVM" {
 		// Firecracker path
@@ -18,9 +52,15 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, map[string]
 		}
 
 		// Artifact validation
-		if spec.KernelImagePath == "" || spec.RootfsPath == "" {
+		if len(storage) == 0 {
 			rejected["firecracker"] = "ERR_LAUNCH_INVALID_FIRECRACKER_ARTIFACT_MODEL"
 			return "", rejected
+		}
+		for _, s := range storage {
+			if s.Format == "qcow2" {
+				rejected["firecracker"] = "ERR_LAUNCH_INVALID_STORAGE_FORMAT"
+				return "", rejected
+			}
 		}
 
 		return "firecracker", rejected
@@ -57,7 +97,7 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, map[string]
 					rejected["cloud_hypervisor"] = reason
 					continue
 				}
-				if spec.ImageReference == "" {
+				if len(storage) == 0 {
 					rejected["cloud_hypervisor"] = "ERR_LAUNCH_MISSING_ARTIFACT"
 					continue
 				}
@@ -83,7 +123,7 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, map[string]
 					rejected["kvm_qemu"] = reason
 					continue
 				}
-				if spec.ImageReference == "" {
+				if len(storage) == 0 {
 					rejected["kvm_qemu"] = "ERR_LAUNCH_MISSING_ARTIFACT"
 					continue
 				}
