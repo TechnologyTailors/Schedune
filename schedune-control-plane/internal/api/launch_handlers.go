@@ -9,6 +9,7 @@ import (
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/store"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/store/sqlite"
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
@@ -29,6 +30,7 @@ func (r *StaticExecutorResolver) Resolve(backend string) (runtime.Executor, erro
 type LaunchHandler struct {
 	nodeStore *store.InMemoryStore
 	execStore *sqlite.SQLiteStore
+	resolver  *StaticExecutorResolver
 	orch      *domain.LaunchOrchestrator
 }
 
@@ -41,7 +43,7 @@ func NewLaunchHandler(nodeStore *store.InMemoryStore, execStore *sqlite.SQLiteSt
 		},
 	}
 	orch := domain.NewLaunchOrchestrator(nodeStore, execStore, resolver)
-	return &LaunchHandler{nodeStore: nodeStore, execStore: execStore, orch: orch}
+	return &LaunchHandler{nodeStore: nodeStore, execStore: execStore, resolver: resolver, orch: orch}
 }
 
 // ValidateLaunch assesses whether a chosen node is physically capable of executing the requested spec.
@@ -82,8 +84,38 @@ func (h *LaunchHandler) DryRunLaunch(c *gin.Context) {
 		return
 	}
 
-	result := domain.ValidateLaunch(spec, node)
-	c.JSON(http.StatusOK, result)
+	validationResult := domain.ValidateLaunch(spec, node)
+	res := launch.LaunchDryRunResult{
+		Validation: validationResult,
+	}
+
+	if !validationResult.IsValid {
+		c.JSON(http.StatusOK, res)
+		return
+	}
+
+	exec, err := h.resolver.Resolve(validationResult.SelectedBackend)
+	if err != nil {
+		errStr := err.Error()
+		reason := schema.ReasonErrPreparationFailed
+		res.PreparationError = &errStr
+		res.PreparationReasonCode = &reason
+		c.JSON(http.StatusOK, res)
+		return
+	}
+
+	prep, err := exec.Prepare(spec)
+	if err != nil {
+		errStr := err.Error()
+		reason := schema.ReasonErrPreparationFailed
+		res.PreparationError = &errStr
+		res.PreparationReasonCode = &reason
+		c.JSON(http.StatusOK, res)
+		return
+	}
+
+	res.PreparedLaunch = &prep
+	c.JSON(http.StatusOK, res)
 }
 
 // ExecuteLaunch kicks off the actual orchestrator pipeline
