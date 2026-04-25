@@ -1,7 +1,7 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "9de8f3e2-5d3f-450b-b096-581b0aceadc3",
+  "collection_id": "11111111-2222-3333-4444-000000000fd8",
   "timestamp_sec": 1777086729,
   "node_id": "x86-storage-only-01",
   "compatibility": {
@@ -31,7 +31,7 @@
       "feature": "kvm_vm_launch",
       "state": "Unsupported",
       "provenance": "Observed",
-      "reason_code": "KVM_MISSING",
+      "reason_code": "CAP_KVM_MISSING",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     },

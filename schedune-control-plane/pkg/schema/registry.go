@@ -69,7 +69,11 @@ var knownReasonCodes = map[string]struct{}{
 
 // KnownReasonCodes returns a map of all registered reason codes.
 func KnownReasonCodes() map[string]struct{} {
-	return knownReasonCodes
+	copied := make(map[string]struct{}, len(knownReasonCodes))
+	for k, v := range knownReasonCodes {
+		copied[k] = v
+	}
+	return copied
 }
 
 // IsKnownReasonCode checks if a given reason code is registered.

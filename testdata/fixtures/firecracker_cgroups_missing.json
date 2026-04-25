@@ -1,7 +1,7 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "69524b96-3edc-4999-a52d-769dac1e2133",
+  "collection_id": "11111111-2222-3333-4444-000000000d24",
   "timestamp_sec": 1777086729,
   "node_id": "x86-fc-fail-cgroups",
   "compatibility": {

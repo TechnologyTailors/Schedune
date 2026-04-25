@@ -166,7 +166,7 @@ func TestValidateLaunch_MissingKvmX86(t *testing.T) {
 		t.Errorf("expected ERR_LAUNCH_BACKEND_NOT_SUPPORTED blocker, got %v", result.BlockingReasonCodes)
 	}
 
-	if result.RejectedBackends["kvm_qemu"] != "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU (KVM_MISSING)" {
+	if result.RejectedBackends["kvm_qemu"] != "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU (CAP_KVM_MISSING)" {
 		t.Errorf("expected rejected backend kvm_qemu with CAP_KVM_MISSING, got %v", result.RejectedBackends)
 	}
 }
@@ -299,7 +299,7 @@ func TestValidateLaunch_KvmExistsNotOpenable(t *testing.T) {
 		t.Errorf("expected ERR_LAUNCH_BACKEND_NOT_SUPPORTED blocker, got %v", result.BlockingReasonCodes)
 	}
 
-	if result.RejectedBackends["kvm_qemu"] != "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU (KVM_NOT_OPENABLE_PERMS)" {
+	if result.RejectedBackends["kvm_qemu"] != "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU (CAP_KVM_NOT_OPENABLE_PERMS)" {
 		t.Errorf("expected rejected backend kvm_qemu, got %v", result.RejectedBackends)
 	}
 
@@ -308,8 +308,8 @@ func TestValidateLaunch_KvmExistsNotOpenable(t *testing.T) {
 	for _, tr := range result.ValidationTrace {
 		traceStr += tr + " "
 	}
-	if !strings.Contains(traceStr, "KVM_NOT_OPENABLE_PERMS") {
-		t.Errorf("expected trace to contain KVM_NOT_OPENABLE_PERMS, got %s", traceStr)
+	if !strings.Contains(traceStr, "CAP_KVM_NOT_OPENABLE_PERMS") {
+		t.Errorf("expected trace to contain CAP_KVM_NOT_OPENABLE_PERMS, got %s", traceStr)
 	}
 }
 
@@ -650,15 +650,24 @@ func TestValidateLaunch_ReasonCodeRegistryHygiene(t *testing.T) {
 			}
 		}
 
+		for _, ev := range res.BackendRejectionEvidence {
+			if !schema.IsKnownReasonCode(ev.ReasonCode) {
+				t.Errorf("fixture %s produced unregistered structured reason code: %q", fname, ev.ReasonCode)
+			}
+			if ev.CapabilityReasonCode != nil && *ev.CapabilityReasonCode != "" {
+				if !schema.IsKnownReasonCode(*ev.CapabilityReasonCode) {
+					t.Errorf("fixture %s produced unregistered structured capability reason code: %q", fname, *ev.CapabilityReasonCode)
+				}
+			}
+		}
+
 		for _, reason := range res.RejectedBackends {
-			// Backend rejection reasons can contain capabilities inside them,
-			// but we know they are usually formatted as REASON_CODE or REASON_CODE [CAPABILITY_CODE]
-			// Let's parse it out simply or just ensure if it's an exact code, it is registered.
-			// For simplicity, we just check if any registered code is a substring,
-			// or if we can extract it.
+			if reason == "" {
+				t.Errorf("fixture %s produced an empty rejected backend reason", fname)
+			}
 			words := strings.Split(reason, " ")
 			for _, w := range words {
-				w = strings.Trim(w, "[]")
+				w = strings.Trim(w, "()[]")
 				if strings.HasPrefix(w, "ERR_") || strings.HasPrefix(w, "CAP_") {
 					if !schema.IsKnownReasonCode(w) {
 						t.Errorf("fixture %s produced unregistered backend rejection code in message %q: %q", fname, reason, w)

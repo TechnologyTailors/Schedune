@@ -1,7 +1,7 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "adb1cc20-ccbc-47f5-a98f-596af5e4970c",
+  "collection_id": "11111111-2222-3333-4444-000000000bb0",
   "timestamp_sec": 1777086729,
   "node_id": "arm-fc-fail-01",
   "compatibility": {
@@ -30,7 +30,7 @@
       "feature": "kvm_vm_launch",
       "state": "Supported",
       "provenance": "Observed",
-      "reason_code": "KVM_OPENABLE",
+      "reason_code": "CAP_KVM_OPENABLE",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     },

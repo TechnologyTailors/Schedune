@@ -15,7 +15,17 @@ mod tests {
         fs::create_dir_all(&path).unwrap();
         path.push(name);
 
-        let json = serde_json::to_string_pretty(envelope).unwrap();
+        let json_temp = serde_json::to_string(envelope).unwrap();
+        let mut cloned: SchedulerEnvelope = serde_json::from_str(&json_temp).unwrap();
+
+        let hash = name.bytes().fold(0u64, |acc, b| acc.wrapping_add(b as u64));
+        cloned.collection_id = format!("11111111-2222-3333-4444-{:012x}", hash);
+        if cloned.timestamp_sec > 1700000000 {
+            cloned.timestamp_sec = 1777086729;
+        }
+
+        let mut json = serde_json::to_string_pretty(&cloned).unwrap();
+        json.push('\n');
         fs::write(path, json).unwrap();
     }
 
@@ -45,7 +55,7 @@ mod tests {
                 feature: "kvm_vm_launch".to_string(),
                 state: SupportState::Supported,
                 provenance: Provenance::Observed,
-                reason_code: Some("KVM_OPENABLE".to_string()),
+                reason_code: Some("CAP_KVM_OPENABLE".to_string()),
                 version: None,
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
@@ -139,7 +149,7 @@ mod tests {
                 feature: "kvm_vm_launch".to_string(),
                 state: SupportState::Unsupported,
                 provenance: Provenance::Observed,
-                reason_code: Some("KVM_MISSING".to_string()),
+                reason_code: Some("CAP_KVM_MISSING".to_string()),
                 version: None,
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
@@ -224,7 +234,7 @@ mod tests {
                 feature: "kvm_vm_launch".to_string(),
                 state: SupportState::Supported,
                 provenance: Provenance::Observed,
-                reason_code: Some("KVM_OPENABLE".to_string()),
+                reason_code: Some("CAP_KVM_OPENABLE".to_string()),
                 version: None,
                 observed_at_sec: 1000000000, // Very old
                 stale_after_sec: Some(1000000300),
@@ -301,7 +311,7 @@ mod tests {
                 feature: "kvm_vm_launch".to_string(),
                 state: SupportState::Supported,
                 provenance: Provenance::Observed,
-                reason_code: Some("KVM_OPENABLE".to_string()),
+                reason_code: Some("CAP_KVM_OPENABLE".to_string()),
                 version: None,
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
@@ -373,7 +383,7 @@ mod tests {
                 feature: "kvm_vm_launch".to_string(),
                 state: SupportState::Unavailable,
                 provenance: Provenance::Observed,
-                reason_code: Some("KVM_NOT_OPENABLE_PERMS".to_string()),
+                reason_code: Some("CAP_KVM_NOT_OPENABLE_PERMS".to_string()),
                 version: None,
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
@@ -453,7 +463,7 @@ mod tests {
                 feature: "kvm_vm_launch".to_string(),
                 state: SupportState::Supported,
                 provenance: Provenance::Observed,
-                reason_code: Some("KVM_OPENABLE".to_string()),
+                reason_code: Some("CAP_KVM_OPENABLE".to_string()),
                 version: None,
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),
@@ -528,7 +538,7 @@ mod tests {
                 feature: "kvm_vm_launch".to_string(),
                 state: SupportState::Unsupported,
                 provenance: Provenance::Observed,
-                reason_code: Some("KVM_MISSING".to_string()),
+                reason_code: Some("CAP_KVM_MISSING".to_string()),
                 version: None,
                 observed_at_sec: 1776978000,
                 stale_after_sec: Some(1776978300),

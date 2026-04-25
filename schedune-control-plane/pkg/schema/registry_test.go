@@ -49,3 +49,22 @@ func TestReasonCodeRegistry_RepresentativeCodes(t *testing.T) {
 		}
 	}
 }
+
+func TestReasonCodeRegistry_Immutability(t *testing.T) {
+	codes := schema.KnownReasonCodes()
+
+	codes["DUMMY_MUTATION_TEST"] = struct{}{}
+
+	if schema.IsKnownReasonCode("DUMMY_MUTATION_TEST") {
+		t.Errorf("registry was mutated by caller")
+	}
+}
+
+func TestReasonCodeRegistry_Uniqueness(t *testing.T) {
+	// The registry is implemented as a map literal, which guarantees uniqueness
+	// of keys at compile-time/runtime. We simply verify the map isn't empty.
+	codes := schema.KnownReasonCodes()
+	if len(codes) == 0 {
+		t.Errorf("expected non-empty registry")
+	}
+}

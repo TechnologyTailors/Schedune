@@ -45,8 +45,8 @@ func TestProjectEnvelope_HealthyArmProduction(t *testing.T) {
 	if cap.State != "Supported" {
 		t.Errorf("expected 'Supported', got %s", cap.State)
 	}
-	if cap.ReasonCode != "KVM_OPENABLE" {
-		t.Errorf("expected 'KVM_OPENABLE', got %s", cap.ReasonCode)
+	if cap.ReasonCode != "CAP_KVM_OPENABLE" {
+		t.Errorf("expected 'CAP_KVM_OPENABLE', got %s", cap.ReasonCode)
 	}
 	if cap.Version != "" {
 		t.Errorf("expected empty Version for kvm_vm_launch, got %s", cap.Version)
@@ -114,8 +114,8 @@ func TestProjectEnvelope_KvmExistsNotOpenable(t *testing.T) {
 	}
 
 	cap := record.Capabilities["kvm_vm_launch"]
-	if cap.State != "Unavailable" || cap.ReasonCode != "KVM_NOT_OPENABLE_PERMS" {
-		t.Errorf("expected Unavailable/KVM_NOT_OPENABLE_PERMS, got %s/%s", cap.State, cap.ReasonCode)
+	if cap.State != "Unavailable" || cap.ReasonCode != "CAP_KVM_NOT_OPENABLE_PERMS" {
+		t.Errorf("expected Unavailable/CAP_KVM_NOT_OPENABLE_PERMS, got %s/%s", cap.State, cap.ReasonCode)
 	}
 }
 
