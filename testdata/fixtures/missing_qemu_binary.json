@@ -1,8 +1,8 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "ab6c4b77-d724-4b6f-b874-f999cac9248d",
-  "timestamp_sec": 1777079254,
+  "collection_id": "e1c5b790-3d40-4e2c-abc5-b36af69193f2",
+  "timestamp_sec": 1777084685,
   "node_id": "x86-no-qemu-01",
   "compatibility": {
     "class": "X86HoldingPool",
@@ -39,6 +39,22 @@
       "state": "Unsupported",
       "provenance": "Observed",
       "reason_code": "CAP_QEMU_BINARY_MISSING",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "kernel_seccomp_supported",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_SECCOMP_SUPPORTED",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "kernel_namespaces_supported",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_NAMESPACES_SUPPORTED",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     }

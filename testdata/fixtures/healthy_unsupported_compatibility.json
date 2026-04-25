@@ -1,8 +1,8 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "46105f0d-1823-4ed9-bb43-25b70af06b58",
-  "timestamp_sec": 1777079254,
+  "collection_id": "6952e1b9-c427-443b-83c4-5eafc62a7445",
+  "timestamp_sec": 1777084685,
   "node_id": "x86-storage-only-01",
   "compatibility": {
     "class": "Unsupported",
@@ -32,6 +32,22 @@
       "state": "Unsupported",
       "provenance": "Observed",
       "reason_code": "KVM_MISSING",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "kernel_seccomp_supported",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_SECCOMP_SUPPORTED",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "kernel_namespaces_supported",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_NAMESPACES_SUPPORTED",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     }

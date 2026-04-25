@@ -1,7 +1,7 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "04bbf444-2287-4629-8ebe-fb2d1c94d0c9",
+  "collection_id": "96ea9a3b-909b-4130-a0f9-6bbe9bc4d5ae",
   "timestamp_sec": 1000000300,
   "node_id": "stale-arm-01",
   "compatibility": {
@@ -33,6 +33,22 @@
       "reason_code": "KVM_OPENABLE",
       "observed_at_sec": 1000000000,
       "stale_after_sec": 1000000300
+    },
+    {
+      "feature": "kernel_seccomp_supported",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_SECCOMP_SUPPORTED",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "kernel_namespaces_supported",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_NAMESPACES_SUPPORTED",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
     }
   ],
   "constraints": [],

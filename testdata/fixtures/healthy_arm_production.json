@@ -1,8 +1,8 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "9e91beef-58cf-4857-839d-f47dd0ddea3a",
-  "timestamp_sec": 1777079254,
+  "collection_id": "15d4eaf7-e5a1-40c1-bf49-399715afee1f",
+  "timestamp_sec": 1777084685,
   "node_id": "arm-prod-01",
   "compatibility": {
     "class": "ArmProduction",
@@ -47,6 +47,22 @@
       "state": "Supported",
       "provenance": "Observed",
       "reason_code": "CAP_TPM_PRESENT",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "kernel_seccomp_supported",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_SECCOMP_SUPPORTED",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "kernel_namespaces_supported",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_NAMESPACES_SUPPORTED",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     }

@@ -96,6 +96,8 @@ const (
 	ReasonErrLaunchMissingCapabilityFcCgroups       = "ERR_LAUNCH_MISSING_CAPABILITY_FC_CGROUPS"
 	ReasonErrLaunchMissingCapabilityKvmQemu         = "ERR_LAUNCH_MISSING_CAPABILITY_KVM_QEMU"
 	ReasonErrLaunchMissingCapabilityQemuBinary      = "ERR_LAUNCH_MISSING_CAPABILITY_QEMU_BINARY"
+	ReasonErrLaunchMissingCapabilitySeccomp         = "ERR_LAUNCH_MISSING_CAPABILITY_SECCOMP"
+	ReasonErrLaunchMissingCapabilityNamespaces      = "ERR_LAUNCH_MISSING_CAPABILITY_NAMESPACES"
 
 	ReasonWarnDeprecatedImageReference     = "WARN_DEPRECATED_IMAGE_REFERENCE"
 	ReasonWarnDeprecatedNetworkAttachments = "WARN_DEPRECATED_NETWORK_ATTACHMENTS"

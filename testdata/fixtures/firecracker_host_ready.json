@@ -1,8 +1,8 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "fd81d8e8-0278-467a-9d73-a380b9626f2b",
-  "timestamp_sec": 1777079254,
+  "collection_id": "4d07496a-cdfa-458c-b9a2-6b2fd3beea63",
+  "timestamp_sec": 1777084685,
   "node_id": "x86-fc-01",
   "compatibility": {
     "class": "X86HoldingPool",
@@ -55,6 +55,22 @@
       "state": "Supported",
       "provenance": "Observed",
       "reason_code": "CAP_FIRECRACKER_CGROUPS_READY",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "kernel_seccomp_supported",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_SECCOMP_SUPPORTED",
+      "observed_at_sec": 1776978000,
+      "stale_after_sec": 1776978300
+    },
+    {
+      "feature": "kernel_namespaces_supported",
+      "state": "Supported",
+      "provenance": "Observed",
+      "reason_code": "CAP_NAMESPACES_SUPPORTED",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     }

@@ -1,9 +1,9 @@
 {
   "schema_version": "v1alpha1",
   "agent_version": "0.1.0",
-  "collection_id": "a5d91c4c-e672-48b9-8ed3-d5101aa8e16c",
+  "collection_id": "f0631954-8e0d-4bae-b80e-468050838f3c",
   "timestamp_sec": 1777084685,
-  "node_id": "x86-fc-fail-cgroups",
+  "node_id": "x86-no-seccomp-01",
   "compatibility": {
     "class": "X86HoldingPool",
     "reason_codes": [
@@ -13,14 +13,14 @@
   "facts": {
     "cpu": {
       "architecture": "x86_64",
-      "cores": 64,
-      "vendor_id": "Intel"
+      "cores": 16,
+      "vendor_id": "GenuineIntel"
     },
     "memory": {
-      "total_mb": 131072
+      "total_mb": 65536
     },
     "os": {
-      "hostname": "x86-fc-fail-cgroups",
+      "hostname": "x86-no-seccomp-01",
       "name": "Ubuntu",
       "kernel_version": "6.8.0"
     }
@@ -35,34 +35,10 @@
       "stale_after_sec": 1776978300
     },
     {
-      "feature": "firecracker_binary_present",
-      "state": "Supported",
-      "provenance": "Observed",
-      "reason_code": "CAP_FIRECRACKER_BINARY_PRESENT",
-      "observed_at_sec": 1776978000,
-      "stale_after_sec": 1776978300
-    },
-    {
-      "feature": "firecracker_tun_ready",
-      "state": "Supported",
-      "provenance": "Observed",
-      "reason_code": "CAP_FIRECRACKER_TUN_READY",
-      "observed_at_sec": 1776978000,
-      "stale_after_sec": 1776978300
-    },
-    {
-      "feature": "firecracker_cgroups_ready",
+      "feature": "kernel_seccomp_supported",
       "state": "Unsupported",
       "provenance": "Observed",
-      "reason_code": "CAP_FIRECRACKER_CGROUPS_MISSING",
-      "observed_at_sec": 1776978000,
-      "stale_after_sec": 1776978300
-    },
-    {
-      "feature": "kernel_seccomp_supported",
-      "state": "Supported",
-      "provenance": "Observed",
-      "reason_code": "CAP_SECCOMP_SUPPORTED",
+      "reason_code": "CAP_SECCOMP_MISSING",
       "observed_at_sec": 1776978000,
       "stale_after_sec": 1776978300
     },
@@ -80,5 +56,12 @@
     "state": "Healthy",
     "active_alarms": []
   },
-  "collector_statuses": []
+  "collector_statuses": [
+    {
+      "collector_name": "MockCollector",
+      "success": true,
+      "duration_ms": 15,
+      "error_message": null
+    }
+  ]
 }

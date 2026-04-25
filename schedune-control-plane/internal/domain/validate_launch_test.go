@@ -502,3 +502,108 @@ func TestValidateLaunch_MissingArtifact(t *testing.T) {
 		t.Errorf("expected rejection ERR_LAUNCH_MISSING_ARTIFACT for kvm_qemu, got %v", result.RejectedBackends)
 	}
 }
+
+func TestValidateLaunch_SecurityContextRequiresSeccomp(t *testing.T) {
+	env := readFixture(t, "missing_seccomp.json")
+	now := time.Now().Unix()
+	env.TimestampSec = now
+	for i := range env.Capabilities {
+		env.Capabilities[i].ObservedAtSec = now
+		staleAfter := now + 300
+		env.Capabilities[i].StaleAfterSec = &staleAfter
+	}
+	node := ProjectEnvelope(env)
+
+	spec := launch.LaunchSpec{
+		SchemaVersion: "v1alpha1",
+		WorkloadID:    "wl-launch-seccomp",
+		TenantID:      "tenant-1",
+		NodeID:        node.ID,
+		RuntimeClass:  "VirtualMachine",
+		Architecture:  "x86_64",
+		Vcpu:          2,
+		MemoryMB:      1024,
+		LaunchMode:    "DryRun",
+		Storage: []launch.StorageAttachmentSpec{
+			{HostPath: "/tmp/vol.qcow2", Format: "qcow2"},
+		},
+		Security: &launch.SecurityContextSpec{
+			SeccompProfile: "runtime/default",
+		},
+	}
+
+	result := ValidateLaunch(spec, node)
+	if result.IsValid {
+		t.Errorf("expected failure due to missing seccomp capability, but it validated")
+	}
+
+	hasSeccompBlocker := false
+	for _, code := range result.BlockingReasonCodes {
+		if code == "ERR_LAUNCH_MISSING_CAPABILITY_SECCOMP" {
+			hasSeccompBlocker = true
+		}
+	}
+
+	if !hasSeccompBlocker {
+		t.Errorf("expected ERR_LAUNCH_MISSING_CAPABILITY_SECCOMP blocker, got %v", result.BlockingReasonCodes)
+	}
+
+	if hint, ok := result.RemediationHints["kernel_seccomp"]; !ok || !strings.Contains(hint, "CONFIG_SECCOMP") {
+		t.Errorf("expected remediation hint for missing seccomp, got %v", result.RemediationHints)
+	}
+}
+
+func TestValidateLaunch_SecurityContextRequiresNamespaces(t *testing.T) {
+	env := readFixture(t, "missing_seccomp.json") // We can mock missing namespaces locally for test
+	now := time.Now().Unix()
+	env.TimestampSec = now
+	for i := range env.Capabilities {
+		env.Capabilities[i].ObservedAtSec = now
+		staleAfter := now + 300
+		env.Capabilities[i].StaleAfterSec = &staleAfter
+		if env.Capabilities[i].Feature == "kernel_namespaces_supported" {
+			env.Capabilities[i].State = "Unsupported"
+			rc := "CAP_NAMESPACES_MISSING"
+			env.Capabilities[i].ReasonCode = &rc
+		}
+	}
+	node := ProjectEnvelope(env)
+
+	spec := launch.LaunchSpec{
+		SchemaVersion: "v1alpha1",
+		WorkloadID:    "wl-launch-namespaces",
+		TenantID:      "tenant-1",
+		NodeID:        node.ID,
+		RuntimeClass:  "VirtualMachine",
+		Architecture:  "x86_64",
+		Vcpu:          2,
+		MemoryMB:      1024,
+		LaunchMode:    "DryRun",
+		Storage: []launch.StorageAttachmentSpec{
+			{HostPath: "/tmp/vol.qcow2", Format: "qcow2"},
+		},
+		Security: &launch.SecurityContextSpec{
+			DropCapabilities: []string{"CAP_SYS_ADMIN"},
+		},
+	}
+
+	result := ValidateLaunch(spec, node)
+	if result.IsValid {
+		t.Errorf("expected failure due to missing namespaces capability, but it validated")
+	}
+
+	hasNamespaceBlocker := false
+	for _, code := range result.BlockingReasonCodes {
+		if code == "ERR_LAUNCH_MISSING_CAPABILITY_NAMESPACES" {
+			hasNamespaceBlocker = true
+		}
+	}
+
+	if !hasNamespaceBlocker {
+		t.Errorf("expected ERR_LAUNCH_MISSING_CAPABILITY_NAMESPACES blocker, got %v", result.BlockingReasonCodes)
+	}
+
+	if hint, ok := result.RemediationHints["kernel_namespaces"]; !ok || !strings.Contains(hint, "user, pid, and net namespaces") {
+		t.Errorf("expected remediation hint for missing namespaces, got %v", result.RemediationHints)
+	}
+}
