@@ -57,6 +57,9 @@ dev-up: build ## Start the control plane in the background (port 9090)
 dev-down: ## Stop the background control plane
 	@if [ -f .schedune.pid ]; then kill $$(cat .schedune.pid) && rm .schedune.pid && echo "Control plane stopped."; else echo "Not running."; fi
 
+smoke-test: build ## Run headless E2E automated API smoke test
+	@bash scripts/smoke-test.sh
+
 demo: doctor build dev-db-reset ## Run the automated end-to-end evaluator demo
 	@bash scripts/demo.sh
 
