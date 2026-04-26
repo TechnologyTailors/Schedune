@@ -172,6 +172,7 @@ func (o *LaunchOrchestrator) spawnAndRecord(spec launch.LaunchSpec, rec *launch.
 	o.save(rec)
 
 	if spec.LaunchMode == "DryRun" || spec.LaunchMode == "Validate" {
+		lifecycle.TransitionTo(rec, launch.StateTerminating, "", "DryRun/Validate successful. Aborting actual spawn.")
 		lifecycle.TransitionTo(rec, launch.StateTerminated, "", "DryRun/Validate successful. Aborting actual spawn.")
 		o.save(rec)
 		o.emitEvent(launch.EventTypeDryRunCompleted, rec, "", "DryRun/Validate successful. Aborting actual spawn.")
@@ -182,7 +183,7 @@ func (o *LaunchOrchestrator) spawnAndRecord(spec launch.LaunchSpec, rec *launch.
 	if err != nil {
 		lifecycle.TransitionTo(rec, launch.StateFailed, schema.ReasonErrExecRuntimeSpawnFailed, err.Error())
 		o.save(rec)
-		o.emitEvent(launch.EventTypePreparationFailed, rec, schema.ReasonErrExecRuntimeSpawnFailed, err.Error())
+		o.emitEvent(launch.EventTypeRuntimeSpawnFailed, rec, schema.ReasonErrExecRuntimeSpawnFailed, err.Error())
 		return
 	}
 

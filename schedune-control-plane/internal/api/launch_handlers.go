@@ -157,6 +157,20 @@ func (h *LaunchHandler) ExecuteLaunch(c *gin.Context) {
 	c.JSON(http.StatusAccepted, record)
 }
 
+func materialSignalChanged(a, b *launch.ReadinessSignalSummary) bool {
+	if a == nil && b == nil {
+		return false
+	}
+	if a == nil || b == nil {
+		return true
+	}
+	return a.ControlSocketExists != b.ControlSocketExists ||
+		a.ControlSocketDialOK != b.ControlSocketDialOK ||
+		a.BackendReadySignal != b.BackendReadySignal ||
+		a.BackendSignalSource != b.BackendSignalSource ||
+		a.StartupGraceElapsed != b.StartupGraceElapsed
+}
+
 func (h *LaunchHandler) reconcileExecution(rec *launch.LaunchExecutionRecord) error {
 	if rec.State == launch.StateExited || rec.State == launch.StateFailed || rec.State == launch.StateTerminated {
 		return nil
@@ -177,6 +191,11 @@ func (h *LaunchHandler) reconcileExecution(rec *launch.LaunchExecutionRecord) er
 		ec := *rec.ExitCode
 		beforeExitCode = &ec
 	}
+	var beforeSignal *launch.ReadinessSignalSummary
+	if rec.ReadinessSignal != nil {
+		sig := *rec.ReadinessSignal
+		beforeSignal = &sig
+	}
 
 	err := lifecycle.Reconcile(rec, inspector)
 	if err != nil {
@@ -189,7 +208,8 @@ func (h *LaunchHandler) reconcileExecution(rec *launch.LaunchExecutionRecord) er
 		beforeLiveness != rec.RuntimeLiveness ||
 		beforeReadiness != rec.RuntimeReadiness ||
 		(beforeExitCode == nil && rec.ExitCode != nil) ||
-		(beforeExitCode != nil && rec.ExitCode != nil && *beforeExitCode != *rec.ExitCode)
+		(beforeExitCode != nil && rec.ExitCode != nil && *beforeExitCode != *rec.ExitCode) ||
+		materialSignalChanged(beforeSignal, rec.ReadinessSignal)
 
 	if changed {
 		ev := launch.RuntimeEvent{
@@ -208,6 +228,7 @@ func (h *LaunchHandler) reconcileExecution(rec *launch.LaunchExecutionRecord) er
 				BeforeReadiness: beforeReadiness,
 				AfterReadiness:  rec.RuntimeReadiness,
 				ExitCode:        rec.ExitCode,
+				Signal:          rec.ReadinessSignal,
 			},
 		}
 		_ = h.execStore.AppendEvent(context.Background(), ev)

@@ -11,6 +11,27 @@ import (
 	"time"
 )
 
+func loadNodeFixture(t *testing.T, fixtureName string) NodeRecord {
+	t.Helper()
+	env := readFixture(t, fixtureName)
+	now := time.Now().Unix()
+	for i := range env.Capabilities {
+		env.Capabilities[i].ObservedAtSec = now
+		staleAfter := now + 300
+		env.Capabilities[i].StaleAfterSec = &staleAfter
+	}
+	return ProjectEnvelope(env)
+}
+
+func hasEvent(events []launch.RuntimeEvent, eventType string) bool {
+	for _, ev := range events {
+		if ev.EventType == eventType {
+			return true
+		}
+	}
+	return false
+}
+
 type MockEventStore struct {
 	Events []launch.RuntimeEvent
 }
@@ -65,14 +86,7 @@ func (m *MockExecutor) Terminate(pid int) error {
 }
 
 func TestLaunchOrchestrator_Success(t *testing.T) {
-	env := readFixture(t, "healthy_arm_production.json")
-	now := time.Now().Unix()
-	for i := range env.Capabilities {
-		env.Capabilities[i].ObservedAtSec = now
-		staleAfter := now + 300
-		env.Capabilities[i].StaleAfterSec = &staleAfter
-	}
-	node := ProjectEnvelope(env)
+	node := loadNodeFixture(t, "healthy_arm_production.json")
 
 	store := &MockStore{
 		node: node,
@@ -118,26 +132,13 @@ func TestLaunchOrchestrator_Success(t *testing.T) {
 	}
 
 	// Verify events
-	hasSpawnEvent := false
-	for _, ev := range evStore.Events {
-		if ev.EventType == launch.EventTypeRuntimeSpawned {
-			hasSpawnEvent = true
-		}
-	}
-	if !hasSpawnEvent {
+	if !hasEvent(evStore.Events, launch.EventTypeRuntimeSpawned) {
 		t.Errorf("expected EventTypeRuntimeSpawned to be emitted")
 	}
 }
 
 func TestLaunchOrchestrator_ValidationFails(t *testing.T) {
-	env := readFixture(t, "missing_kvm_x86.json") // Node without KVM
-	now := time.Now().Unix()
-	for i := range env.Capabilities {
-		env.Capabilities[i].ObservedAtSec = now
-		staleAfter := now + 300
-		env.Capabilities[i].StaleAfterSec = &staleAfter
-	}
-	node := ProjectEnvelope(env)
+	node := loadNodeFixture(t, "missing_kvm_x86.json") // Node without KVM
 
 	store := &MockStore{
 		node: node,
@@ -178,26 +179,13 @@ func TestLaunchOrchestrator_ValidationFails(t *testing.T) {
 	}
 
 	// Verify events
-	hasValEvent := false
-	for _, ev := range evStore.Events {
-		if ev.EventType == launch.EventTypeValidationFailed {
-			hasValEvent = true
-		}
-	}
-	if !hasValEvent {
+	if !hasEvent(evStore.Events, launch.EventTypeValidationFailed) {
 		t.Errorf("expected EventTypeValidationFailed to be emitted")
 	}
 }
 
 func TestLaunchOrchestrator_FirecrackerExecuteFailsValidation(t *testing.T) {
-	env := readFixture(t, "firecracker_host_ready.json")
-	now := time.Now().Unix()
-	for i := range env.Capabilities {
-		env.Capabilities[i].ObservedAtSec = now
-		staleAfter := now + 300
-		env.Capabilities[i].StaleAfterSec = &staleAfter
-	}
-	node := ProjectEnvelope(env)
+	node := loadNodeFixture(t, "firecracker_host_ready.json")
 
 	store := &MockStore{
 		node: node,
@@ -239,13 +227,137 @@ func TestLaunchOrchestrator_FirecrackerExecuteFailsValidation(t *testing.T) {
 	}
 
 	// Verify events
-	hasValEvent := false
-	for _, ev := range evStore.Events {
-		if ev.EventType == launch.EventTypeValidationFailed {
-			hasValEvent = true
-		}
-	}
-	if !hasValEvent {
+	if !hasEvent(evStore.Events, launch.EventTypeValidationFailed) {
 		t.Errorf("expected EventTypeValidationFailed to be emitted")
+	}
+}
+
+func TestLaunchOrchestrator_DryRun(t *testing.T) {
+	node := loadNodeFixture(t, "healthy_arm_production.json")
+	store := &MockStore{
+		node: node,
+		exec: make(map[string]launch.LaunchExecutionRecord),
+	}
+	evStore := &MockEventStore{}
+	orch := NewLaunchOrchestrator(store, store, evStore, &MockExecutor{})
+
+	spec := launch.LaunchSpec{
+		SchemaVersion:  "v1alpha1",
+		WorkloadID:     "wl-test",
+		TenantID:       "tenant-test",
+		NodeID:         node.ID,
+		RuntimeClass:   "VirtualMachine",
+		Architecture:   "aarch64",
+		ImageReference: "dummy",
+		Vcpu:           2,
+		MemoryMB:       1024,
+		LaunchMode:     "DryRun",
+	}
+
+	rec := orch.StartLaunch(spec)
+
+	if rec.State != launch.StateTerminated {
+		t.Errorf("expected state %s, got %s", launch.StateTerminated, rec.State)
+	}
+
+	if !hasEvent(evStore.Events, launch.EventTypeDryRunCompleted) {
+		t.Errorf("expected EventTypeDryRunCompleted to be emitted")
+	}
+}
+
+func TestLaunchOrchestrator_PrepareFails(t *testing.T) {
+	node := loadNodeFixture(t, "healthy_arm_production.json")
+	store := &MockStore{
+		node: node,
+		exec: make(map[string]launch.LaunchExecutionRecord),
+	}
+	evStore := &MockEventStore{}
+	orch := NewLaunchOrchestrator(store, store, evStore, &MockExecutor{ShouldFailPrepare: true})
+
+	spec := launch.LaunchSpec{
+		SchemaVersion:  "v1alpha1",
+		WorkloadID:     "wl-test",
+		TenantID:       "tenant-test",
+		NodeID:         node.ID,
+		RuntimeClass:   "VirtualMachine",
+		Architecture:   "aarch64",
+		ImageReference: "dummy",
+		Vcpu:           2,
+		MemoryMB:       1024,
+		LaunchMode:     "Execute",
+	}
+
+	rec := orch.StartLaunch(spec)
+
+	if rec.State != launch.StateFailed {
+		t.Errorf("expected state %s, got %s", launch.StateFailed, rec.State)
+	}
+
+	if !hasEvent(evStore.Events, launch.EventTypePreparationFailed) {
+		t.Errorf("expected EventTypePreparationFailed to be emitted")
+	}
+}
+
+func TestLaunchOrchestrator_ExecuteSpawnFails(t *testing.T) {
+	node := loadNodeFixture(t, "healthy_arm_production.json")
+	store := &MockStore{
+		node: node,
+		exec: make(map[string]launch.LaunchExecutionRecord),
+	}
+	evStore := &MockEventStore{}
+	orch := NewLaunchOrchestrator(store, store, evStore, &MockExecutor{ShouldFailExecute: true})
+
+	spec := launch.LaunchSpec{
+		SchemaVersion:  "v1alpha1",
+		WorkloadID:     "wl-test",
+		TenantID:       "tenant-test",
+		NodeID:         node.ID,
+		RuntimeClass:   "VirtualMachine",
+		Architecture:   "aarch64",
+		ImageReference: "dummy",
+		Vcpu:           2,
+		MemoryMB:       1024,
+		LaunchMode:     "Execute",
+	}
+
+	rec := orch.StartLaunch(spec)
+
+	if rec.State != launch.StateFailed {
+		t.Errorf("expected state %s, got %s", launch.StateFailed, rec.State)
+	}
+
+	if !hasEvent(evStore.Events, launch.EventTypeRuntimeSpawnFailed) {
+		t.Errorf("expected EventTypeRuntimeSpawnFailed to be emitted")
+	}
+}
+
+func TestLaunchOrchestrator_TerminateSuccess(t *testing.T) {
+	node := loadNodeFixture(t, "healthy_arm_production.json")
+	store := &MockStore{
+		node: node,
+		exec: make(map[string]launch.LaunchExecutionRecord),
+	}
+	evStore := &MockEventStore{}
+	orch := NewLaunchOrchestrator(store, store, evStore, &MockExecutor{})
+
+	pid := 1234
+	store.exec["test-exec"] = launch.LaunchExecutionRecord{
+		ExecutionID:   "test-exec",
+		State:         launch.StateRunning,
+		PID:           &pid,
+		PreparedState: &launch.PreparedLaunch{RuntimeBackend: "mock"},
+	}
+
+	rec, err := orch.TerminateLaunch("test-exec")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if rec.State != launch.StateTerminated {
+		t.Errorf("expected state %s, got %s", launch.StateTerminated, rec.State)
+	}
+
+	if !hasEvent(evStore.Events, launch.EventTypeTerminationRequested) || !hasEvent(evStore.Events, launch.EventTypeTerminated) {
+		t.Errorf("expected TerminationRequested and Terminated events")
 	}
 }
