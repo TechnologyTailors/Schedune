@@ -2,6 +2,12 @@
 
 **Schedune is an alpha-stage control plane and node agent for explainable scheduling, launch validation, managed runtime lifecycle, restart recovery, and orphan visibility across heterogeneous ARM and x86 infrastructure.**
 
+**Main Purpose:** Schedune tells infrastructure teams which machine can safely run a workload, proves why, validates runtime readiness before launch, then tracks what happened afterward.
+
+**Who it is for:** Platform and infrastructure teams operating or evaluating mixed ARM, x86, private-cloud, and edge fleets. It is not designed for solo app developers deploying a single application.
+
+**Example Scenario:** Your fleet consists of ARM nodes, x86 nodes, and edge boxes. A workload intent requests VM isolation, CPU, RAM, and architecture constraints. Schedune rejects incompatible nodes (e.g., due to missing KVM, stale telemetry, insufficient memory, or policy mismatch), validates the runtime path before launch, and tracks PID, readiness, events, and recovery state afterward.
+
 **Status:** v0.1.0-alpha / Experimental (Single-node technical preview)
 **Community:** [Join the Schedune Discord](https://discord.gg/mdr8tyCQvc)
 **Control Plane:** Go
@@ -15,6 +21,21 @@
 Unlike generic orchestrators or traditional hypervisors, Schedune is built specifically to help organizations exit expensive legacy virtualization, adopt ARM infrastructure safely, and manage mixed fleets with lower operational risk.
 
 ![Schedune Architecture Diagram](docs/assets/how-schedune-works.png)
+
+## Where Schedune is today (Alpha)
+
+Currently, the lower-half control plane is working. This includes:
+- Typed node truth, intake, and projection
+- Eligibility explainability (proving why a node was rejected)
+- Launch validation and dry-runs
+- Initial runtime execution paths (KVM/QEMU, Cloud Hypervisor)
+- State, trace, and events tracking
+- Restart recovery and orphan process visibility
+- Fixture demos for testing on non-Linux hosts
+
+**ARM Compatibility Note:** Today, the workload architecture and intent is supplied by the user or examples. Future value will come from image/container/import evidence, but this is not yet implemented.
+
+Schedune **is not yet** capable of full workload compatibility discovery/import, live migration, High Availability (HA), full storage/networking, or guest-internal app health.
 
 ## What Schedune does today
 
