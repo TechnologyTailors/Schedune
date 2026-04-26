@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
 )
@@ -32,21 +33,29 @@ func (k *KvmExecutor) Prepare(spec launch.LaunchSpec) (launch.PreparedLaunch, er
 		return launch.PreparedLaunch{}, fmt.Errorf("artifact missing at host path: %s", artifactPath)
 	}
 
+	controlSocket, err := GetControlSocketPath(spec.WorkloadID, "qemu")
+	if err != nil {
+		return launch.PreparedLaunch{}, fmt.Errorf("failed to resolve control socket: %w", err)
+	}
+
 	args := []string{
 		"-m", fmt.Sprintf("%d", spec.MemoryMB),
 		"-smp", fmt.Sprintf("%d", spec.Vcpu),
 		"-drive", fmt.Sprintf("file=%s,format=%s", artifactPath, format),
 		"-nographic",
+		"-qmp", fmt.Sprintf("unix:%s,server,nowait", controlSocket),
 	}
 
 	return launch.PreparedLaunch{
-		RuntimeBackend: "kvm_qemu",
-		MemoryMB:       spec.MemoryMB,
-		Vcpu:           spec.Vcpu,
+		RuntimeBackend:  "kvm_qemu",
+		MemoryMB:        spec.MemoryMB,
+		Vcpu:            spec.Vcpu,
+		StartupGraceSec: 5,
 		KvmQemu: &launch.PreparedQemuLaunch{
-			BinaryPath:   binPath,
-			ArtifactPath: artifactPath,
-			CommandArgs:  args,
+			BinaryPath:        binPath,
+			ArtifactPath:      artifactPath,
+			CommandArgs:       args,
+			ControlSocketPath: controlSocket,
 		},
 	}, nil
 }
@@ -55,6 +64,14 @@ func (k *KvmExecutor) Execute(prepared launch.PreparedLaunch) (int, error) {
 	if prepared.KvmQemu == nil {
 		return 0, fmt.Errorf("missing kvm_qemu prepared state")
 	}
+
+	// Ensure the runtime directory exists before starting the binary
+	if prepared.KvmQemu.ControlSocketPath != "" {
+		if err := os.MkdirAll(filepath.Dir(prepared.KvmQemu.ControlSocketPath), 0755); err != nil {
+			return 0, fmt.Errorf("failed to create runtime directory: %w", err)
+		}
+	}
+
 	cmd := exec.Command(prepared.KvmQemu.BinaryPath, prepared.KvmQemu.CommandArgs...)
 	if err := cmd.Start(); err != nil {
 		return 0, fmt.Errorf("executable failed to start: %w", err)

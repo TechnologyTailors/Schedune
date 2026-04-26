@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
 )
@@ -18,22 +19,31 @@ func (k *FirecrackerExecutor) Prepare(spec launch.LaunchSpec) (launch.PreparedLa
 		return launch.PreparedLaunch{}, fmt.Errorf("missing kernel or rootfs path for firecracker artifact model")
 	}
 
+	controlSocket, err := GetControlSocketPath(spec.WorkloadID, "firecracker")
+	if err != nil {
+		return launch.PreparedLaunch{}, fmt.Errorf("failed to resolve control socket: %w", err)
+	}
+
+	runtimeDir := filepath.Dir(controlSocket)
+
 	args := []string{
-		"--api-sock", "/tmp/firecracker.socket",
+		"--api-sock", controlSocket,
 		// In a real execution, we'd write a config JSON and pass it, or call the API.
 		// For V0 dry-run, we just mock the arguments.
-		"--config-file", "/tmp/fc-config.json",
+		"--config-file", filepath.Join(runtimeDir, "fc-config.json"),
 	}
 
 	return launch.PreparedLaunch{
-		RuntimeBackend: "firecracker",
-		MemoryMB:       spec.MemoryMB,
-		Vcpu:           spec.Vcpu,
+		RuntimeBackend:  "firecracker",
+		MemoryMB:        spec.MemoryMB,
+		Vcpu:            spec.Vcpu,
+		StartupGraceSec: 2,
 		Firecracker: &launch.PreparedFirecrackerLaunch{
-			BinaryPath:      binPath,
-			KernelImagePath: kernel,
-			RootfsPath:      rootfs,
-			CommandArgs:     args,
+			BinaryPath:        binPath,
+			KernelImagePath:   kernel,
+			RootfsPath:        rootfs,
+			CommandArgs:       args,
+			ControlSocketPath: controlSocket,
 		},
 	}, nil
 }
