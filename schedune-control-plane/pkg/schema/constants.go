@@ -86,6 +86,7 @@ const (
 	// Launch Validation
 	ReasonErrLaunchArchMismatch                     = "ERR_LAUNCH_ARCH_MISMATCH"
 	ReasonErrLaunchBackendNotSupported              = "ERR_LAUNCH_BACKEND_NOT_SUPPORTED"
+	ReasonErrLaunchBackendExecutionUnsupported      = "ERR_LAUNCH_BACKEND_EXECUTION_UNSUPPORTED"
 	ReasonErrLaunchMissingArtifact                  = "ERR_LAUNCH_MISSING_ARTIFACT"
 	ReasonErrLaunchInvalidStorageFormat             = "ERR_LAUNCH_INVALID_STORAGE_FORMAT"
 	ReasonErrLaunchInvalidFirecrackerArtifactModel  = "ERR_LAUNCH_INVALID_FIRECRACKER_ARTIFACT_MODEL"
