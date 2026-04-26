@@ -16,15 +16,31 @@ Get a single-node Schedune control plane and agent running in under 5 minutes.
 
 You can evaluate Schedune using our automated demo mode or by walking through the manual flow.
 
-### Automated Demo Mode
+### Automated Demo Mode (Linux)
 
-The easiest way to see Schedune in action:
+The easiest way to see Schedune in action on Linux:
 
 ```bash
 make demo
 ```
 
 This will run the preflight checks, build the binaries, reset the database, start the control plane, ingest your local node's capabilities, and run a workload scheduling explanation.
+
+### Evaluate from a MacBook / non-Linux host
+
+On a MacBook M2 Air (or other non-Linux hosts), you can still test control-plane intake, scheduling explainability, launch validation against fixture truth, node APIs, and orphan API shape. Actual VM/microVM execution requires Linux with KVM and runtime binaries.
+
+Run the fixture-backed evaluator demo to quickly verify the pipeline:
+
+```bash
+make demo-fixture-once
+```
+
+For an interactive session where you can explore the API manually afterwards, run:
+
+```bash
+make demo-fixture
+```
 
 ### Manual Step-by-Step Flow
 

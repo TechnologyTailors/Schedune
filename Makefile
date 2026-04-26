@@ -63,6 +63,22 @@ smoke-test: build ## Run headless E2E automated API smoke test
 demo: doctor build dev-db-reset ## Run the automated end-to-end evaluator demo
 	@bash scripts/demo.sh
 
+demo-fixture: build-control-plane dev-db-reset ## Run the fixture-backed evaluator demo (macOS/non-Linux friendly)
+	@bash scripts/demo-fixture.sh
+
+demo-fixture-once: build-control-plane dev-db-reset ## Run the fixture-backed evaluator demo and exit cleanly
+	@bash scripts/demo-fixture.sh --once
+
+example-nodes: ## List normalized node summaries
+	@curl -s http://127.0.0.1:9090/api/v1alpha1/nodes
+
+example-node-explain: ## Explain scheduling eligibility for a specific node (Requires NODE_ID)
+	@if [ -z "$(NODE_ID)" ]; then \
+		echo "Usage: make example-node-explain NODE_ID=<id>"; \
+	else \
+		curl -s http://127.0.0.1:9090/api/v1alpha1/nodes/$(NODE_ID)/explain; \
+	fi
+
 example-intake: ## Ingest the local node capability payload
 	@bash examples/curls/intake.sh
 

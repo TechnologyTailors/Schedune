@@ -129,15 +129,14 @@ func runDoctor() {
 		fmt.Printf("%s Architecture: %s\n", PASS, runtime.GOARCH)
 		fmt.Printf("%s Kernel: %s\n", PASS, getKernelVersion())
 	} else {
-		fmt.Printf("%s OS: %s (Schedune requires Linux)\n", FAIL, runtime.GOOS)
-		controlPlaneReady = false
+		fmt.Printf("%s OS: %s (Control plane: evaluator mode. Agent/Runtime: Linux required)\n", WARN, runtime.GOOS)
 		agentInspectReady = false
 	}
 
 	if syscall.Access("/proc", 4) == nil {
 		fmt.Printf("%s /proc: readable\n", PASS)
 	} else {
-		fmt.Printf("%s /proc: not readable\n", FAIL)
+		fmt.Printf("%s /proc: not readable\n", WARN)
 		orphanSweepReady = false
 	}
 	fmt.Println()
@@ -277,7 +276,9 @@ func runDoctor() {
 	fmt.Println()
 
 	fmt.Println("Recommended next step:")
-	if controlPlaneReady && agentInspectReady {
+	if runtime.GOOS != "linux" && controlPlaneReady {
+		fmt.Println("  make demo-fixture (evaluator mode)")
+	} else if controlPlaneReady && agentInspectReady {
 		fmt.Println("  make demo")
 	} else {
 		fmt.Println("  Resolve [FAIL] items before continuing.")
@@ -302,7 +303,7 @@ func runServer() {
 	}
 
 	// Phase 7B.5: Real Orphan Sweep
-	enumerator := &cp_runtime.LinuxProcEnumerator{}
+	enumerator := cp_runtime.NewEnumerator()
 	orphanSweeper := recovery.NewOrphanSweepService(enumerator, sqliteStore, sqliteStore, sqliteStore, "local-node")
 
 	go func() {
@@ -318,6 +319,8 @@ func runServer() {
 	memStore := store.NewInMemoryStore()
 
 	// Initialize HTTP Handlers
+	systemHandler := api.NewSystemHandler()
+	nodeHandler := api.NewNodeHandler(memStore)
 	intakeHandler := api.NewIntakeHandler(memStore)
 	schedulerHandler := api.NewSchedulerHandler(memStore)
 	launchHandler := api.NewLaunchHandler(memStore, sqliteStore)
@@ -330,6 +333,13 @@ func runServer() {
 	// API Group
 	v1 := r.Group("/api/v1alpha1")
 	{
+		// System Health
+		v1.GET("/healthz", systemHandler.Healthz)
+
+		// Operator -> Control Plane (Nodes)
+		v1.GET("/nodes", nodeHandler.ListNodes)
+		v1.GET("/nodes/:id", nodeHandler.GetNode)
+
 		// Data Plane -> Control Plane
 		v1.POST("/intake/envelope", intakeHandler.Ingest)
 

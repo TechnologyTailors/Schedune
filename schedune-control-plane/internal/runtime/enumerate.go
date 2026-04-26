@@ -1,5 +1,7 @@
 package runtime
 
+import "runtime"
+
 type EnumeratedProcess struct {
 	PID                int
 	PPID               *int
@@ -15,4 +17,17 @@ type EnumeratedProcess struct {
 
 type Enumerator interface {
 	Enumerate() ([]EnumeratedProcess, error)
+}
+
+func NewEnumerator() Enumerator {
+	if runtime.GOOS == "linux" {
+		return &LinuxProcEnumerator{}
+	}
+	return &NoopEnumerator{}
+}
+
+type NoopEnumerator struct{}
+
+func (e *NoopEnumerator) Enumerate() ([]EnumeratedProcess, error) {
+	return nil, nil
 }
