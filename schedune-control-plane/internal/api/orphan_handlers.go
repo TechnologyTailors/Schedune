@@ -31,6 +31,10 @@ func (h *OrphanHandler) ListOrphans(c *gin.Context) {
 		return
 	}
 
+	if orphans == nil {
+		orphans = []domain.OrphanRecord{}
+	}
+
 	c.JSON(http.StatusOK, gin.H{"orphans": orphans})
 }
 

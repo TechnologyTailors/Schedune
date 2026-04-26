@@ -6,7 +6,9 @@ import (
 	"net/http"
 
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/domain"
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/domain/lifecycle"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime"
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime/inspect"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/store"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/store/sqlite"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema"
@@ -27,11 +29,29 @@ func (r *StaticExecutorResolver) Resolve(backend string) (runtime.Executor, erro
 	return exec, nil
 }
 
+type InspectorResolver interface {
+	Resolve(backend string) inspect.Inspector
+}
+
+type StaticInspectorResolver struct{}
+
+func (r *StaticInspectorResolver) Resolve(backend string) inspect.Inspector {
+	switch backend {
+	case "kvm_qemu":
+		return &inspect.QemuInspector{}
+	case "cloud_hypervisor":
+		return &inspect.CloudHypervisorInspector{}
+	default:
+		return &inspect.ProcessInspector{}
+	}
+}
+
 type LaunchHandler struct {
-	nodeStore *store.InMemoryStore
-	execStore *sqlite.SQLiteStore
-	resolver  *StaticExecutorResolver
-	orch      *domain.LaunchOrchestrator
+	nodeStore         *store.InMemoryStore
+	execStore         *sqlite.SQLiteStore
+	resolver          *StaticExecutorResolver
+	inspectorResolver InspectorResolver
+	orch              *domain.LaunchOrchestrator
 }
 
 func NewLaunchHandler(nodeStore *store.InMemoryStore, execStore *sqlite.SQLiteStore) *LaunchHandler {
@@ -43,7 +63,7 @@ func NewLaunchHandler(nodeStore *store.InMemoryStore, execStore *sqlite.SQLiteSt
 		},
 	}
 	orch := domain.NewLaunchOrchestrator(nodeStore, execStore, resolver)
-	return &LaunchHandler{nodeStore: nodeStore, execStore: execStore, resolver: resolver, orch: orch}
+	return &LaunchHandler{nodeStore: nodeStore, execStore: execStore, resolver: resolver, inspectorResolver: &StaticInspectorResolver{}, orch: orch}
 }
 
 // ValidateLaunch assesses whether a chosen node is physically capable of executing the requested spec.
@@ -135,6 +155,26 @@ func (h *LaunchHandler) ExecuteLaunch(c *gin.Context) {
 	c.JSON(http.StatusAccepted, record)
 }
 
+func (h *LaunchHandler) reconcileExecution(rec *launch.LaunchExecutionRecord) error {
+	if rec.State == launch.StateExited || rec.State == launch.StateFailed || rec.State == launch.StateTerminated {
+		return nil
+	}
+
+	backend := ""
+	if rec.PreparedState != nil {
+		backend = rec.PreparedState.RuntimeBackend
+	}
+	inspector := h.inspectorResolver.Resolve(backend)
+
+	err := lifecycle.Reconcile(rec, inspector)
+	if err != nil {
+		log.Error().Err(err).Str("execution_id", rec.ExecutionID).Msg("Failed to reconcile execution")
+		return err
+	}
+
+	return h.execStore.SaveExecution(context.Background(), *rec)
+}
+
 // InspectLaunch returns the live status of the execution trace
 func (h *LaunchHandler) InspectLaunch(c *gin.Context) {
 	id := c.Param("id")
@@ -143,6 +183,11 @@ func (h *LaunchHandler) InspectLaunch(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Execution not found"})
 		return
 	}
+
+	if err := h.reconcileExecution(&rec); err != nil {
+		// Logged in reconcileExecution, continue to return current state
+	}
+
 	c.JSON(http.StatusOK, rec)
 }
 
@@ -164,6 +209,10 @@ func (h *LaunchHandler) InspectReadiness(c *gin.Context) {
 	if err != nil || !found {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Execution not found"})
 		return
+	}
+
+	if err := h.reconcileExecution(&rec); err != nil {
+		// Logged in reconcileExecution, continue to return current state
 	}
 
 	backend := ""

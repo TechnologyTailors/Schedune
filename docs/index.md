@@ -37,4 +37,8 @@ Schedune **is not yet** capable of full workload compatibility discovery/import,
 - **Lifecycle management:** Rigorous state machine with append-only traces, robust restart recovery (rehydration), and real `/proc`-backed orphan sweeping.
 - **Supported Runtimes:** KVM/QEMU (Execution), Cloud Hypervisor (Execution), Firecracker (Validation/Dry-run only).
 
+## Live Lab Demo
+
+To try out a live execution of a KVM/QEMU workload locally, see the [Live Lab Demo](live-lab.md) documentation.
+
 *Note: Expect rapid changes as the product shape stabilizes.*

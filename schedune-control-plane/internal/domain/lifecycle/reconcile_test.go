@@ -124,4 +124,10 @@ func TestReconcile_TerminatingToTerminated(t *testing.T) {
 	if rec.State != launch.StateTerminated {
 		t.Errorf("expected Terminated, got %s", rec.State)
 	}
+	if rec.RuntimeLiveness != "Dead" {
+		t.Errorf("expected Dead, got %s", rec.RuntimeLiveness)
+	}
+	if rec.RuntimeReadiness != "NotReady" {
+		t.Errorf("expected NotReady, got %s", rec.RuntimeReadiness)
+	}
 }

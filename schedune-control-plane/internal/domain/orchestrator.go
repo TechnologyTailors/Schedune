@@ -184,6 +184,8 @@ func (o *LaunchOrchestrator) TerminateLaunch(executionID string) (launch.LaunchE
 
 	termTime := time.Now().Unix()
 	rec.TerminatedAtSec = &termTime
+	rec.RuntimeLiveness = "Dead"
+	rec.RuntimeReadiness = "NotReady"
 	lifecycle.TransitionTo(&rec, launch.StateTerminated, "", "Process terminated successfully")
 	o.save(&rec)
 	return rec, nil

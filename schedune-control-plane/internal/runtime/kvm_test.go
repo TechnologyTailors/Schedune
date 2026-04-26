@@ -63,6 +63,7 @@ func TestKvmExecutor_PrepareValidImageLegacy(t *testing.T) {
 
 	foundDrive := false
 	foundQmp := false
+	foundKvm := false
 	for i, arg := range prep.KvmQemu.CommandArgs {
 		if strings.Contains(arg, "format=qcow2") {
 			foundDrive = true
@@ -70,12 +71,18 @@ func TestKvmExecutor_PrepareValidImageLegacy(t *testing.T) {
 		if arg == "-qmp" && i+1 < len(prep.KvmQemu.CommandArgs) && prep.KvmQemu.CommandArgs[i+1] == fmt.Sprintf("unix:%s,server,nowait", prep.KvmQemu.ControlSocketPath) {
 			foundQmp = true
 		}
+		if arg == "-enable-kvm" {
+			foundKvm = true
+		}
 	}
 	if !foundDrive {
 		t.Errorf("expected format=qcow2 in args, got %v", prep.KvmQemu.CommandArgs)
 	}
 	if !foundQmp {
 		t.Errorf("expected exact -qmp socket in args, got %v", prep.KvmQemu.CommandArgs)
+	}
+	if !foundKvm {
+		t.Errorf("expected -enable-kvm in args, got %v", prep.KvmQemu.CommandArgs)
 	}
 }
 

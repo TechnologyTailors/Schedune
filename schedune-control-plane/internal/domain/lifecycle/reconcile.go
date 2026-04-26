@@ -51,6 +51,7 @@ func Reconcile(rec *launch.LaunchExecutionRecord, inspector inspect.Inspector) e
 		termTime := now
 		rec.TerminatedAtSec = &termTime
 		rec.RuntimeLiveness = "Dead"
+		rec.RuntimeReadiness = "NotReady"
 		return TransitionTo(rec, launch.StateTerminated, "", "Process disappeared after termination requested")
 	}
 

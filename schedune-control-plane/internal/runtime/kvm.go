@@ -39,6 +39,7 @@ func (k *KvmExecutor) Prepare(spec launch.LaunchSpec) (launch.PreparedLaunch, er
 	}
 
 	args := []string{
+		"-enable-kvm",
 		"-m", fmt.Sprintf("%d", spec.MemoryMB),
 		"-smp", fmt.Sprintf("%d", spec.Vcpu),
 		"-drive", fmt.Sprintf("file=%s,format=%s", artifactPath, format),

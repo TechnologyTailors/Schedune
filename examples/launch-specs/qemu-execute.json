@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1alpha1",
+  "launch_mode": "Execute",
+  "workload_id": "example-qemu-vm",
+  "tenant_id": "tenant-example",
+  "node_id": "node-123",
+  "runtime_class": "VirtualMachine",
+  "runtime_backend_preference": "kvm_qemu",
+  "architecture": "x86_64",
+  "memory_mb": 128,
+  "vcpu": 1,
+  "storage": [
+    {
+      "host_path": "/var/lib/schedune/images/example.qcow2",
+      "format": "qcow2"
+    }
+  ]
+}
