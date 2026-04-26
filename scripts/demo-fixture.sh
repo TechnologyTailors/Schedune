@@ -55,11 +55,38 @@ format_json() {
   fi
 }
 
+echo "[*] Freshening fixtures to avoid stale telemetry rejections..."
+if command -v python3 >/dev/null 2>&1; then
+cat << 'EOF' > /tmp/freshen.py
+import json, time, sys
+now = int(time.time())
+stale_after = now + 3600
+
+with open(sys.argv[1], 'r') as f:
+    data = json.load(f)
+
+data['timestamp_sec'] = now
+if 'capabilities' in data:
+    for cap in data['capabilities']:
+        cap['observed_at_sec'] = now
+        cap['stale_after_sec'] = stale_after
+
+with open(sys.argv[2], 'w') as f:
+    json.dump(data, f)
+EOF
+  python3 /tmp/freshen.py testdata/fixtures/cloudhypervisor_ready_arm.json /tmp/fixture_arm.json
+  python3 /tmp/freshen.py testdata/fixtures/missing_kvm_x86.json /tmp/fixture_x86.json
+else
+  echo "[!] python3 not found. Falling back to raw fixtures (telemetry may be stale)."
+  cp testdata/fixtures/cloudhypervisor_ready_arm.json /tmp/fixture_arm.json
+  cp testdata/fixtures/missing_kvm_x86.json /tmp/fixture_x86.json
+fi
+
 # Ingest fixtures
 echo "[*] Ingesting fixtures..."
-curl -s -X POST -H "Content-Type: application/json" -d @testdata/fixtures/healthy_arm_production.json http://127.0.0.1:9090/api/v1alpha1/intake/envelope | format_json
+curl -s -X POST -H "Content-Type: application/json" -d @/tmp/fixture_arm.json http://127.0.0.1:9090/api/v1alpha1/intake/envelope | format_json
 echo ""
-curl -s -X POST -H "Content-Type: application/json" -d @testdata/fixtures/missing_kvm_x86.json http://127.0.0.1:9090/api/v1alpha1/intake/envelope | format_json
+curl -s -X POST -H "Content-Type: application/json" -d @/tmp/fixture_x86.json http://127.0.0.1:9090/api/v1alpha1/intake/envelope | format_json
 echo ""
 
 echo ""
@@ -68,18 +95,39 @@ curl -s http://127.0.0.1:9090/api/v1alpha1/nodes | format_json
 echo ""
 
 echo ""
-echo "[*] Running scheduling explainability for ARM microVM intent..."
-curl -s -X POST -H "Content-Type: application/json" -d @examples/workload-intents/microvm-firecracker.json http://127.0.0.1:9090/api/v1alpha1/schedule/explain | format_json
+echo "[*] Running scheduling explainability for ARM VM intent (Positive Path)..."
+curl -s -X POST -H "Content-Type: application/json" -d @examples/workload-intents/vm-arm64.json http://127.0.0.1:9090/api/v1alpha1/schedule/explain | format_json
 echo ""
 
 echo ""
-echo "[*] Evaluating launch validation against mocked ARM node..."
-# We assume healthy_arm_production.json has node_id "fixture-healthy-arm-prod-001" or similar. Let's look up its node ID by asking the API or parsing the file.
-NODE_ID=$(cat testdata/fixtures/healthy_arm_production.json | grep '"node_id"' | head -n 1 | awk -F'"' '{print $4}')
+echo "[*] Running scheduling explainability for x86 VM intent (Expected Rejection Path)..."
+curl -s -X POST -H "Content-Type: application/json" -d @examples/workload-intents/vm-x86.json http://127.0.0.1:9090/api/v1alpha1/schedule/explain | format_json
+echo ""
+
+echo ""
+echo "[*] Evaluating launch validation against ARM node (cloud_hypervisor)..."
+if command -v python3 >/dev/null 2>&1; then
+  NODE_ID=$(python3 -c "import json; print(json.load(open('/tmp/fixture_arm.json'))['node_id'])")
+else
+  NODE_ID=$(grep -o '"node_id"[[:space:]]*:[[:space:]]*"[^"]*"' /tmp/fixture_arm.json | head -n 1 | cut -d'"' -f4)
+fi
 
 # Run validation using node ID
-# wait, the launch specs need the correct node ID. I can use sed to inject it.
-cat examples/launch-specs/firecracker-dryrun.json | sed "s/\"node_id\": \".*\"/\"node_id\": \"$NODE_ID\"/" > /tmp/demo-launch.json
+if command -v python3 >/dev/null 2>&1; then
+cat << 'EOF' > /tmp/validate.py
+import json, sys
+with open(sys.argv[1], 'r') as f:
+    data = json.load(f)
+data['node_id'] = sys.argv[2]
+data['architecture'] = 'aarch64'
+with open(sys.argv[3], 'w') as f:
+    json.dump(data, f)
+EOF
+  python3 /tmp/validate.py examples/launch-specs/cloudhypervisor-validate.json "$NODE_ID" /tmp/demo-launch.json
+else
+  cat examples/launch-specs/cloudhypervisor-validate.json | sed "s/\"node_id\": \".*\"/\"node_id\": \"$NODE_ID\"/" | sed "s/\"architecture\": \"x86_64\"/\"architecture\": \"aarch64\"/" > /tmp/demo-launch.json
+fi
+
 curl -s -X POST -H "Content-Type: application/json" -d @/tmp/demo-launch.json http://127.0.0.1:9090/api/v1alpha1/launch/validate | format_json
 echo ""
 
