@@ -49,7 +49,13 @@ make demo
 
 On a MacBook M2 Air (or other non-Linux hosts), you can still test control-plane intake, scheduling explainability, launch validation against fixture truth, node APIs, and orphan API shape. Actual VM/microVM execution requires Linux with KVM and runtime binaries.
 
-Run the fixture-backed evaluator demo:
+Run the fixture-backed evaluator demo to quickly verify the pipeline:
+
+```bash
+make demo-fixture-once
+```
+
+For an interactive session where you can explore the API manually afterwards, run:
 
 ```bash
 make demo-fixture

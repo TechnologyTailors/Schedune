@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 set -e
 
+DEMO_ONCE=0
+for arg in "$@"; do
+    if [ "$arg" == "--once" ]; then
+        DEMO_ONCE=1
+    fi
+done
+if [ "${SCHEDUNE_DEMO_ONCE:-0}" -eq 1 ]; then
+    DEMO_ONCE=1
+fi
+
 echo "============================================"
 echo "      Schedune Fixture Evaluator Demo       "
 echo "============================================"
@@ -26,8 +36,8 @@ echo "[*] Starting Control Plane on :9090..."
 ./bin/schedune-cp server > /dev/null 2>&1 &
 SERVER_PID=$!
 
-# Trap to ensure server is killed on exit
-trap "echo 'Shutting down control plane...'; kill $SERVER_PID" EXIT
+# Trap to ensure server is killed and temp files cleaned on exit
+trap "echo 'Shutting down control plane...'; kill $SERVER_PID 2>/dev/null || true; rm -f /tmp/fixture_arm.json /tmp/fixture_x86.json /tmp/freshen.py /tmp/validate.py /tmp/demo-launch.json" EXIT
 
 # Wait for healthz
 echo "[*] Waiting for control plane readiness..."
@@ -142,6 +152,11 @@ echo "  make example-node-explain NODE_ID=$NODE_ID"
 echo ""
 echo "Press Ctrl+C to stop the server."
 echo "=========================================================="
+
+if [ "$DEMO_ONCE" -eq 1 ]; then
+    echo "Exiting one-shot demo mode."
+    exit 0
+fi
 
 # Keep script running to keep server alive
 wait $SERVER_PID

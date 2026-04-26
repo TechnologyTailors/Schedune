@@ -66,6 +66,9 @@ demo: doctor build dev-db-reset ## Run the automated end-to-end evaluator demo
 demo-fixture: build-control-plane dev-db-reset ## Run the fixture-backed evaluator demo (macOS/non-Linux friendly)
 	@bash scripts/demo-fixture.sh
 
+demo-fixture-once: build-control-plane dev-db-reset ## Run the fixture-backed evaluator demo and exit cleanly
+	@bash scripts/demo-fixture.sh --once
+
 example-nodes: ## List normalized node summaries
 	@curl -s http://127.0.0.1:9090/api/v1alpha1/nodes
 
