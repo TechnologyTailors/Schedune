@@ -11,6 +11,15 @@ import (
 	"time"
 )
 
+type MockEventStore struct {
+	Events []launch.RuntimeEvent
+}
+
+func (m *MockEventStore) AppendEvent(ctx context.Context, ev launch.RuntimeEvent) error {
+	m.Events = append(m.Events, ev)
+	return nil
+}
+
 type MockStore struct {
 	node NodeRecord
 	exec map[string]launch.LaunchExecutionRecord
@@ -71,7 +80,8 @@ func TestLaunchOrchestrator_Success(t *testing.T) {
 	}
 	exec := &MockExecutor{}
 
-	orch := NewLaunchOrchestrator(store, store, exec)
+	evStore := &MockEventStore{}
+	orch := NewLaunchOrchestrator(store, store, evStore, exec)
 
 	spec := launch.LaunchSpec{
 		SchemaVersion:  "v1alpha1",
@@ -106,6 +116,17 @@ func TestLaunchOrchestrator_Success(t *testing.T) {
 	if !hasSpawnSuccess {
 		t.Errorf("expected trace to have RuntimeSpawn Success, got %v", rec.Trace)
 	}
+
+	// Verify events
+	hasSpawnEvent := false
+	for _, ev := range evStore.Events {
+		if ev.EventType == launch.EventTypeRuntimeSpawned {
+			hasSpawnEvent = true
+		}
+	}
+	if !hasSpawnEvent {
+		t.Errorf("expected EventTypeRuntimeSpawned to be emitted")
+	}
 }
 
 func TestLaunchOrchestrator_ValidationFails(t *testing.T) {
@@ -124,7 +145,8 @@ func TestLaunchOrchestrator_ValidationFails(t *testing.T) {
 	}
 	exec := &MockExecutor{}
 
-	orch := NewLaunchOrchestrator(store, store, exec)
+	evStore := &MockEventStore{}
+	orch := NewLaunchOrchestrator(store, store, evStore, exec)
 
 	spec := launch.LaunchSpec{
 		SchemaVersion:  "v1alpha1",
@@ -154,6 +176,17 @@ func TestLaunchOrchestrator_ValidationFails(t *testing.T) {
 	if !hasValFailed {
 		t.Errorf("expected trace to have HostPreflight Failed, got %v", rec.Trace)
 	}
+
+	// Verify events
+	hasValEvent := false
+	for _, ev := range evStore.Events {
+		if ev.EventType == launch.EventTypeValidationFailed {
+			hasValEvent = true
+		}
+	}
+	if !hasValEvent {
+		t.Errorf("expected EventTypeValidationFailed to be emitted")
+	}
 }
 
 func TestLaunchOrchestrator_FirecrackerExecuteFailsValidation(t *testing.T) {
@@ -172,7 +205,8 @@ func TestLaunchOrchestrator_FirecrackerExecuteFailsValidation(t *testing.T) {
 	}
 	exec := &MockExecutor{}
 
-	orch := NewLaunchOrchestrator(store, store, exec)
+	evStore := &MockEventStore{}
+	orch := NewLaunchOrchestrator(store, store, evStore, exec)
 
 	spec := launch.LaunchSpec{
 		SchemaVersion:   "v1alpha1",
@@ -202,5 +236,16 @@ func TestLaunchOrchestrator_FirecrackerExecuteFailsValidation(t *testing.T) {
 	}
 	if !hasBackendExecutionUnsupported {
 		t.Errorf("expected trace to have %s in validation failure message, got %v", schema.ReasonErrLaunchBackendExecutionUnsupported, rec.Trace)
+	}
+
+	// Verify events
+	hasValEvent := false
+	for _, ev := range evStore.Events {
+		if ev.EventType == launch.EventTypeValidationFailed {
+			hasValEvent = true
+		}
+	}
+	if !hasValEvent {
+		t.Errorf("expected EventTypeValidationFailed to be emitted")
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/domain"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/domain/lifecycle"
@@ -14,6 +15,7 @@ import (
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 )
 
@@ -62,7 +64,7 @@ func NewLaunchHandler(nodeStore *store.InMemoryStore, execStore *sqlite.SQLiteSt
 			"firecracker":      &runtime.FirecrackerExecutor{},
 		},
 	}
-	orch := domain.NewLaunchOrchestrator(nodeStore, execStore, resolver)
+	orch := domain.NewLaunchOrchestrator(nodeStore, execStore, execStore, resolver)
 	return &LaunchHandler{nodeStore: nodeStore, execStore: execStore, resolver: resolver, inspectorResolver: &StaticInspectorResolver{}, orch: orch}
 }
 
@@ -166,10 +168,49 @@ func (h *LaunchHandler) reconcileExecution(rec *launch.LaunchExecutionRecord) er
 	}
 	inspector := h.inspectorResolver.Resolve(backend)
 
+	// Capture before state
+	beforeState := rec.State
+	beforeLiveness := rec.RuntimeLiveness
+	beforeReadiness := rec.RuntimeReadiness
+	var beforeExitCode *int
+	if rec.ExitCode != nil {
+		ec := *rec.ExitCode
+		beforeExitCode = &ec
+	}
+
 	err := lifecycle.Reconcile(rec, inspector)
 	if err != nil {
 		log.Error().Err(err).Str("execution_id", rec.ExecutionID).Msg("Failed to reconcile execution")
 		return err
+	}
+
+	// Determine if material change occurred
+	changed := beforeState != rec.State ||
+		beforeLiveness != rec.RuntimeLiveness ||
+		beforeReadiness != rec.RuntimeReadiness ||
+		(beforeExitCode == nil && rec.ExitCode != nil) ||
+		(beforeExitCode != nil && rec.ExitCode != nil && *beforeExitCode != *rec.ExitCode)
+
+	if changed {
+		ev := launch.RuntimeEvent{
+			EventID:      uuid.New().String(),
+			ExecutionID:  rec.ExecutionID,
+			EventType:    launch.EventTypeReconcileStateChanged,
+			TimestampSec: time.Now().Unix(),
+			ReasonCode:   "",
+			PayloadJSON: launch.EventPayloadReconcile{
+				ExecutionID:     rec.ExecutionID,
+				NodeID:          rec.NodeID,
+				BeforeState:     beforeState,
+				AfterState:      rec.State,
+				BeforeLiveness:  beforeLiveness,
+				AfterLiveness:   rec.RuntimeLiveness,
+				BeforeReadiness: beforeReadiness,
+				AfterReadiness:  rec.RuntimeReadiness,
+				ExitCode:        rec.ExitCode,
+			},
+		}
+		_ = h.execStore.AppendEvent(context.Background(), ev)
 	}
 
 	return h.execStore.SaveExecution(context.Background(), *rec)

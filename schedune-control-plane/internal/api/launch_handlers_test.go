@@ -80,7 +80,7 @@ func setupDryRunTestRouter(executor *MockExecutor, node domain.NodeRecord) *gin.
 			"firecracker":      &runtime.FirecrackerExecutor{},
 		},
 	}
-	orch := domain.NewLaunchOrchestrator(nodeStore, execStore, resolver)
+	orch := domain.NewLaunchOrchestrator(nodeStore, execStore, execStore, resolver)
 
 	handler := &LaunchHandler{
 		nodeStore: nodeStore,
@@ -276,7 +276,7 @@ func setupInspectTestRouter(t *testing.T) (*gin.Engine, *store.InMemoryStore, *s
 	execStore, _ := sqlite.NewSQLiteStore(":memory:")
 
 	resolver := &StaticExecutorResolver{}
-	orch := domain.NewLaunchOrchestrator(nodeStore, execStore, resolver)
+	orch := domain.NewLaunchOrchestrator(nodeStore, execStore, execStore, resolver)
 
 	mockInspector := &MockInspector{}
 	mockResolver := &MockInspectorResolver{Inspector: mockInspector}
@@ -346,5 +346,17 @@ func TestInspectReadiness_ReconcilesToReady(t *testing.T) {
 	}
 	if persisted.State != launch.StateRunning {
 		t.Errorf("expected persisted state to be Running, got %s", persisted.State)
+	}
+
+	events, _ := execStore.ListEvents(context.Background(), "test-exec-1")
+	hasReconcileEvent := false
+	for _, ev := range events {
+		if ev.EventType == launch.EventTypeReconcileStateChanged {
+			hasReconcileEvent = true
+			break
+		}
+	}
+	if !hasReconcileEvent {
+		t.Errorf("expected EventTypeReconcileStateChanged to be emitted")
 	}
 }

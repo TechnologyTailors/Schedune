@@ -23,6 +23,11 @@ type ExecutionStore interface {
 	GetExecution(ctx context.Context, id string) (launch.LaunchExecutionRecord, bool, error)
 }
 
+// EventStore handles append-only event stream
+type EventStore interface {
+	AppendEvent(ctx context.Context, ev launch.RuntimeEvent) error
+}
+
 // ExecutorResolver defines how the orchestrator finds the right backend logic
 type ExecutorResolver interface {
 	Resolve(backend string) (runtime.Executor, error)
@@ -30,13 +35,14 @@ type ExecutorResolver interface {
 
 // LaunchOrchestrator manages the deterministic pipeline of Validate -> Prepare -> Execute
 type LaunchOrchestrator struct {
-	nodeStore NodeStore
-	execStore ExecutionStore
-	resolver  ExecutorResolver
+	nodeStore  NodeStore
+	execStore  ExecutionStore
+	eventStore EventStore
+	resolver   ExecutorResolver
 }
 
-func NewLaunchOrchestrator(nodeStore NodeStore, execStore ExecutionStore, resolver ExecutorResolver) *LaunchOrchestrator {
-	return &LaunchOrchestrator{nodeStore: nodeStore, execStore: execStore, resolver: resolver}
+func NewLaunchOrchestrator(nodeStore NodeStore, execStore ExecutionStore, eventStore EventStore, resolver ExecutorResolver) *LaunchOrchestrator {
+	return &LaunchOrchestrator{nodeStore: nodeStore, execStore: execStore, eventStore: eventStore, resolver: resolver}
 }
 
 // StartLaunch executes the pipeline synchronously to prove execution boundaries
@@ -57,6 +63,32 @@ func (o *LaunchOrchestrator) StartLaunch(spec launch.LaunchSpec) launch.LaunchEx
 	return rec
 }
 
+func (o *LaunchOrchestrator) emitEvent(eventType string, rec *launch.LaunchExecutionRecord, reasonCode, message string) {
+	if o.eventStore == nil {
+		return
+	}
+	backend := ""
+	if rec.PreparedState != nil {
+		backend = rec.PreparedState.RuntimeBackend
+	}
+	ev := launch.RuntimeEvent{
+		EventID:      uuid.New().String(),
+		ExecutionID:  rec.ExecutionID,
+		EventType:    eventType,
+		TimestampSec: time.Now().Unix(),
+		ReasonCode:   reasonCode,
+		PayloadJSON: launch.EventPayloadLifecycle{
+			ExecutionID: rec.ExecutionID,
+			WorkloadID:  rec.WorkloadID,
+			NodeID:      rec.NodeID,
+			Backend:     backend,
+			State:       rec.State,
+			Message:     message,
+		},
+	}
+	_ = o.eventStore.AppendEvent(context.Background(), ev)
+}
+
 func (o *LaunchOrchestrator) initializeRecord(spec launch.LaunchSpec) launch.LaunchExecutionRecord {
 	now := time.Now().Unix()
 	rec := launch.LaunchExecutionRecord{
@@ -72,6 +104,7 @@ func (o *LaunchOrchestrator) initializeRecord(spec launch.LaunchSpec) launch.Lau
 		Trace:            []launch.ExecutionTraceStep{},
 	}
 	lifecycle.AppendTrace(&rec, "Init", "Success", "", "Execution initialized")
+	o.emitEvent(launch.EventTypeExecutionCreated, &rec, "", "Execution initialized")
 	return rec
 }
 
@@ -81,19 +114,23 @@ func (o *LaunchOrchestrator) validateAndRecord(spec launch.LaunchSpec, rec *laun
 		lifecycle.TransitionTo(rec, launch.StatePreparing, "", "Initializing preparation")
 		lifecycle.TransitionTo(rec, launch.StateFailed, schema.ReasonErrNodeNotFound, "Target node not found in store")
 		o.save(rec)
+		o.emitEvent(launch.EventTypeValidationFailed, rec, schema.ReasonErrNodeNotFound, "Target node not found in store")
 		return false
 	}
 
 	valRes := ValidateLaunch(spec, node)
 	if !valRes.IsValid {
 		lifecycle.TransitionTo(rec, launch.StatePreparing, "", "Initializing preparation")
-		lifecycle.TransitionTo(rec, launch.StateFailed, schema.ReasonErrValidationFailed, fmt.Sprintf("Node missing prerequisites: %v", valRes.BlockingReasonCodes))
+		msg := fmt.Sprintf("Node missing prerequisites: %v", valRes.BlockingReasonCodes)
+		lifecycle.TransitionTo(rec, launch.StateFailed, schema.ReasonErrValidationFailed, msg)
 		o.save(rec)
+		o.emitEvent(launch.EventTypeValidationFailed, rec, schema.ReasonErrValidationFailed, msg)
 		return false
 	}
 
 	lifecycle.TransitionTo(rec, launch.StatePreparing, "", "Host capabilities validated successfully")
 	o.save(rec)
+	o.emitEvent(launch.EventTypeValidationPassed, rec, "", "Host capabilities validated successfully")
 	return true
 }
 
@@ -107,8 +144,10 @@ func (o *LaunchOrchestrator) prepareAndRecord(spec launch.LaunchSpec, rec *launc
 
 	exec, err := o.resolver.Resolve(selectedBackend)
 	if err != nil {
-		lifecycle.TransitionTo(rec, launch.StateFailed, schema.ReasonErrPreparationFailed, fmt.Sprintf("Failed to resolve executor for backend %s: %v", selectedBackend, err))
+		msg := fmt.Sprintf("Failed to resolve executor for backend %s: %v", selectedBackend, err)
+		lifecycle.TransitionTo(rec, launch.StateFailed, schema.ReasonErrPreparationFailed, msg)
 		o.save(rec)
+		o.emitEvent(launch.EventTypePreparationFailed, rec, schema.ReasonErrPreparationFailed, msg)
 		return nil, false
 	}
 
@@ -116,6 +155,7 @@ func (o *LaunchOrchestrator) prepareAndRecord(spec launch.LaunchSpec, rec *launc
 	if err != nil {
 		lifecycle.TransitionTo(rec, launch.StateFailed, schema.ReasonErrPreparationFailed, err.Error())
 		o.save(rec)
+		o.emitEvent(launch.EventTypePreparationFailed, rec, schema.ReasonErrPreparationFailed, err.Error())
 		return nil, false
 	}
 	rec.PreparedState = &prep
@@ -123,6 +163,7 @@ func (o *LaunchOrchestrator) prepareAndRecord(spec launch.LaunchSpec, rec *launc
 
 	lifecycle.TransitionTo(rec, launch.StateValidated, "", "Ready for launch")
 	o.save(rec)
+	o.emitEvent(launch.EventTypePreparationPassed, rec, "", "Ready for launch")
 	return exec, true
 }
 
@@ -133,6 +174,7 @@ func (o *LaunchOrchestrator) spawnAndRecord(spec launch.LaunchSpec, rec *launch.
 	if spec.LaunchMode == "DryRun" || spec.LaunchMode == "Validate" {
 		lifecycle.TransitionTo(rec, launch.StateTerminated, "", "DryRun/Validate successful. Aborting actual spawn.")
 		o.save(rec)
+		o.emitEvent(launch.EventTypeDryRunCompleted, rec, "", "DryRun/Validate successful. Aborting actual spawn.")
 		return
 	}
 
@@ -140,6 +182,7 @@ func (o *LaunchOrchestrator) spawnAndRecord(spec launch.LaunchSpec, rec *launch.
 	if err != nil {
 		lifecycle.TransitionTo(rec, launch.StateFailed, schema.ReasonErrExecRuntimeSpawnFailed, err.Error())
 		o.save(rec)
+		o.emitEvent(launch.EventTypePreparationFailed, rec, schema.ReasonErrExecRuntimeSpawnFailed, err.Error())
 		return
 	}
 
@@ -147,8 +190,10 @@ func (o *LaunchOrchestrator) spawnAndRecord(spec launch.LaunchSpec, rec *launch.
 	startedTime := time.Now().Unix()
 	rec.StartedAtSec = &startedTime
 
-	lifecycle.TransitionTo(rec, launch.StateStarting, "", fmt.Sprintf("Process successfully spawned (PID %d)", pid))
+	msg := fmt.Sprintf("Process successfully spawned (PID %d)", pid)
+	lifecycle.TransitionTo(rec, launch.StateStarting, "", msg)
 	o.save(rec)
+	o.emitEvent(launch.EventTypeRuntimeSpawned, rec, "", msg)
 }
 
 func (o *LaunchOrchestrator) save(rec *launch.LaunchExecutionRecord) {
@@ -168,6 +213,7 @@ func (o *LaunchOrchestrator) TerminateLaunch(executionID string) (launch.LaunchE
 
 	lifecycle.TransitionTo(&rec, launch.StateTerminating, "", "Termination requested by API")
 	o.save(&rec)
+	o.emitEvent(launch.EventTypeTerminationRequested, &rec, "", "Termination requested by API")
 
 	if rec.PID != nil && rec.PreparedState != nil {
 		exec, err := o.resolver.Resolve(rec.PreparedState.RuntimeBackend)
@@ -178,6 +224,7 @@ func (o *LaunchOrchestrator) TerminateLaunch(executionID string) (launch.LaunchE
 			// Do not jump to Failed immediately; let reconcile loop handle stubborn processes
 			lifecycle.AppendTrace(&rec, "Termination", "Failed", schema.ReasonErrTermSignalFailed, err.Error())
 			o.save(&rec)
+			o.emitEvent(launch.EventTypeTerminationFailed, &rec, schema.ReasonErrTermSignalFailed, err.Error())
 			return rec, err
 		}
 	}
@@ -188,5 +235,6 @@ func (o *LaunchOrchestrator) TerminateLaunch(executionID string) (launch.LaunchE
 	rec.RuntimeReadiness = "NotReady"
 	lifecycle.TransitionTo(&rec, launch.StateTerminated, "", "Process terminated successfully")
 	o.save(&rec)
+	o.emitEvent(launch.EventTypeTerminated, &rec, "", "Process terminated successfully")
 	return rec, nil
 }
