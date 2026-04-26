@@ -6,7 +6,12 @@
 
 **Who it is for:** Platform and infrastructure teams operating or evaluating mixed ARM, x86, private-cloud, and edge fleets. It is not designed for solo app developers deploying a single application.
 
-**Example Scenario:** Your fleet consists of ARM nodes, x86 nodes, and edge boxes. A workload intent requests VM isolation, CPU, RAM, and architecture constraints. Schedune rejects incompatible nodes (e.g., due to missing KVM, stale telemetry, insufficient memory, or policy mismatch), validates the runtime path before launch, and tracks PID, readiness, events, and recovery state afterward.
+**Example Scenario:**
+- **Fleet:** Mixed machines (ARM servers, x86 servers, edge mini PCs).
+- **Intent:** Run a workload (e.g., payments service VM) requiring 4 vCPU, 8GB RAM, and KVM.
+- **Evaluation:** Schedune inspects the fleet. It selects `arm-01` (healthy, KVM works) and explicitly rejects others like `arm-02` (missing KVM), `x86-02` (stale telemetry), and `edge-01` (insufficient memory).
+- **Validation:** Before launch, it validates KVM, binaries, and safe socket paths.
+- **Tracking:** After launch, it tracks the PID, backend readiness, events, and recovery state.
 
 **Status:** v0.1.0-alpha / Experimental (Single-node technical preview)
 **Community:** [Join the Schedune Discord](https://discord.gg/mdr8tyCQvc)
