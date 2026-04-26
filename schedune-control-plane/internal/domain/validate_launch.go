@@ -80,6 +80,15 @@ func ValidateLaunch(spec launch.LaunchSpec, node NodeRecord) launch.LaunchValida
 		return result
 	}
 
+	if selectedBackend == schema.BackendFirecracker && spec.LaunchMode == "Execute" {
+		result.IsValid = false
+		result.BlockingReasonCodes = append(result.BlockingReasonCodes, schema.ReasonErrLaunchBackendExecutionUnsupported)
+		result.ValidationTrace = append(result.ValidationTrace, "Failed: Firecracker execution is not implemented in Data Plane V0. Only Validate and DryRun are supported.")
+		result.ExplainabilityText = "Node cannot launch workload due to Data Plane limitations."
+		result.RemediationHints = generateRemediationHints(result)
+		return result
+	}
+
 	// 3. Layer 4: Setup context for preparation phase validation
 	result.ValidationTrace = append(result.ValidationTrace, "Passed: Selected backend "+selectedBackend)
 	if spec.RuntimeVersion != nil && (spec.RuntimeVersion.MinimumVersion != "" || spec.RuntimeVersion.ExactVersion != "") {
@@ -113,6 +122,9 @@ func generateRemediationHints(result launch.LaunchValidationResult) map[string]s
 		}
 		if code == schema.ReasonErrLaunchBackendNotSupported {
 			hints["backend"] = "Check the RejectedBackends map for specific missing capabilities."
+		}
+		if code == schema.ReasonErrLaunchBackendExecutionUnsupported {
+			hints["launch_mode"] = "Firecracker execution is not supported in Data Plane V0. Use Validate or DryRun, or select a different backend."
 		}
 		if code == schema.ReasonErrLaunchMissingCapabilitySeccomp {
 			hints["kernel_seccomp"] = "Ensure the host kernel is compiled with CONFIG_SECCOMP and actions_avail is readable."

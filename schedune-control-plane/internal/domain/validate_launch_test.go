@@ -731,3 +731,84 @@ func TestValidateLaunch_RuntimeVersionMismatch(t *testing.T) {
 		t.Errorf("expected structured evidence for runtime version mismatch, got %+v", result.BackendRejectionEvidence)
 	}
 }
+
+func TestValidateLaunch_FirecrackerExecuteUnsupported(t *testing.T) {
+	env := readFixture(t, "firecracker_host_ready.json")
+	now := time.Now().Unix()
+	env.TimestampSec = now
+	for i := range env.Capabilities {
+		env.Capabilities[i].ObservedAtSec = now
+		staleAfter := now + 300
+		env.Capabilities[i].StaleAfterSec = &staleAfter
+	}
+	node := ProjectEnvelope(env)
+
+	spec := launch.LaunchSpec{
+		SchemaVersion:   "v1alpha1",
+		WorkloadID:      "wl-launch-fc-execute",
+		TenantID:        "tenant-1",
+		NodeID:          node.ID,
+		RuntimeClass:    "MicroVM",
+		Architecture:    "x86_64",
+		Vcpu:            2,
+		MemoryMB:        1024,
+		LaunchMode:      "Execute",
+		KernelImagePath: "/tmp/kernel.bin",
+		RootfsPath:      "/tmp/rootfs.ext4",
+	}
+
+	result := ValidateLaunch(spec, node)
+	if result.IsValid {
+		t.Errorf("expected launch to be invalid due to Execute mode for Firecracker")
+	}
+
+	hasBlocker := false
+	for _, code := range result.BlockingReasonCodes {
+		if code == schema.ReasonErrLaunchBackendExecutionUnsupported {
+			hasBlocker = true
+		}
+	}
+
+	if !hasBlocker {
+		t.Errorf("expected ERR_LAUNCH_BACKEND_EXECUTION_UNSUPPORTED blocker, got %v", result.BlockingReasonCodes)
+	}
+
+	if result.SelectedBackend != schema.BackendFirecracker {
+		t.Errorf("expected SelectedBackend to be firecracker, got %s", result.SelectedBackend)
+	}
+}
+
+func TestValidateLaunch_FirecrackerDryRunSupported(t *testing.T) {
+	env := readFixture(t, "firecracker_host_ready.json")
+	now := time.Now().Unix()
+	env.TimestampSec = now
+	for i := range env.Capabilities {
+		env.Capabilities[i].ObservedAtSec = now
+		staleAfter := now + 300
+		env.Capabilities[i].StaleAfterSec = &staleAfter
+	}
+	node := ProjectEnvelope(env)
+
+	spec := launch.LaunchSpec{
+		SchemaVersion:   "v1alpha1",
+		WorkloadID:      "wl-launch-fc-dryrun",
+		TenantID:        "tenant-1",
+		NodeID:          node.ID,
+		RuntimeClass:    "MicroVM",
+		Architecture:    "x86_64",
+		Vcpu:            2,
+		MemoryMB:        1024,
+		LaunchMode:      "DryRun",
+		KernelImagePath: "/tmp/kernel.bin",
+		RootfsPath:      "/tmp/rootfs.ext4",
+	}
+
+	result := ValidateLaunch(spec, node)
+	if !result.IsValid {
+		t.Errorf("expected launch to be valid for Firecracker DryRun, got blockers: %v", result.BlockingReasonCodes)
+	}
+
+	if result.SelectedBackend != schema.BackendFirecracker {
+		t.Errorf("expected SelectedBackend to be firecracker, got %s", result.SelectedBackend)
+	}
+}

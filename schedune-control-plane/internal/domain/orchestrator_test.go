@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"errors"
+	"strings"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
@@ -152,5 +153,54 @@ func TestLaunchOrchestrator_ValidationFails(t *testing.T) {
 	}
 	if !hasValFailed {
 		t.Errorf("expected trace to have HostPreflight Failed, got %v", rec.Trace)
+	}
+}
+
+func TestLaunchOrchestrator_FirecrackerExecuteFailsValidation(t *testing.T) {
+	env := readFixture(t, "firecracker_host_ready.json")
+	now := time.Now().Unix()
+	for i := range env.Capabilities {
+		env.Capabilities[i].ObservedAtSec = now
+		staleAfter := now + 300
+		env.Capabilities[i].StaleAfterSec = &staleAfter
+	}
+	node := ProjectEnvelope(env)
+
+	store := &MockStore{
+		node: node,
+		exec: make(map[string]launch.LaunchExecutionRecord),
+	}
+	exec := &MockExecutor{}
+
+	orch := NewLaunchOrchestrator(store, store, exec)
+
+	spec := launch.LaunchSpec{
+		SchemaVersion:   "v1alpha1",
+		WorkloadID:      "wl-test-fc-exec",
+		TenantID:        "tenant-test",
+		NodeID:          node.ID,
+		RuntimeClass:    "MicroVM",
+		Architecture:    "x86_64",
+		Vcpu:            2,
+		MemoryMB:        1024,
+		LaunchMode:      "Execute",
+		KernelImagePath: "/tmp/kernel.bin",
+		RootfsPath:      "/tmp/rootfs.ext4",
+	}
+
+	rec := orch.StartLaunch(spec)
+
+	if rec.State != launch.StateFailed {
+		t.Errorf("expected state %s, got %s", launch.StateFailed, rec.State)
+	}
+
+	hasBackendExecutionUnsupported := false
+	for _, tr := range rec.Trace {
+		if tr.Stage == "StateTransition" && tr.ReasonCode == schema.ReasonErrValidationFailed && strings.Contains(tr.Message, schema.ReasonErrLaunchBackendExecutionUnsupported) {
+			hasBackendExecutionUnsupported = true
+		}
+	}
+	if !hasBackendExecutionUnsupported {
+		t.Errorf("expected trace to have %s in validation failure message, got %v", schema.ReasonErrLaunchBackendExecutionUnsupported, rec.Trace)
 	}
 }
