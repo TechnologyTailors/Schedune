@@ -1,5 +1,7 @@
 site_name: Schedune
-site_description: A production-grade, explainable control plane and node agent for scheduling and managing VMs and MicroVMs.
+site_description: An alpha-stage, explainable control plane and node agent for scheduling and managing VMs and MicroVMs.
+repo_url: https://github.com/TechnologyTailors/Schedune
+repo_name: TechnologyTailors/Schedune
 theme:
   name: material
   palette:
@@ -14,3 +16,4 @@ nav:
   - State Machine: state-machine.md
   - Recovery: recovery.md
   - Troubleshooting: troubleshooting.md
+  - GitHub: https://github.com/TechnologyTailors/Schedune
