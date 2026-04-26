@@ -31,18 +31,28 @@ Get a single-node Schedune control plane and agent running in under 5 minutes.
 
 ### 1. Preflight Check
 
-Check if your local Linux host is ready for the evaluator:
+Check if your local host is ready for the evaluator:
 
 ```bash
 make dev-preflight
 ```
 
-### 2. Evaluator Demo
+### 2. Evaluator Demo (Linux)
 
-Run the end-to-end evaluator journey. This builds the components, starts the control plane, inspects your local node, ingests the truth, and evaluates a sample workload intent.
+If you are on a Linux host with KVM, run the end-to-end evaluator journey. This builds the components, starts the control plane, inspects your local node, ingests the truth, and evaluates a sample workload intent.
 
 ```bash
 make demo
+```
+
+### 3. Evaluate from a MacBook / non-Linux host
+
+On a MacBook M2 Air (or other non-Linux hosts), you can still test control-plane intake, scheduling explainability, launch validation against fixture truth, node APIs, and orphan API shape. Actual VM/microVM execution requires Linux with KVM and runtime binaries.
+
+Run the fixture-backed evaluator demo:
+
+```bash
+make demo-fixture
 ```
 
 ### 3. Step-by-Step Examples
