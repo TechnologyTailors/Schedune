@@ -8,6 +8,7 @@ nav:
   - Home: index.md
   - Quickstart: quickstart.md
   - Architecture: architecture.md
+  - Roadmap: roadmap.md
   - API: api.md
   - Runtime Support: runtime-support.md
   - State Machine: state-machine.md
