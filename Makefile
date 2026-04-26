@@ -69,6 +69,12 @@ demo-fixture: build-control-plane dev-db-reset ## Run the fixture-backed evaluat
 demo-fixture-once: build-control-plane dev-db-reset ## Run the fixture-backed evaluator demo and exit cleanly
 	@bash scripts/demo-fixture.sh --once
 
+demo-live-lab: build dev-db-reset ## Run the live lab KVM demo interactively
+	@bash scripts/demo-live-lab.sh
+
+demo-live-lab-once: build dev-db-reset ## Run the live lab KVM demo and exit cleanly
+	@bash scripts/demo-live-lab.sh --once
+
 example-nodes: ## List normalized node summaries
 	@curl -s http://127.0.0.1:9090/api/v1alpha1/nodes
 

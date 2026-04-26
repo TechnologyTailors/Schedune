@@ -101,6 +101,16 @@ make example-orphans         # Check for orphaned processes
 make dev-down                # Stop the control plane
 ```
 
+### 4. Live Lab Demo
+
+If you are on an x86_64 Linux host or nested-KVM x86_64 environment with KVM and QEMU, you can run the live lab demo which executes a KVM workload natively:
+
+```bash
+make demo-live-lab
+```
+
+For more information, see the [Live Lab Demo](docs/live-lab.md) documentation.
+
 ## Repository Layout
 
 - `schedune-control-plane/`: The Go-based control plane, API, and orchestration logic.

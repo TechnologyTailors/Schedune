@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/domain"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime"
+	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime/inspect"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/store"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/store/sqlite"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema"
@@ -246,5 +248,103 @@ func TestDryRunLaunch_PreparationFails(t *testing.T) {
 
 	if res.PreparationReasonCode == nil || *res.PreparationReasonCode != schema.ReasonErrPreparationFailed {
 		t.Errorf("expected preparation reason code, got %v", res.PreparationReasonCode)
+	}
+}
+
+type MockInspector struct {
+	Obs inspect.RuntimeObservation
+	Err error
+}
+
+func (m *MockInspector) Inspect(executionID string, pid *int, prepared launch.PreparedLaunch) (inspect.RuntimeObservation, error) {
+	return m.Obs, m.Err
+}
+
+type MockInspectorResolver struct {
+	Inspector inspect.Inspector
+}
+
+func (m *MockInspectorResolver) Resolve(backend string) inspect.Inspector {
+	return m.Inspector
+}
+
+func setupInspectTestRouter(t *testing.T) (*gin.Engine, *store.InMemoryStore, *sqlite.SQLiteStore, *MockInspector) {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+
+	nodeStore := store.NewInMemoryStore()
+	execStore, _ := sqlite.NewSQLiteStore(":memory:")
+
+	resolver := &StaticExecutorResolver{}
+	orch := domain.NewLaunchOrchestrator(nodeStore, execStore, resolver)
+
+	mockInspector := &MockInspector{}
+	mockResolver := &MockInspectorResolver{Inspector: mockInspector}
+
+	handler := &LaunchHandler{
+		nodeStore:         nodeStore,
+		execStore:         execStore,
+		resolver:          resolver,
+		inspectorResolver: mockResolver,
+		orch:              orch,
+	}
+
+	router.GET("/launch/:id", handler.InspectLaunch)
+	router.GET("/launch/:id/readiness", handler.InspectReadiness)
+
+	return router, nodeStore, execStore, mockInspector
+}
+
+func TestInspectReadiness_ReconcilesToReady(t *testing.T) {
+	router, _, execStore, mockInspector := setupInspectTestRouter(t)
+
+	// Insert a Starting execution
+	pid := 1234
+	now := time.Now().Unix()
+	rec := launch.LaunchExecutionRecord{
+		ExecutionID:  "test-exec-1",
+		NodeID:       "test-node",
+		State:        launch.StateStarting,
+		PID:          &pid,
+		StartedAtSec: &now,
+	}
+	execStore.SaveExecution(context.Background(), rec)
+
+	// Mock observation: Process is alive and ready
+	mockInspector.Obs = inspect.RuntimeObservation{
+		ProcessExists:       true,
+		BackendReadySignal:  true,
+		BackendSignalSource: "mock-backend",
+		ObservedAtSec:       now,
+	}
+
+	// Request readiness
+	req, _ := http.NewRequest("GET", "/launch/test-exec-1/readiness", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+
+	var res launch.LaunchExecutionRecord
+	if err := json.Unmarshal(w.Body.Bytes(), &res); err != nil {
+		t.Fatalf("failed to unmarshal response: %v", err)
+	}
+
+	if res.State != launch.StateRunning {
+		t.Errorf("expected state to be Running, got %s", res.State)
+	}
+	if res.RuntimeReadiness != "Ready" {
+		t.Errorf("expected readiness to be Ready, got %s", res.RuntimeReadiness)
+	}
+
+	// Verify it was persisted
+	persisted, _, err := execStore.GetExecution(context.Background(), "test-exec-1")
+	if err != nil {
+		t.Fatalf("failed to get execution: %v", err)
+	}
+	if persisted.State != launch.StateRunning {
+		t.Errorf("expected persisted state to be Running, got %s", persisted.State)
 	}
 }

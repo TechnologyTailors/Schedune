@@ -191,7 +191,7 @@ func (s *SQLiteStore) ListEvents(ctx context.Context, executionID string) ([]lau
 	}
 	defer rows.Close()
 
-	var events []launch.RuntimeEvent
+	events := []launch.RuntimeEvent{}
 	for rows.Next() {
 		var ev launch.RuntimeEvent
 		var payload sql.NullString
