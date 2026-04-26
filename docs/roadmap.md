@@ -14,6 +14,13 @@ Schedune has made significant progress in establishing a reliable, explainable f
 - **Dry-Run Preparation:** Realistic dry-run capabilities across runtimes to validate specs safely.
 - **Tooling & Infrastructure:** Docs website, E2E smoke tests, API contract testing, and CI automated validation workflows.
 
+## Milestones
+
+* **Alpha Foundation:** Establishing control plane API, node agent truth ingestion, and explainable eligibility. *(Completed)*
+* **Data Plane V0:** Robust launch validation, dry-run capabilities, state machine recovery, and orphan visibility. *(Current Focus)*
+* **First Real Runtime Execution:** Active development of execution paths for QEMU, Cloud Hypervisor, and Firecracker with networking and storage support.
+* **Technical Preview:** Feature-complete early release, hardened API schema, and robust CLI tooling for initial evaluation.
+
 ## Top 20 Next Tasks
 
 Our immediate focus is refining the Schedune Data Plane V0, hardening launch validation, and establishing the first real execution paths while keeping migration-safe infrastructure principles in mind.
