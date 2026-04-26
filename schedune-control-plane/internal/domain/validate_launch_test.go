@@ -677,3 +677,57 @@ func TestValidateLaunch_ReasonCodeRegistryHygiene(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateLaunch_RuntimeVersionMismatch(t *testing.T) {
+	env := readFixture(t, "healthy_arm_production.json")
+	now := time.Now().Unix()
+	env.TimestampSec = now
+	for i, cap := range env.Capabilities {
+		env.Capabilities[i].ObservedAtSec = now
+		staleAfter := now + 300
+		env.Capabilities[i].StaleAfterSec = &staleAfter
+		if cap.Feature == "qemu_binary_present" {
+			v := "QEMU emulator version 6.2.0 (Debian 1:6.2+dfsg-2ubuntu6.22)"
+			env.Capabilities[i].Version = &v
+		}
+	}
+	node := ProjectEnvelope(env)
+
+	spec := launch.LaunchSpec{
+		SchemaVersion: "v1alpha1",
+		WorkloadID:    "wl-launch-version",
+		TenantID:      "tenant-1",
+		NodeID:        node.ID,
+		RuntimeClass:  "VirtualMachine",
+		Architecture:  "aarch64",
+		Vcpu:          2,
+		MemoryMB:      1024,
+		LaunchMode:    "DryRun",
+		Storage: []launch.StorageAttachmentSpec{
+			{HostPath: "/tmp/vol.qcow2", Format: "qcow2"},
+		},
+		RuntimeVersion: &launch.RuntimeVersionRequirement{
+			ExactVersion: "9.9.9",
+		},
+	}
+
+	result := ValidateLaunch(spec, node)
+	if result.IsValid {
+		t.Errorf("expected validation to fail due to runtime version mismatch")
+	}
+
+	hint, ok := result.RemediationHints["runtime_version_mismatch"]
+	if !ok || !strings.Contains(hint, "Install the exact runtime binary") {
+		t.Errorf("expected runtime version mismatch hint, got %v", result.RemediationHints)
+	}
+
+	foundEvidence := false
+	for _, ev := range result.BackendRejectionEvidence {
+		if ev.ReasonCode == schema.ReasonErrLaunchRuntimeVersionMismatch {
+			foundEvidence = true
+		}
+	}
+	if !foundEvidence {
+		t.Errorf("expected structured evidence for runtime version mismatch, got %+v", result.BackendRejectionEvidence)
+	}
+}

@@ -83,3 +83,58 @@ func TestSelectBackend_Fallback(t *testing.T) {
 		t.Errorf("expected kvm_qemu fallback, got %s. rejections: %v", backend, rejected)
 	}
 }
+
+func TestSelectBackend_RuntimeVersion(t *testing.T) {
+	env := readFixture(t, "healthy_arm_production.json")
+	now := time.Now().Unix()
+	env.TimestampSec = now
+	for i, cap := range env.Capabilities {
+		env.Capabilities[i].ObservedAtSec = now
+		staleAfter := now + 300
+		env.Capabilities[i].StaleAfterSec = &staleAfter
+		if cap.Feature == "qemu_binary_present" {
+			v := "QEMU emulator version 6.2.0 (Debian 1:6.2+dfsg-2ubuntu6.22)"
+			env.Capabilities[i].Version = &v
+		}
+	}
+	node := ProjectEnvelope(env)
+
+	baseSpec := launch.LaunchSpec{
+		RuntimeClass:   "VirtualMachine",
+		ImageReference: "/tmp/image.qcow2",
+	}
+
+	tests := []struct {
+		name      string
+		req       *launch.RuntimeVersionRequirement
+		expectOk  bool
+		expectErr string
+	}{
+		{"NoRequirement", nil, true, ""},
+		{"SatisfiedMinimum", &launch.RuntimeVersionRequirement{MinimumVersion: "6.1.0"}, true, ""},
+		{"TooOld", &launch.RuntimeVersionRequirement{MinimumVersion: "6.3.0"}, false, schema.ReasonErrLaunchRuntimeVersionTooOld},
+		{"SatisfiedExact", &launch.RuntimeVersionRequirement{ExactVersion: "6.2.0"}, true, ""},
+		{"MismatchExact", &launch.RuntimeVersionRequirement{ExactVersion: "6.2.1"}, false, schema.ReasonErrLaunchRuntimeVersionMismatch},
+		{"UnparseableRequirement", &launch.RuntimeVersionRequirement{ExactVersion: "invalid"}, false, schema.ReasonErrLaunchRuntimeVersionUnparseable},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec := baseSpec
+			spec.RuntimeVersion = tt.req
+			backend, _, rejected := SelectBackend(spec, node)
+			if tt.expectOk {
+				if backend != "kvm_qemu" {
+					t.Errorf("expected kvm_qemu, got %s. rejections: %v", backend, rejected)
+				}
+			} else {
+				if backend != "" {
+					t.Errorf("expected rejection, got %s", backend)
+				}
+				if reason := rejected["kvm_qemu"]; len(reason) < len(tt.expectErr) || reason[:len(tt.expectErr)] != tt.expectErr {
+					t.Errorf("expected prefix %s, got %s", tt.expectErr, reason)
+				}
+			}
+		})
+	}
+}

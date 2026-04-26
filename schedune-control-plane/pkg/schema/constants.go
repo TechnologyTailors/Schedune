@@ -98,6 +98,10 @@ const (
 	ReasonErrLaunchMissingCapabilityQemuBinary      = "ERR_LAUNCH_MISSING_CAPABILITY_QEMU_BINARY"
 	ReasonErrLaunchMissingCapabilitySeccomp         = "ERR_LAUNCH_MISSING_CAPABILITY_SECCOMP"
 	ReasonErrLaunchMissingCapabilityNamespaces      = "ERR_LAUNCH_MISSING_CAPABILITY_NAMESPACES"
+	ReasonErrLaunchRuntimeVersionUnknown            = "ERR_LAUNCH_RUNTIME_VERSION_UNKNOWN"
+	ReasonErrLaunchRuntimeVersionUnparseable        = "ERR_LAUNCH_RUNTIME_VERSION_UNPARSEABLE"
+	ReasonErrLaunchRuntimeVersionTooOld             = "ERR_LAUNCH_RUNTIME_VERSION_TOO_OLD"
+	ReasonErrLaunchRuntimeVersionMismatch           = "ERR_LAUNCH_RUNTIME_VERSION_MISMATCH"
 
 	ReasonWarnDeprecatedImageReference     = "WARN_DEPRECATED_IMAGE_REFERENCE"
 	ReasonWarnDeprecatedNetworkAttachments = "WARN_DEPRECATED_NETWORK_ATTACHMENTS"

@@ -92,6 +92,10 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, []launch.Ba
 			reject("firecracker", schema.ReasonErrLaunchMissingCapabilityFcBinary, &capName, capPtr)
 			return "", evidence, rejected
 		}
+		if ok, reason := checkVersionRequirement(binCap.Version, spec.RuntimeVersion); !ok {
+			reject("firecracker", reason, &capName, &binCap)
+			return "", evidence, rejected
+		}
 
 		capName = "firecracker_tun_ready"
 		tunCap, tunExists := node.Capabilities[capName]
@@ -173,6 +177,10 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, []launch.Ba
 					reject("cloud_hypervisor", schema.ReasonErrLaunchMissingCapabilityChBinary, &capName, capPtr)
 					continue
 				}
+				if ok, reason := checkVersionRequirement(binCap.Version, spec.RuntimeVersion); !ok {
+					reject("cloud_hypervisor", reason, &capName, &binCap)
+					continue
+				}
 
 				if len(storage) == 0 {
 					reject("cloud_hypervisor", schema.ReasonErrLaunchMissingArtifact, nil, nil)
@@ -201,6 +209,10 @@ func SelectBackend(spec launch.LaunchSpec, node NodeRecord) (string, []launch.Ba
 						capPtr = &binCap
 					}
 					reject("kvm_qemu", schema.ReasonErrLaunchMissingCapabilityQemuBinary, &capName, capPtr)
+					continue
+				}
+				if ok, reason := checkVersionRequirement(binCap.Version, spec.RuntimeVersion); !ok {
+					reject("kvm_qemu", reason, &capName, &binCap)
 					continue
 				}
 
