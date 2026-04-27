@@ -5,3 +5,4 @@ schedune-control-plane/schedune-control-plane
 bin/
 var/
 .schedune.pid
+.codex
