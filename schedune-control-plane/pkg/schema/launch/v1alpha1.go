@@ -226,6 +226,7 @@ const (
 	EventTypeValidationPassed      = "ValidationPassed"
 	EventTypePreparationFailed     = "PreparationFailed"
 	EventTypePreparationPassed     = "PreparationPassed"
+	EventTypeRuntimeSpawnFailed    = "RuntimeSpawnFailed"
 	EventTypeRuntimeSpawned        = "RuntimeSpawned"
 	EventTypeDryRunCompleted       = "DryRunCompleted"
 	EventTypeTerminationRequested  = "TerminationRequested"
@@ -244,14 +245,14 @@ type EventPayloadLifecycle struct {
 }
 
 type EventPayloadReconcile struct {
-	ExecutionID     string                 `json:"execution_id"`
-	NodeID          string                 `json:"node_id"`
-	BeforeState     LaunchState            `json:"before_state"`
-	AfterState      LaunchState            `json:"after_state"`
-	BeforeLiveness  string                 `json:"before_liveness"`
-	AfterLiveness   string                 `json:"after_liveness"`
-	BeforeReadiness string                 `json:"before_readiness"`
-	AfterReadiness  string                 `json:"after_readiness"`
-	ExitCode        *int                   `json:"exit_code,omitempty"`
-	Signal          ReadinessSignalSummary `json:"signal,omitempty"`
+	ExecutionID     string                  `json:"execution_id"`
+	NodeID          string                  `json:"node_id"`
+	BeforeState     LaunchState             `json:"before_state"`
+	AfterState      LaunchState             `json:"after_state"`
+	BeforeLiveness  string                  `json:"before_liveness"`
+	AfterLiveness   string                  `json:"after_liveness"`
+	BeforeReadiness string                  `json:"before_readiness"`
+	AfterReadiness  string                  `json:"after_readiness"`
+	ExitCode        *int                    `json:"exit_code,omitempty"`
+	Signal          *ReadinessSignalSummary `json:"signal,omitempty"`
 }

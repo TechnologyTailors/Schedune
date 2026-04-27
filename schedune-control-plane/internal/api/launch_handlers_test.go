@@ -360,3 +360,65 @@ func TestInspectReadiness_ReconcilesToReady(t *testing.T) {
 		t.Errorf("expected EventTypeReconcileStateChanged to be emitted")
 	}
 }
+
+func TestInspectReadiness_MaterialSignalChange(t *testing.T) {
+	router, _, execStore, mockInspector := setupInspectTestRouter(t)
+
+	pid := 1234
+	now := time.Now().Unix()
+
+	// Create a record that is already running and ready, but with no signal data
+	rec := launch.LaunchExecutionRecord{
+		ExecutionID:      "test-exec-signal",
+		NodeID:           "test-node",
+		State:            launch.StateRunning,
+		RuntimeLiveness:  "Alive",
+		RuntimeReadiness: "Ready",
+		PID:              &pid,
+		StartedAtSec:     &now,
+		ReadinessSignal: &launch.ReadinessSignalSummary{
+			ControlSocketExists: true,
+			ControlSocketDialOK: true,
+		},
+	}
+	execStore.SaveExecution(context.Background(), rec)
+
+	// Mock observation: Process is alive and ready, but signal changed (BackendReadySignal is now true)
+	mockInspector.Obs = inspect.RuntimeObservation{
+		ProcessExists:       true,
+		BackendReadySignal:  true,
+		BackendSignalSource: "mock-backend",
+		ObservedAtSec:       now,
+	}
+
+	req, _ := http.NewRequest("GET", "/launch/test-exec-signal/readiness", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected status 200, got %d", w.Code)
+	}
+
+	events, _ := execStore.ListEvents(context.Background(), "test-exec-signal")
+	hasReconcileEvent := false
+	for _, ev := range events {
+		if ev.EventType == launch.EventTypeReconcileStateChanged {
+			hasReconcileEvent = true
+
+			// verify payload has signal evidence
+			payloadBytes, _ := json.Marshal(ev.PayloadJSON)
+			var payload launch.EventPayloadReconcile
+			json.Unmarshal(payloadBytes, &payload)
+
+			if payload.Signal == nil {
+				t.Errorf("expected signal in payload, got nil")
+			} else if !payload.Signal.BackendReadySignal {
+				t.Errorf("expected signal BackendReadySignal=true in payload")
+			}
+			break
+		}
+	}
+	if !hasReconcileEvent {
+		t.Errorf("expected EventTypeReconcileStateChanged to be emitted for material signal change")
+	}
+}
