@@ -9,7 +9,7 @@ import (
 // BuildLaunchPlan orchestrates the connection between scheduling and launch spec templating.
 func BuildLaunchPlan(
 	intent workload.WorkloadIntent,
-	template launch.LaunchSpec,
+	template plan.LaunchTemplateSpec,
 	mode string,
 	targetNodeID string,
 	candidateNodes []NodeRecord,
@@ -69,16 +69,43 @@ func BuildLaunchPlan(
 		result.NextActions = append(result.NextActions, plan.ActionNone)
 		return result
 	}
+	if template.NodeID != "" && template.NodeID != selectedNode {
+		result.Status = plan.PlanStatusConflict
+		result.Warnings = append(result.Warnings, "Launch template node ID conflicts with scheduler decision")
+		result.NextActions = append(result.NextActions, plan.ActionNone)
+		return result
+	}
 
 	result.SelectedNode = &selectedNode
 
+	// Map mode to valid LaunchMode enum
+	launchModeEnum := "Validate"
+	if mode == "dry_run" {
+		launchModeEnum = "DryRun"
+	}
+
 	// 3. Template Hydration
-	plannedSpec := template
-	plannedSpec.NodeID = selectedNode
-	plannedSpec.LaunchMode = mode
-	// Ensure these fields from intent overrule template defaults if missing/empty
-	plannedSpec.WorkloadID = intent.WorkloadID
-	plannedSpec.TenantID = intent.TenantID
+	plannedSpec := launch.LaunchSpec{
+		SchemaVersion:            template.SchemaVersion,
+		WorkloadID:               intent.WorkloadID,
+		TenantID:                 intent.TenantID,
+		NodeID:                   selectedNode,
+		RuntimeClass:             template.RuntimeClass,
+		Architecture:             template.Architecture,
+		ImageReference:           template.ImageReference,
+		KernelImagePath:          template.KernelImagePath,
+		RootfsPath:               template.RootfsPath,
+		NetworkAttachments:       template.NetworkAttachments,
+		Storage:                  template.Storage,
+		Networks:                 template.Networks,
+		Security:                 template.Security,
+		Vcpu:                     template.Vcpu,
+		MemoryMB:                 template.MemoryMB,
+		LaunchMode:               launchModeEnum,
+		RuntimeBackendPreference: template.RuntimeBackendPreference,
+		AllowBackendFallback:     template.AllowBackendFallback,
+		RuntimeVersion:           template.RuntimeVersion,
+	}
 
 	result.PlannedLaunchSpec = &plannedSpec
 	result.NextActions = append(result.NextActions, plan.ActionSubmitLaunch)

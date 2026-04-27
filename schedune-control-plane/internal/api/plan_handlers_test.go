@@ -45,16 +45,16 @@ func basePlanRequest(mode string, nodeID string) plan.LaunchPlanRequest {
 			MaxTelemetryAgeSec:           300,
 			RequiredCompatibilityClasses: []string{"kvm_standard"},
 		},
-		LaunchTemplate: launch.LaunchSpec{
+		LaunchTemplate: plan.LaunchTemplateSpec{
 			SchemaVersion: "v1alpha1",
 			WorkloadID:    "wl-1",
 			TenantID:      "tenant-1",
-			NodeID:        "placeholder", // Hydrated by plan
+			NodeID:        "",
 			RuntimeClass:  "VirtualMachine",
 			Architecture:  "x86_64",
 			Vcpu:          2,
 			MemoryMB:      1024,
-			LaunchMode:    "Validate", // Hydrated by plan
+			LaunchMode:    "",
 			Storage: []launch.StorageAttachmentSpec{
 				{HostPath: "/tmp/test.qcow2", Format: "qcow2"},
 			},
@@ -236,5 +236,133 @@ func TestPlanLaunch_ConflictingNodeID(t *testing.T) {
 	}
 	if len(res.Warnings) == 0 {
 		t.Error("expected warnings explaining the conflict")
+	}
+}
+
+func TestPlanLaunch_TemplateConflict(t *testing.T) {
+	nodeStore := store.NewInMemoryStore()
+	node := domain.NodeRecord{
+		ID:            "node-1",
+		Identity:      domain.NodeIdentity{Architecture: "x86_64"},
+		Compatibility: domain.NodeCompatibilityRecord{Class: "kvm_standard"},
+		Health:        domain.NodeHealthSummary{State: "Healthy"},
+		Freshness:     domain.NodeFreshnessRecord{LastCollectionTime: time.Now()},
+		Capabilities: map[string]domain.NodeCapabilityRecord{
+			"kvm_vm_launch":       {State: "Supported"},
+			"qemu_binary_present": {State: "Supported"},
+		},
+	}
+	nodeStore.SaveNodeState(schema.SchedulerEnvelope{NodeID: "node-1"}, node)
+
+	mockExec := &MockExecutor{}
+	router := setupPlanTestRouter(nodeStore, mockExec)
+
+	reqData := basePlanRequest("validate", "")
+	reqData.LaunchTemplate.NodeID = "node-2" // Conflict with selected node-1
+
+	body, _ := json.Marshal(reqData)
+	req, _ := http.NewRequest("POST", "/plan/launch", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	var res plan.LaunchPlanResult
+	json.Unmarshal(w.Body.Bytes(), &res)
+
+	if res.Status != plan.PlanStatusConflict {
+		t.Errorf("expected Conflict status, got %s", res.Status)
+	}
+	if mockExec.PrepareCalled {
+		t.Error("expected Prepare NOT to be called on conflict")
+	}
+}
+
+func TestPlanLaunch_ValidateModeHydration(t *testing.T) {
+	nodeStore := store.NewInMemoryStore()
+	node := domain.NodeRecord{
+		ID:            "node-1",
+		Identity:      domain.NodeIdentity{Architecture: "x86_64"},
+		Compatibility: domain.NodeCompatibilityRecord{Class: "kvm_standard"},
+		Health:        domain.NodeHealthSummary{State: "Healthy"},
+		Freshness:     domain.NodeFreshnessRecord{LastCollectionTime: time.Now()},
+		Capabilities: map[string]domain.NodeCapabilityRecord{
+			"kvm_vm_launch":       {State: "Supported"},
+			"qemu_binary_present": {State: "Supported"},
+		},
+	}
+	nodeStore.SaveNodeState(schema.SchedulerEnvelope{NodeID: "node-1"}, node)
+
+	mockExec := &MockExecutor{}
+	router := setupPlanTestRouter(nodeStore, mockExec)
+
+	reqData := basePlanRequest("validate", "") // empty node_id and launch_mode in template
+	body, _ := json.Marshal(reqData)
+	req, _ := http.NewRequest("POST", "/plan/launch", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	var res plan.LaunchPlanResult
+	json.Unmarshal(w.Body.Bytes(), &res)
+
+	if res.Status != plan.PlanStatusReady {
+		t.Errorf("expected Ready status, got %s", res.Status)
+	}
+	if res.PlannedLaunchSpec == nil {
+		t.Fatal("expected planned launch spec to be non-nil")
+	}
+	if res.PlannedLaunchSpec.LaunchMode != "Validate" {
+		t.Errorf("expected launch mode Validate, got %s", res.PlannedLaunchSpec.LaunchMode)
+	}
+	if res.PlannedLaunchSpec.NodeID != "node-1" {
+		t.Errorf("expected node ID node-1, got %s", res.PlannedLaunchSpec.NodeID)
+	}
+}
+
+func TestPlanLaunch_DryRunModeHydration(t *testing.T) {
+	nodeStore := store.NewInMemoryStore()
+	node := domain.NodeRecord{
+		ID:            "node-1",
+		Identity:      domain.NodeIdentity{Architecture: "x86_64"},
+		Compatibility: domain.NodeCompatibilityRecord{Class: "kvm_standard"},
+		Health:        domain.NodeHealthSummary{State: "Healthy"},
+		Freshness:     domain.NodeFreshnessRecord{LastCollectionTime: time.Now()},
+		Capabilities: map[string]domain.NodeCapabilityRecord{
+			"kvm_vm_launch":       {State: "Supported"},
+			"qemu_binary_present": {State: "Supported"},
+		},
+	}
+	nodeStore.SaveNodeState(schema.SchedulerEnvelope{NodeID: "node-1"}, node)
+
+	mockExec := &MockExecutor{}
+	router := setupPlanTestRouter(nodeStore, mockExec)
+
+	reqData := basePlanRequest("dry_run", "") // empty node_id and launch_mode in template
+	body, _ := json.Marshal(reqData)
+	req, _ := http.NewRequest("POST", "/plan/launch", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	var res plan.LaunchPlanResult
+	json.Unmarshal(w.Body.Bytes(), &res)
+
+	if res.Status != plan.PlanStatusReady {
+		t.Errorf("expected Ready status, got %s", res.Status)
+	}
+	if res.PlannedLaunchSpec == nil {
+		t.Fatal("expected planned launch spec to be non-nil")
+	}
+	if res.PlannedLaunchSpec.LaunchMode != "DryRun" {
+		t.Errorf("expected launch mode DryRun, got %s", res.PlannedLaunchSpec.LaunchMode)
+	}
+	if res.PlannedLaunchSpec.NodeID != "node-1" {
+		t.Errorf("expected node ID node-1, got %s", res.PlannedLaunchSpec.NodeID)
+	}
+	if !res.DryRunPrepared {
+		t.Errorf("expected DryRunPrepared true")
 	}
 }

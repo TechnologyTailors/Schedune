@@ -95,6 +95,7 @@ example-launch-plan: ## Plan a launch (placement, validation, and dry-run) witho
 	@bash examples/curls/plan-launch.sh
 
 example-launch-validate: ## Validate a launch without executing it
+	@bash examples/curls/launch-validate.sh
 
 example-launch-dry-run: ## Dry-run a launch without executing it
 	@bash examples/curls/launch-dry-run.sh
