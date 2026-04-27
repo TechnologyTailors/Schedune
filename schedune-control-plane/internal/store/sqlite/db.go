@@ -131,6 +131,10 @@ func (s *SQLiteStore) ListActiveExecutions(ctx context.Context) ([]launch.Launch
 	return s.listByStateCondition(ctx, "state NOT IN ('Failed', 'Terminated', 'Exited')")
 }
 
+func (s *SQLiteStore) ListExecutions(ctx context.Context) ([]launch.LaunchExecutionRecord, error) {
+	return s.listByStateCondition(ctx, "1=1")
+}
+
 func (s *SQLiteStore) ListRecoverableExecutions(ctx context.Context) ([]launch.LaunchExecutionRecord, error) {
 	return s.listByStateCondition(ctx, "state NOT IN ('Failed', 'Terminated', 'Exited')")
 }

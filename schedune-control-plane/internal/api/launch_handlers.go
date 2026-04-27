@@ -253,30 +253,35 @@ func (h *LaunchHandler) InspectLaunch(c *gin.Context) {
 	c.JSON(http.StatusOK, rec)
 }
 
-// TerminateLaunch kills a running execution
-func (h *LaunchHandler) TerminateLaunch(c *gin.Context) {
-	id := c.Param("id")
-	rec, err := h.orch.TerminateLaunch(id)
+// ListLaunches returns a summary of all known executions
+func (h *LaunchHandler) ListLaunches(c *gin.Context) {
+	records, err := h.execStore.ListExecutions(context.Background())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(), "trace": rec.Trace})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list executions"})
 		return
 	}
-	c.JSON(http.StatusOK, rec)
+
+	summaries := []launch.ExecutionSummary{}
+	for _, rec := range records {
+		if err := h.reconcileExecution(&rec); err != nil {
+			log.Warn().Err(err).Str("execution_id", rec.ExecutionID).Msg("Failed to reconcile during list")
+		}
+		summaries = append(summaries, launch.ExecutionSummary{
+			ExecutionID:      rec.ExecutionID,
+			WorkloadID:       rec.WorkloadID,
+			NodeID:           rec.NodeID,
+			State:            rec.State,
+			RuntimeLiveness:  rec.RuntimeLiveness,
+			RuntimeReadiness: rec.RuntimeReadiness,
+			CreatedAtSec:     rec.CreatedAtSec,
+		})
+	}
+
+	c.JSON(http.StatusOK, summaries)
 }
 
-// InspectReadiness returns a focused readiness view
-func (h *LaunchHandler) InspectReadiness(c *gin.Context) {
-	id := c.Param("id")
-	rec, found, err := h.execStore.GetExecution(context.Background(), id)
-	if err != nil || !found {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Execution not found"})
-		return
-	}
-
-	if err := h.reconcileExecution(&rec); err != nil {
-		// Logged in reconcileExecution, continue to return current state
-	}
-
+// buildReadinessResponse creates a LaunchReadinessResponse from a record
+func buildReadinessResponse(rec launch.LaunchExecutionRecord) launch.LaunchReadinessResponse {
 	backend := ""
 	if rec.PreparedState != nil {
 		backend = rec.PreparedState.RuntimeBackend
@@ -332,7 +337,7 @@ func (h *LaunchHandler) InspectReadiness(c *gin.Context) {
 		reasonCode = *rec.FailureReasonCode
 	}
 
-	res := launch.LaunchReadinessResponse{
+	return launch.LaunchReadinessResponse{
 		ExecutionID:      rec.ExecutionID,
 		WorkloadID:       rec.WorkloadID,
 		NodeID:           rec.NodeID,
@@ -345,7 +350,76 @@ func (h *LaunchHandler) InspectReadiness(c *gin.Context) {
 		Signal:           sigView,
 		Timing:           timingView,
 	}
+}
 
+// ObserveLaunch provides a comprehensive, read-only view of a specific execution
+func (h *LaunchHandler) ObserveLaunch(c *gin.Context) {
+	id := c.Param("id")
+	rec, found, err := h.execStore.GetExecution(context.Background(), id)
+	if err != nil || !found {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Execution not found"})
+		return
+	}
+
+	if err := h.reconcileExecution(&rec); err != nil {
+		log.Warn().Err(err).Str("execution_id", rec.ExecutionID).Msg("Failed to reconcile during observation")
+	}
+
+	events, err := h.execStore.ListEvents(context.Background(), id)
+	if err != nil {
+		log.Warn().Err(err).Str("execution_id", id).Msg("Failed to list events for observation")
+		events = []launch.RuntimeEvent{}
+	}
+
+	// Limit to recent 20 events for summary
+	if len(events) > 20 {
+		events = events[len(events)-20:]
+	}
+
+	observation := launch.ExecutionObservation{
+		Summary: launch.ExecutionSummary{
+			ExecutionID:      rec.ExecutionID,
+			WorkloadID:       rec.WorkloadID,
+			NodeID:           rec.NodeID,
+			State:            rec.State,
+			RuntimeLiveness:  rec.RuntimeLiveness,
+			RuntimeReadiness: rec.RuntimeReadiness,
+			CreatedAtSec:     rec.CreatedAtSec,
+		},
+		PreparedWith: rec.PreparedState,
+		Readiness:    buildReadinessResponse(rec),
+		Trace:        rec.Trace,
+		RecentEvents: events,
+	}
+
+	c.JSON(http.StatusOK, observation)
+}
+
+// TerminateLaunch kills a running execution
+func (h *LaunchHandler) TerminateLaunch(c *gin.Context) {
+	id := c.Param("id")
+	rec, err := h.orch.TerminateLaunch(id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error(), "trace": rec.Trace})
+		return
+	}
+	c.JSON(http.StatusOK, rec)
+}
+
+// InspectReadiness returns a focused readiness view
+func (h *LaunchHandler) InspectReadiness(c *gin.Context) {
+	id := c.Param("id")
+	rec, found, err := h.execStore.GetExecution(context.Background(), id)
+	if err != nil || !found {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Execution not found"})
+		return
+	}
+
+	if err := h.reconcileExecution(&rec); err != nil {
+		// Logged in reconcileExecution, continue to return current state
+	}
+
+	res := buildReadinessResponse(rec)
 	c.JSON(http.StatusOK, res)
 }
 

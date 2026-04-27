@@ -422,3 +422,99 @@ func TestInspectReadiness_MaterialSignalChange(t *testing.T) {
 		t.Errorf("expected EventTypeReconcileStateChanged to be emitted for material signal change")
 	}
 }
+
+func TestListLaunches(t *testing.T) {
+	execStore, err := sqlite.NewSQLiteStore(":memory:")
+	if err != nil {
+		t.Fatalf("failed to create store: %v", err)
+	}
+	h := &LaunchHandler{
+		execStore:         execStore,
+		inspectorResolver: &StaticInspectorResolver{},
+	}
+	r := gin.New()
+	r.GET("/launch", h.ListLaunches)
+
+	rec := launch.LaunchExecutionRecord{
+		ExecutionID: "exec-1",
+		WorkloadID:  "wl-1",
+		State:       launch.StateRunning,
+	}
+	if err := execStore.SaveExecution(context.Background(), rec); err != nil {
+		t.Fatalf("failed to save execution: %v", err)
+	}
+
+	req, err := http.NewRequest("GET", "/launch", nil)
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
+	}
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %v", w.Code)
+	}
+
+	var res []launch.ExecutionSummary
+	if err := json.Unmarshal(w.Body.Bytes(), &res); err != nil {
+		t.Fatalf("failed to unmarshal: %v", err)
+	}
+	if len(res) != 1 {
+		t.Fatalf("expected 1 execution, got %v", len(res))
+	}
+	if res[0].ExecutionID != "exec-1" {
+		t.Errorf("expected exec-1, got %v", res[0].ExecutionID)
+	}
+}
+
+func TestObserveLaunch(t *testing.T) {
+	execStore, err := sqlite.NewSQLiteStore(":memory:")
+	if err != nil {
+		t.Fatalf("failed to create store: %v", err)
+	}
+	h := &LaunchHandler{
+		execStore:         execStore,
+		inspectorResolver: &StaticInspectorResolver{},
+	}
+	r := gin.New()
+	r.GET("/launch/:id/observe", h.ObserveLaunch)
+
+	rec := launch.LaunchExecutionRecord{
+		ExecutionID: "exec-2",
+		WorkloadID:  "wl-2",
+		State:       launch.StateRunning,
+	}
+	if err := execStore.SaveExecution(context.Background(), rec); err != nil {
+		t.Fatalf("failed to save execution: %v", err)
+	}
+	err = execStore.AppendEvent(context.Background(), launch.RuntimeEvent{
+		EventID:     "evt-1",
+		ExecutionID: "exec-2",
+		EventType:   launch.EventTypeRuntimeSpawned,
+	})
+	if err != nil {
+		t.Fatalf("failed to append event: %v", err)
+	}
+
+	req, err := http.NewRequest("GET", "/launch/exec-2/observe", nil)
+	if err != nil {
+		t.Fatalf("failed to create request: %v", err)
+	}
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %v", w.Code)
+	}
+
+	var res launch.ExecutionObservation
+	if err := json.Unmarshal(w.Body.Bytes(), &res); err != nil {
+		t.Fatalf("failed to unmarshal: %v", err)
+	}
+	if res.Summary.ExecutionID != "exec-2" {
+		t.Errorf("expected exec-2, got %v", res.Summary.ExecutionID)
+	}
+	if len(res.RecentEvents) != 1 {
+		t.Errorf("expected 1 recent event, got %v", len(res.RecentEvents))
+	}
+}

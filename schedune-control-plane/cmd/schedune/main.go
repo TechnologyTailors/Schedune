@@ -351,10 +351,12 @@ func runServer() {
 		v1.POST("/schedule/select", schedulerHandler.SelectNode)
 
 		// Execution Contract -> Control Plane
+		v1.GET("/launch", launchHandler.ListLaunches)
 		v1.POST("/launch/validate", launchHandler.ValidateLaunch)
 		v1.POST("/launch/dry-run", launchHandler.DryRunLaunch)
 		v1.POST("/launch/execute", launchHandler.ExecuteLaunch)
 		v1.GET("/launch/:id", launchHandler.InspectLaunch)
+		v1.GET("/launch/:id/observe", launchHandler.ObserveLaunch)
 		v1.GET("/launch/:id/readiness", launchHandler.InspectReadiness)
 		v1.GET("/launch/:id/trace", launchHandler.InspectTrace)
 		v1.GET("/launch/:id/events", launchHandler.InspectEvents)
