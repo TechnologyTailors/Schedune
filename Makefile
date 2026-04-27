@@ -1,4 +1,4 @@
-.PHONY: help build build-agent build-control-plane test test-agent test-control-plane fmt lint doctor dev-preflight dev-up dev-down demo dev-db-reset example-intake example-schedule example-launch-validate example-launch-dry-run example-launch-execute example-readiness example-orphans
+.PHONY: help build build-agent build-control-plane test test-agent test-control-plane fmt lint doctor dev-preflight dev-up dev-down demo dev-db-reset example-intake example-schedule example-launch-validate example-launch-dry-run example-launch-execute example-launch-list example-launch-observe example-readiness example-orphans
 
 # Configuration
 BIN_DIR=bin
@@ -99,6 +99,18 @@ example-launch-dry-run: ## Dry-run a launch without executing it
 
 example-launch-execute: ## Execute a launch on a local runtime
 	@bash examples/curls/launch-execute.sh
+
+example-launch-list: ## List all executions on the node
+	@curl -s http://127.0.0.1:9090/api/v1alpha1/launch; echo ""
+
+example-launch-observe: ## Observe a full execution summary (Requires EXECUTION_ID)
+	@if [ -z "$(EXECUTION_ID)" ]; then \
+		echo "Usage: make example-launch-observe EXECUTION_ID=<id>"; \
+		echo "Run 'make example-launch-execute' first to get an execution ID."; \
+	else \
+		curl -s http://127.0.0.1:9090/api/v1alpha1/launch/$(EXECUTION_ID)/observe; \
+		echo ""; \
+	fi
 
 example-readiness: ## Check readiness for an execution (Requires EXECUTION_ID)
 	@if [ -z "$(EXECUTION_ID)" ]; then \

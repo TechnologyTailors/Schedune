@@ -256,3 +256,21 @@ type EventPayloadReconcile struct {
 	ExitCode        *int                    `json:"exit_code,omitempty"`
 	Signal          *ReadinessSignalSummary `json:"signal,omitempty"`
 }
+
+type ExecutionSummary struct {
+	ExecutionID      string      `json:"execution_id"`
+	WorkloadID       string      `json:"workload_id"`
+	NodeID           string      `json:"node_id"`
+	State            LaunchState `json:"state"`
+	RuntimeLiveness  string      `json:"runtime_liveness"`
+	RuntimeReadiness string      `json:"runtime_readiness"`
+	CreatedAtSec     int64       `json:"created_at_sec"`
+}
+
+type ExecutionObservation struct {
+	Summary      ExecutionSummary        `json:"summary"`
+	PreparedWith *PreparedLaunch         `json:"prepared_with,omitempty"`
+	Readiness    LaunchReadinessResponse `json:"readiness"`
+	Trace        []ExecutionTraceStep    `json:"trace"`
+	RecentEvents []RuntimeEvent          `json:"recent_events"`
+}

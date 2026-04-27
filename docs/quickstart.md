@@ -108,13 +108,19 @@ make example-launch-execute
 Use the `execution_id` to inspect the VM's state, readiness, trace, and events:
 
 ```bash
-# Check the launch status and trace
+# List all executions
+make example-launch-list
+
+# Observe full execution details (status, readiness, trace, and events)
+make example-launch-observe EXECUTION_ID=<EXECUTION_ID>
+
+# Check the launch status and trace (raw API)
 curl http://127.0.0.1:9090/api/v1alpha1/launch/<EXECUTION_ID>
 
-# Check specific readiness
+# Check specific readiness (raw API)
 make example-readiness EXECUTION_ID=<EXECUTION_ID>
 
-# Check execution events
+# Check execution events (raw API)
 curl http://127.0.0.1:9090/api/v1alpha1/launch/<EXECUTION_ID>/events
 ```
 
