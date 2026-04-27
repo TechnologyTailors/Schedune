@@ -13,6 +13,7 @@ Schedune provides a clear, RESTful interface for scheduling, validating, executi
 ### Orchestration
 *   `POST /api/v1alpha1/schedule/explain`: Given a `WorkloadIntent`, evaluates all nodes and returns `RankedNodes` and `RejectedNodes` with explicit `HardRejectionCodes`.
 *   `POST /api/v1alpha1/schedule/select`: Simulates placement and returns the optimal node ID for the given intent.
+*   `POST /api/v1alpha1/plan/launch`: Bridges scheduling and execution. Returns a hydrated `LaunchSpec`, explains rejections, and optionally performs a dry run preparation without executing the runtime.
 
 ### Execution
 *   `POST /api/v1alpha1/launch/validate`: Given a `LaunchSpec`, assesses if the specific host has the prerequisites to run the chosen backend without launching the process.

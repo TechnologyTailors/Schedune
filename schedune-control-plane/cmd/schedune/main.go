@@ -325,6 +325,7 @@ func runServer() {
 	schedulerHandler := api.NewSchedulerHandler(memStore)
 	launchHandler := api.NewLaunchHandler(memStore, sqliteStore)
 	orphanHandler := api.NewOrphanHandler(sqliteStore)
+	planHandler := api.NewPlanHandler(memStore)
 
 	// Setup Router
 	r := gin.New()
@@ -349,6 +350,9 @@ func runServer() {
 		// Workload Orchestration -> Control Plane
 		v1.POST("/schedule/explain", schedulerHandler.ExplainSchedule)
 		v1.POST("/schedule/select", schedulerHandler.SelectNode)
+
+		// Data Plane Planning -> Control Plane
+		v1.POST("/plan/launch", planHandler.PlanLaunch)
 
 		// Execution Contract -> Control Plane
 		v1.GET("/launch", launchHandler.ListLaunches)

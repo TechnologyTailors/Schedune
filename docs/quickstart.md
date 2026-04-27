@@ -86,7 +86,16 @@ make example-schedule
 ```
 *(This evaluates an x86 VM intent and explains the eligibility outcome.)*
 
-#### 6. Validate Launch
+#### 6. Plan Launch
+
+Combine your workload intent and a launch template to find an eligible node, validate the launch on it, and dry-run prepare the environment—all without executing anything:
+
+```bash
+make example-launch-plan
+```
+*(This bridges scheduling and execution into a single, safe, read-only explainable response.)*
+
+#### 7. Validate Launch
 
 Validate a launch payload to ensure the backend is available and capabilities match, without starting the VM:
 
@@ -94,7 +103,7 @@ Validate a launch payload to ensure the backend is available and capabilities ma
 make example-launch-validate
 ```
 
-#### 7. Execute Launch
+#### 8. Execute Launch
 
 If your host has the required binary (`cloud-hypervisor`), execute the launch:
 
