@@ -112,7 +112,7 @@ make example-launch-execute
 ```
 *Note the returned `execution_id`.*
 
-#### 8. Inspect Lifecycle
+#### 9. Inspect Lifecycle
 
 Use the `execution_id` to inspect the VM's state, readiness, trace, and events:
 
@@ -133,7 +133,7 @@ make example-readiness EXECUTION_ID=<EXECUTION_ID>
 curl http://127.0.0.1:9090/api/v1alpha1/launch/<EXECUTION_ID>/events
 ```
 
-#### 9. Inspect Orphans
+#### 10. Inspect Orphans
 
 Schedune automatically sweeps for orphan processes. You can list them via:
 
@@ -141,7 +141,7 @@ Schedune automatically sweeps for orphan processes. You can list them via:
 make example-orphans
 ```
 
-#### 10. Terminate
+#### 11. Terminate
 
 When you are done, terminate the execution and stop the control plane:
 
