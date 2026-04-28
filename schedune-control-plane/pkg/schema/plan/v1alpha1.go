@@ -64,10 +64,30 @@ type LaunchPlanNextAction string
 
 const (
 	ActionSubmitLaunch  LaunchPlanNextAction = "SubmitLaunch"
+	ActionPrepareOnNode LaunchPlanNextAction = "PrepareOnNode"
 	ActionRetryLater    LaunchPlanNextAction = "RetryLater"
 	ActionFixValidation LaunchPlanNextAction = "FixValidation"
 	ActionNone          LaunchPlanNextAction = "None"
 )
+
+type LaunchPreparationStatus string
+
+const (
+	PreparationStatusPendingNodeAgent LaunchPreparationStatus = "PendingNodeAgent"
+	PreparationStatusFailed           LaunchPreparationStatus = "Failed"
+	PreparationStatusSuccess          LaunchPreparationStatus = "Success"
+)
+
+type LaunchPreparationResult struct {
+	SchemaVersion       string                  `json:"schema_version"`
+	Status              LaunchPreparationStatus `json:"status"`
+	NodeID              string                  `json:"node_id"`
+	Backend             string                  `json:"backend"`
+	IsPreparable        bool                    `json:"is_preparable"`
+	BlockingReasonCodes []string                `json:"blocking_reason_codes"`
+	Warnings            []string                `json:"warnings"`
+	PreparedLaunch      *launch.PreparedLaunch  `json:"prepared_launch,omitempty"`
+}
 
 type LaunchPlanResult struct {
 	SchemaVersion     string                         `json:"schema_version"`
@@ -76,6 +96,7 @@ type LaunchPlanResult struct {
 	RejectedNodes     []EligibilityEvidence          `json:"rejected_nodes"`
 	PlannedLaunchSpec *launch.LaunchSpec             `json:"planned_launch_spec,omitempty"`
 	ValidationResult  *launch.LaunchValidationResult `json:"validation_result,omitempty"`
+	PreparationResult *LaunchPreparationResult       `json:"preparation_result,omitempty"`
 	DryRunPrepared    bool                           `json:"dry_run_prepared"`
 	Warnings          []string                       `json:"warnings"`
 	NextActions       []LaunchPlanNextAction         `json:"next_actions"`

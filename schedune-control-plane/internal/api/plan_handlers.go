@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/domain"
-	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/store"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/plan"
@@ -14,20 +13,11 @@ import (
 
 type PlanHandler struct {
 	nodeStore *store.InMemoryStore
-	resolver  *StaticExecutorResolver
 }
 
 func NewPlanHandler(nodeStore *store.InMemoryStore) *PlanHandler {
-	resolver := &StaticExecutorResolver{
-		executors: map[string]runtime.Executor{
-			"kvm_qemu":         &runtime.KvmExecutor{},
-			"cloud_hypervisor": &runtime.CloudHypervisorExecutor{},
-			"firecracker":      &runtime.FirecrackerExecutor{},
-		},
-	}
 	return &PlanHandler{
 		nodeStore: nodeStore,
-		resolver:  resolver,
 	}
 }
 
@@ -81,29 +71,18 @@ func (h *PlanHandler) PlanLaunch(c *gin.Context) {
 
 	// 3. Dry Run Prepared Evidence (if requested)
 	if req.Mode == "dry_run" {
-		exec, err := h.resolver.Resolve(validationResult.SelectedBackend)
-		if err != nil {
-			planResult.Status = plan.PlanStatusValidationFail
-			planResult.Warnings = append(planResult.Warnings, "Failed to resolve executor for dry run: "+err.Error())
-			planResult.NextActions = []plan.LaunchPlanNextAction{plan.ActionFixValidation}
-			c.JSON(http.StatusOK, planResult)
-			return
+		planResult.PreparationResult = &plan.LaunchPreparationResult{
+			SchemaVersion:       "v1alpha1",
+			Status:              plan.PreparationStatusPendingNodeAgent,
+			NodeID:              selectedNodeID,
+			Backend:             validationResult.SelectedBackend,
+			IsPreparable:        false,
+			BlockingReasonCodes: []string{schema.ReasonErrPreparationRequiresNodeAgent},
+			Warnings:            []string{"Node-scoped preparation requires an active node agent path"},
 		}
 
-		_, err = exec.Prepare(*planResult.PlannedLaunchSpec)
-		if err != nil {
-			planResult.Status = plan.PlanStatusValidationFail
-			reason := schema.ReasonErrPreparationFailed
-			planResult.Warnings = append(planResult.Warnings, "Dry run preparation failed: "+err.Error())
-			// Populate a backend rejection for dry run error
-			planResult.ValidationResult.IsValid = false
-			planResult.ValidationResult.BlockingReasonCodes = append(planResult.ValidationResult.BlockingReasonCodes, reason)
-			planResult.NextActions = []plan.LaunchPlanNextAction{plan.ActionFixValidation}
-			c.JSON(http.StatusOK, planResult)
-			return
-		}
-
-		planResult.DryRunPrepared = true
+		planResult.DryRunPrepared = false // Keep false until distributed prep exists
+		planResult.NextActions = []plan.LaunchPlanNextAction{plan.ActionPrepareOnNode}
 	}
 
 	c.JSON(http.StatusOK, planResult)

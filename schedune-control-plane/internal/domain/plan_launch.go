@@ -23,6 +23,32 @@ func BuildLaunchPlan(
 		NextActions:   []plan.LaunchPlanNextAction{},
 	}
 
+	// 0. Consistency Check
+	if intent.WorkloadID != template.WorkloadID {
+		result.Status = plan.PlanStatusConflict
+		result.Warnings = append(result.Warnings, "Intent and Template WorkloadID mismatch")
+		result.NextActions = append(result.NextActions, plan.ActionNone)
+		return result
+	}
+	if intent.TenantID != template.TenantID {
+		result.Status = plan.PlanStatusConflict
+		result.Warnings = append(result.Warnings, "Intent and Template TenantID mismatch")
+		result.NextActions = append(result.NextActions, plan.ActionNone)
+		return result
+	}
+	if intent.RuntimeClass != template.RuntimeClass {
+		result.Status = plan.PlanStatusConflict
+		result.Warnings = append(result.Warnings, "Intent and Template RuntimeClass mismatch")
+		result.NextActions = append(result.NextActions, plan.ActionNone)
+		return result
+	}
+	if intent.RequiredArchitecture != "any" && intent.RequiredArchitecture != template.Architecture {
+		result.Status = plan.PlanStatusConflict
+		result.Warnings = append(result.Warnings, "Intent RequiredArchitecture and Template Architecture mismatch")
+		result.NextActions = append(result.NextActions, plan.ActionNone)
+		return result
+	}
+
 	// 1. Run Scheduling
 	decision := ScheduleV0(intent, candidateNodes)
 

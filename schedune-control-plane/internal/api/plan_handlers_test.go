@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/domain"
-	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/runtime"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/internal/store"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema"
 	"github.com/TechnologyTailors/Schedune/schedune-control-plane/pkg/schema/launch"
@@ -18,15 +17,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func setupPlanTestRouter(nodeStore *store.InMemoryStore, mockExec *MockExecutor) *gin.Engine {
+func setupPlanTestRouter(nodeStore *store.InMemoryStore) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	handler := NewPlanHandler(nodeStore)
-	handler.resolver = &StaticExecutorResolver{
-		executors: map[string]runtime.Executor{
-			"kvm_qemu": mockExec,
-		},
-	}
 	router.POST("/plan/launch", handler.PlanLaunch)
 	return router
 }
@@ -64,8 +58,7 @@ func basePlanRequest(mode string, nodeID string) plan.LaunchPlanRequest {
 
 func TestPlanLaunch_NoEligibleNode(t *testing.T) {
 	nodeStore := store.NewInMemoryStore()
-	mockExec := &MockExecutor{}
-	router := setupPlanTestRouter(nodeStore, mockExec)
+	router := setupPlanTestRouter(nodeStore)
 
 	reqData := basePlanRequest("validate", "")
 	body, _ := json.Marshal(reqData)
@@ -124,8 +117,7 @@ func TestPlanLaunch_ValidationFailure(t *testing.T) {
 	}
 	nodeStore.SaveNodeState(schema.SchedulerEnvelope{NodeID: "node-1"}, node)
 
-	mockExec := &MockExecutor{}
-	router := setupPlanTestRouter(nodeStore, mockExec)
+	router := setupPlanTestRouter(nodeStore)
 
 	reqData := basePlanRequest("validate", "")
 	body, _ := json.Marshal(reqData)
@@ -144,9 +136,6 @@ func TestPlanLaunch_ValidationFailure(t *testing.T) {
 	if res.ValidationResult == nil || res.ValidationResult.IsValid {
 		t.Error("expected validation result to be invalid")
 	}
-	if mockExec.PrepareCalled {
-		t.Error("expected Prepare NOT to be called on validation failure")
-	}
 }
 
 func TestPlanLaunch_DryRunPreparedEvidence(t *testing.T) {
@@ -164,14 +153,7 @@ func TestPlanLaunch_DryRunPreparedEvidence(t *testing.T) {
 	}
 	nodeStore.SaveNodeState(schema.SchedulerEnvelope{NodeID: "node-1"}, node)
 
-	mockExec := &MockExecutor{
-		PreparedLaunch: launch.PreparedLaunch{
-			RuntimeBackend: "kvm_qemu",
-			MemoryMB:       1024,
-			Vcpu:           2,
-		},
-	}
-	router := setupPlanTestRouter(nodeStore, mockExec)
+	router := setupPlanTestRouter(nodeStore)
 
 	reqData := basePlanRequest("dry_run", "")
 	body, _ := json.Marshal(reqData)
@@ -187,17 +169,30 @@ func TestPlanLaunch_DryRunPreparedEvidence(t *testing.T) {
 	if res.Status != plan.PlanStatusReady {
 		t.Errorf("expected Ready status, got %s", res.Status)
 	}
-	if !res.DryRunPrepared {
-		t.Error("expected DryRunPrepared to be true")
+	if res.DryRunPrepared {
+		t.Error("expected DryRunPrepared to be false for node-scoped prep")
+	}
+	if res.PreparationResult == nil {
+		t.Error("expected PreparationResult to be populated")
+	} else {
+		if res.PreparationResult.Status != plan.PreparationStatusPendingNodeAgent {
+			t.Errorf("expected PendingNodeAgent, got %s", res.PreparationResult.Status)
+		}
 	}
 	if res.ValidationResult == nil || !res.ValidationResult.IsValid {
 		t.Error("expected validation result to be valid")
 	}
-	if !mockExec.PrepareCalled {
-		t.Error("expected Prepare to be called during dry_run")
+
+	// Check NextActions is correctly updated to PrepareOnNode
+	foundPrepareOnNode := false
+	for _, action := range res.NextActions {
+		if action == plan.ActionPrepareOnNode {
+			foundPrepareOnNode = true
+			break
+		}
 	}
-	if mockExec.ExecuteCalled {
-		t.Error("expected Execute NOT to be called")
+	if !foundPrepareOnNode {
+		t.Errorf("expected next_actions to contain PrepareOnNode, got %v", res.NextActions)
 	}
 }
 
@@ -216,8 +211,7 @@ func TestPlanLaunch_ConflictingNodeID(t *testing.T) {
 	}
 	nodeStore.SaveNodeState(schema.SchedulerEnvelope{NodeID: "node-1"}, node)
 
-	mockExec := &MockExecutor{}
-	router := setupPlanTestRouter(nodeStore, mockExec)
+	router := setupPlanTestRouter(nodeStore)
 
 	// Explicitly requesting node-2 but only node-1 is available/eligible
 	reqData := basePlanRequest("validate", "node-2")
@@ -254,8 +248,7 @@ func TestPlanLaunch_TemplateConflict(t *testing.T) {
 	}
 	nodeStore.SaveNodeState(schema.SchedulerEnvelope{NodeID: "node-1"}, node)
 
-	mockExec := &MockExecutor{}
-	router := setupPlanTestRouter(nodeStore, mockExec)
+	router := setupPlanTestRouter(nodeStore)
 
 	reqData := basePlanRequest("validate", "")
 	reqData.LaunchTemplate.NodeID = "node-2" // Conflict with selected node-1
@@ -272,9 +265,6 @@ func TestPlanLaunch_TemplateConflict(t *testing.T) {
 
 	if res.Status != plan.PlanStatusConflict {
 		t.Errorf("expected Conflict status, got %s", res.Status)
-	}
-	if mockExec.PrepareCalled {
-		t.Error("expected Prepare NOT to be called on conflict")
 	}
 }
 
@@ -293,8 +283,7 @@ func TestPlanLaunch_ValidateModeHydration(t *testing.T) {
 	}
 	nodeStore.SaveNodeState(schema.SchedulerEnvelope{NodeID: "node-1"}, node)
 
-	mockExec := &MockExecutor{}
-	router := setupPlanTestRouter(nodeStore, mockExec)
+	router := setupPlanTestRouter(nodeStore)
 
 	reqData := basePlanRequest("validate", "") // empty node_id and launch_mode in template
 	body, _ := json.Marshal(reqData)
@@ -336,8 +325,7 @@ func TestPlanLaunch_DryRunModeHydration(t *testing.T) {
 	}
 	nodeStore.SaveNodeState(schema.SchedulerEnvelope{NodeID: "node-1"}, node)
 
-	mockExec := &MockExecutor{}
-	router := setupPlanTestRouter(nodeStore, mockExec)
+	router := setupPlanTestRouter(nodeStore)
 
 	reqData := basePlanRequest("dry_run", "") // empty node_id and launch_mode in template
 	body, _ := json.Marshal(reqData)
@@ -362,7 +350,7 @@ func TestPlanLaunch_DryRunModeHydration(t *testing.T) {
 	if res.PlannedLaunchSpec.NodeID != "node-1" {
 		t.Errorf("expected node ID node-1, got %s", res.PlannedLaunchSpec.NodeID)
 	}
-	if !res.DryRunPrepared {
-		t.Errorf("expected DryRunPrepared true")
+	if res.DryRunPrepared {
+		t.Errorf("expected DryRunPrepared false for node-scoped prep")
 	}
 }
