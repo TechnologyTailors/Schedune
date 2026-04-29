@@ -60,8 +60,11 @@ func ScheduleV0(intent workload.WorkloadIntent, candidateNodes []NodeRecord) Sch
 		})
 	}
 
-	// Sort RankedNodes descending by Score
+	// Sort RankedNodes descending by Score, then ascending by NodeID for determinism
 	sort.Slice(decision.RankedNodes, func(i, j int) bool {
+		if decision.RankedNodes[i].Score == decision.RankedNodes[j].Score {
+			return decision.RankedNodes[i].NodeID < decision.RankedNodes[j].NodeID
+		}
 		return decision.RankedNodes[i].Score > decision.RankedNodes[j].Score
 	})
 

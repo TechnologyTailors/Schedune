@@ -99,6 +99,7 @@ const (
 	ReasonErrLaunchMissingCapabilityQemuBinary      = "ERR_LAUNCH_MISSING_CAPABILITY_QEMU_BINARY"
 	ReasonErrLaunchMissingCapabilitySeccomp         = "ERR_LAUNCH_MISSING_CAPABILITY_SECCOMP"
 	ReasonErrLaunchMissingCapabilityNamespaces      = "ERR_LAUNCH_MISSING_CAPABILITY_NAMESPACES"
+	ReasonErrLaunchUnsafeWorkloadID                 = "ERR_LAUNCH_UNSAFE_WORKLOAD_ID"
 	ReasonErrLaunchRuntimeVersionUnknown            = "ERR_LAUNCH_RUNTIME_VERSION_UNKNOWN"
 	ReasonErrLaunchRuntimeVersionUnparseable        = "ERR_LAUNCH_RUNTIME_VERSION_UNPARSEABLE"
 	ReasonErrLaunchRuntimeVersionTooOld             = "ERR_LAUNCH_RUNTIME_VERSION_TOO_OLD"
@@ -108,13 +109,14 @@ const (
 	ReasonWarnDeprecatedNetworkAttachments = "WARN_DEPRECATED_NETWORK_ATTACHMENTS"
 
 	// Execution / Preparation
-	ReasonErrPreparationFailed      = "ERR_PREPARATION_FAILED"
-	ReasonErrNodeNotFound           = "ERR_NODE_NOT_FOUND"
-	ReasonErrValidationFailed       = "ERR_VALIDATION_FAILED"
-	ReasonErrExecRuntimeSpawnFailed = "ERR_EXEC_RUNTIME_SPAWN_FAILED"
-	ReasonErrExecRuntimeCrashed     = "ERR_EXEC_RUNTIME_CRASHED"
-	ReasonErrExecRuntimeExitedEarly = "ERR_EXEC_RUNTIME_EXITED_EARLY"
-	ReasonErrTermSignalFailed       = "ERR_TERM_SIGNAL_FAILED"
+	ReasonErrPreparationFailed            = "ERR_PREPARATION_FAILED"
+	ReasonErrPreparationRequiresNodeAgent = "ERR_PREPARATION_REQUIRES_NODE_AGENT"
+	ReasonErrNodeNotFound                 = "ERR_NODE_NOT_FOUND"
+	ReasonErrValidationFailed             = "ERR_VALIDATION_FAILED"
+	ReasonErrExecRuntimeSpawnFailed       = "ERR_EXEC_RUNTIME_SPAWN_FAILED"
+	ReasonErrExecRuntimeCrashed           = "ERR_EXEC_RUNTIME_CRASHED"
+	ReasonErrExecRuntimeExitedEarly       = "ERR_EXEC_RUNTIME_EXITED_EARLY"
+	ReasonErrTermSignalFailed             = "ERR_TERM_SIGNAL_FAILED"
 
 	// Readiness / Reconciliation
 	ReasonErrReadyProbeFailed                  = "ERR_READY_PROBE_FAILED"

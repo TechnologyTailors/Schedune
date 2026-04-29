@@ -1,0 +1,36 @@
+{
+  "schema_version": "v1alpha1",
+  "mode": "dry_run",
+  "workload_intent": {
+    "schema_version": "v1alpha1",
+    "workload_id": "wl-demo-plan",
+    "tenant_id": "demo-tenant",
+    "runtime_class": "VirtualMachine",
+    "required_architecture": "x86_64",
+    "max_telemetry_age_sec": 300,
+    "requires_kvm": true,
+    "required_compatibility_classes": [
+      "linux_x86_kvm"
+    ],
+    "preferred_features": [
+      "qemu_binary_present"
+    ],
+    "allow_backend_fallback": true
+  },
+  "launch_template": {
+    "schema_version": "v1alpha1",
+    "workload_id": "wl-demo-plan",
+    "tenant_id": "demo-tenant",
+    "runtime_class": "VirtualMachine",
+    "architecture": "x86_64",
+    "vcpu": 2,
+    "memory_mb": 1024,
+    "storage": [
+      {
+        "host_path": "/var/run/demo.qcow2",
+        "format": "qcow2",
+        "read_only": false
+      }
+    ]
+  }
+}

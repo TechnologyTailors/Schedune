@@ -1,4 +1,4 @@
-.PHONY: help build build-agent build-control-plane test test-agent test-control-plane fmt lint doctor dev-preflight dev-up dev-down demo dev-db-reset example-intake example-schedule example-launch-validate example-launch-dry-run example-launch-execute example-launch-list example-launch-observe example-readiness example-orphans
+.PHONY: help build build-agent build-control-plane test test-agent test-control-plane fmt lint doctor dev-preflight dev-up dev-down demo dev-db-reset example-intake example-schedule example-launch-plan example-launch-validate example-launch-dry-run example-launch-execute example-launch-list example-launch-observe example-readiness example-orphans
 
 # Configuration
 BIN_DIR=bin
@@ -90,6 +90,9 @@ example-intake: ## Ingest the local node capability payload
 
 example-schedule: ## Run a workload eligibility evaluation explanation
 	@bash examples/curls/schedule-explain.sh
+
+example-launch-plan: ## Plan a launch (placement, validation, and dry-run) without executing
+	@bash examples/curls/plan-launch.sh
 
 example-launch-validate: ## Validate a launch without executing it
 	@bash examples/curls/launch-validate.sh

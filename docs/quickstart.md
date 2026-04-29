@@ -86,7 +86,16 @@ make example-schedule
 ```
 *(This evaluates an x86 VM intent and explains the eligibility outcome.)*
 
-#### 6. Validate Launch
+#### 6. Plan Launch
+
+Combine your workload intent and a launch template to find an eligible node, validate the launch on it, and dry-run prepare the environment—all without executing anything:
+
+```bash
+make example-launch-plan
+```
+*(This bridges scheduling and execution into a single, safe, read-only explainable response. If `next_actions` includes `PrepareOnNode`, you can invoke the local node agent using `schedune-agent prepare --spec <path>` to locally provision the environment without executing the VM.)*
+
+#### 7. Validate Launch
 
 Validate a launch payload to ensure the backend is available and capabilities match, without starting the VM:
 
@@ -94,7 +103,7 @@ Validate a launch payload to ensure the backend is available and capabilities ma
 make example-launch-validate
 ```
 
-#### 7. Execute Launch
+#### 8. Execute Launch
 
 If your host has the required binary (`cloud-hypervisor`), execute the launch:
 
@@ -103,7 +112,7 @@ make example-launch-execute
 ```
 *Note the returned `execution_id`.*
 
-#### 8. Inspect Lifecycle
+#### 9. Inspect Lifecycle
 
 Use the `execution_id` to inspect the VM's state, readiness, trace, and events:
 
@@ -124,7 +133,7 @@ make example-readiness EXECUTION_ID=<EXECUTION_ID>
 curl http://127.0.0.1:9090/api/v1alpha1/launch/<EXECUTION_ID>/events
 ```
 
-#### 9. Inspect Orphans
+#### 10. Inspect Orphans
 
 Schedune automatically sweeps for orphan processes. You can list them via:
 
@@ -132,7 +141,7 @@ Schedune automatically sweeps for orphan processes. You can list them via:
 make example-orphans
 ```
 
-#### 10. Terminate
+#### 11. Terminate
 
 When you are done, terminate the execution and stop the control plane:
 
