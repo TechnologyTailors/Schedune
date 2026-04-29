@@ -446,10 +446,8 @@ fn prepare_firecracker(
             if rootfs.is_none() {
                 rootfs = Some(storage.host_path.clone());
             }
-        } else if storage.format == "raw" && storage.read_only {
-            if kernel.is_none() {
-                kernel = Some(storage.host_path.clone());
-            }
+        } else if storage.format == "raw" && storage.read_only && kernel.is_none() {
+            kernel = Some(storage.host_path.clone());
         }
     }
 
