@@ -142,7 +142,7 @@ func TestBuildLaunchPlan_ConsistencyCheck(t *testing.T) {
 				if res.Status != plan.PlanStatusConflict {
 					t.Errorf("expected status %s, got %s", plan.PlanStatusConflict, res.Status)
 				}
-				
+
 				foundWarn := false
 				for _, w := range res.Warnings {
 					if w == tc.errWarn || strings.Contains(w, tc.errWarn) {

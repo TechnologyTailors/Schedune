@@ -40,6 +40,7 @@ var knownReasonCodes = map[string]struct{}{
 	ReasonErrLaunchMissingCapabilityQemuBinary:      {},
 	ReasonErrLaunchMissingCapabilitySeccomp:         {},
 	ReasonErrLaunchMissingCapabilityNamespaces:      {},
+	ReasonErrLaunchUnsafeWorkloadID:                 {},
 	ReasonErrLaunchRuntimeVersionUnknown:            {},
 	ReasonErrLaunchRuntimeVersionUnparseable:        {},
 	ReasonErrLaunchRuntimeVersionTooOld:             {},

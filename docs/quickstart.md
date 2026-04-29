@@ -93,7 +93,7 @@ Combine your workload intent and a launch template to find an eligible node, val
 ```bash
 make example-launch-plan
 ```
-*(This bridges scheduling and execution into a single, safe, read-only explainable response.)*
+*(This bridges scheduling and execution into a single, safe, read-only explainable response. If `next_actions` includes `PrepareOnNode`, you can invoke the local node agent using `schedune-agent prepare --spec <path>` to locally provision the environment without executing the VM.)*
 
 #### 7. Validate Launch
 

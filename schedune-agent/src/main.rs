@@ -3,6 +3,7 @@ mod collectors;
 mod daemon;
 mod health;
 mod migration;
+mod prepare;
 mod scheduler_contract;
 
 use anyhow::Result;
@@ -35,6 +36,12 @@ enum Commands {
         /// Port to listen on
         #[arg(short, long, default_value_t = 8080)]
         port: u16,
+    },
+    /// Prepare the launch environment for a workload
+    Prepare {
+        /// Path to the LaunchSpec JSON file (or '-' for stdin)
+        #[arg(long)]
+        spec: String,
     },
 }
 
@@ -79,6 +86,19 @@ async fn main() -> Result<()> {
         }
         Commands::Serve { port } => {
             daemon::run(*port).await;
+        }
+        Commands::Prepare { spec } => {
+            let json_str = if spec == "-" {
+                std::io::read_to_string(std::io::stdin())?
+            } else {
+                std::fs::read_to_string(spec)?
+            };
+
+            let launch_spec: crate::prepare::LaunchSpec = serde_json::from_str(&json_str)?;
+            let result = crate::prepare::prepare_launch(launch_spec);
+
+            let json = serde_json::to_string_pretty(&result)?;
+            println!("{}", json);
         }
     }
 
